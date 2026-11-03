@@ -61,8 +61,8 @@ public class ThemesPanel {
                     : name.equals(Theme.CUSTOM) ? gui.customAccent.argb() | 0xFF000000 : Theme.ACCENTS[i];
             if (animated && !name.equals(Theme.RAINBOW)) {
                 float[] rng = Theme.animatedHues(name);
-                double t = 0.5 + 0.5 * Math.sin(System.currentTimeMillis() / 1800.0);
-                dot = ColorUtil.fromHsb((float) (rng[0] + (rng[1] - rng[0]) * t), 0.6f, 1f, 255);
+                double wave = 0.5 + 0.5 * Math.sin(System.currentTimeMillis() / 1800.0);
+                dot = ColorUtil.fromHsb((float) (rng[0] + (rng[1] - rng[0]) * wave), 0.6f, 1f, 255);
             }
             int cx = x + 3 + col * (colW + 2);
             boolean hover = GuiDraw.in(mx, my, cx, cy, colW, 11);
