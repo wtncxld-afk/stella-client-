@@ -1,27 +1,48 @@
 # ✦ Stella Client
 
-A purple-themed, DonutSMP-focused **Fabric** client mod for **Minecraft Java 1.21.4**.
+A purple-themed, DonutSMP-focused **Fabric** client mod for **Minecraft Java 1.21.11**.
 
 | | |
 |---|---|
-| Minecraft | 1.21.4 |
-| Fabric Loader | ≥ 0.16.10 |
-| Fabric API | 0.119.4+1.21.4 |
+| Minecraft | 1.21.11 |
+| Fabric Loader | ≥ 0.17.3 |
+| Fabric API | 0.141.6+1.21.11 |
 | Java | 21 |
 
 ## Installation
 
-1. Install **Fabric Loader** for Minecraft 1.21.4 (https://fabricmc.net/use/installer/).
-2. Download **Fabric API 0.119.4+1.21.4** (or newer for 1.21.4) and put it in `.minecraft/mods`.
-3. Download `stella-client-1.0.0.jar` from the latest **Build Stella Client** GitHub Actions run
-   (artifact `stella-client-jar`) or build it yourself (below), and put it in `.minecraft/mods`.
-   Use the jar **without** `-sources` in its name.
-4. Launch the *Fabric Loader 1.21.4* profile. Press **Right Shift** to open the ClickGUI.
+1. Install **Fabric Loader** for Minecraft 1.21.11 (https://fabricmc.net/use/installer/).
+2. Download **Fabric API 0.141.6+1.21.11** (or newer for 1.21.11) and put it in `.minecraft/mods`.
+3. Download `stella-client-1.0.<n>.jar` from the latest **GitHub Release** (or build it yourself,
+   below) and put it in `.minecraft/mods`. Use the jar **without** `-sources` in its name.
+   Remove any older Stella jar first.
+4. Launch the *Fabric Loader 1.21.11* profile. Press **Right Shift** to open the ClickGUI.
+
+### Auto Updater
+
+You only install Stella by hand once. After that, the **Auto Updater** module (SETTINGS panel) keeps it current:
+
+1. On startup it makes one request to `api.github.com/repos/<Update Source>/releases/latest`.
+2. If that release is newer, it downloads the jar into `.minecraft/.stella-update/`. It checks the jar's
+   SHA-256 against the release, and checks that the jar is the Stella mod. If either check fails, it
+   deletes the download.
+3. When you close Minecraft, a small helper inside the new jar waits for the game to exit, copies the new
+   jar into `mods/` and deletes the old one. The update is live the next time you start the game.
+
+It only downloads from github.com, sends nothing about you, and never installs an unverified file.
+Its settings are *Check On Startup*, *Auto Download*, *Install On Exit*, *Update Source*, *Check Now* and
+*Show Status*. If you turn the module off, it does nothing.
+
+Every push that passes the build, the in-game smoke test and the jar audit (bytecode scan + ClamAV) is
+published by CI as release `v1.0.<run number>` with a `.sha256` file. **GitHub only lets the updater see
+releases of a public repository.** If this repository is private, either make it public, or publish the
+releases in a separate public repository and set *Update Source* to it.
 
 ### Building from source
 
 ```bash
 ./gradlew build          # jar is written to build/libs/stella-client-1.0.0.jar
+./gradlew build -Pmod_version=1.0.42   # CI sets the version this way
 ./gradlew runClient      # launches a development client
 ```
 
@@ -82,7 +103,7 @@ own toggle, position, scale, opacity and colours, and moving or disabling one ne
 Turning any module on or off shows a small popup; switch this off with *Module Toggle Popups* in the
 Notifications HUD settings.
 
-**Settings:** Config (auto-save), Animations.
+**Settings:** Config (auto-save), Animations, Auto Updater.
 
 ## Configuration
 
@@ -96,6 +117,7 @@ Everything lives in `.minecraft/config/stella/`:
 | `staff.json` | **Your** verified staff roster (ships empty) |
 | `regions.json` | Region Map grid (ships as a flagged placeholder) |
 | `waypoints.json` | Waypoints created from Block Notifier |
+| `../../.stella-update/` | Verified update waiting to be installed, plus `installer.log` |
 
 The **CONFIGS** button at the bottom of the ClickGUI handles profiles. *New* copies the current profile.
 *Delete* deletes the profile whose name you type into the box. *Save* and *Export* write files
