@@ -144,7 +144,7 @@ public class ClickGuiScreen extends Screen {
             String d = hovered.getDescription();
             List<String> lines = SettingsWindow.wrap(d, 170);
             int w = 0;
-            for (String l : lines) w = Math.max(w, GuiDraw.vw(l));
+            for (String l : lines) w = Math.max(w, GuiDraw.width(l));
             int tx = mx + 10, ty = my + 10;
             if (tx + w + 8 > vw) tx = mx - w - 14;
             ctx.getMatrices().push();
