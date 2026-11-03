@@ -50,6 +50,8 @@ public final class BlockScanner {
         });
         ClientChunkEvents.CHUNK_UNLOAD.register((world, chunk) -> {
             long key = chunk.getPos().toLong();
+            WorldChunk current = world.getChunkManager().getWorldChunk(chunk.getPos().x, chunk.getPos().z);
+            if (current != null && current != chunk) return; // an old copy unloading after its replacement loaded
             LOADED.remove(key);
             QUEUE.remove(key);
             for (ScanTarget t : TARGETS) t.clearChunk(key);
@@ -64,7 +66,17 @@ public final class BlockScanner {
         // nearest chunks first, so things around the player show up immediately
         MinecraftClient mc = MinecraftClient.getInstance();
         int pcx = mc.player != null ? mc.player.getBlockX() >> 4 : 0, pcz = mc.player != null ? mc.player.getBlockZ() >> 4 : 0;
-        long[] keys = LOADED.toLongArray();
+        // Ask the world which chunks are loaded around the player; the LOADED set can miss chunks that
+        // were reloaded in place (unload of the old copy arriving after load of the new one).
+        it.unimi.dsi.fastutil.longs.LongOpenHashSet all = new it.unimi.dsi.fastutil.longs.LongOpenHashSet(LOADED);
+        if (mc.world != null) {
+            int r = mc.options.getClampedViewDistance() + 3;
+            for (int dx = -r; dx <= r; dx++) for (int dz = -r; dz <= r; dz++) {
+                WorldChunk c = mc.world.getChunkManager().getWorldChunk(pcx + dx, pcz + dz);
+                if (c != null) { all.add(c.getPos().toLong()); LOADED.add(c.getPos().toLong()); }
+            }
+        }
+        long[] keys = all.toLongArray();
         Long[] boxed = new Long[keys.length];
         for (int i = 0; i < keys.length; i++) boxed[i] = keys[i];
         java.util.Arrays.sort(boxed, java.util.Comparator.comparingLong((Long k) -> {
