@@ -88,8 +88,14 @@ public class SpawnerFinder extends HudElement {
         return t;
     }
 
+    private Object lastWorld;
+
     @Override
     public void onTick() {
+        if (mc.world != lastWorld) { // new server / dimension: forget everything from the old world
+            lastWorld = mc.world;
+            types.clear(); entityTypes.clear(); firstSeen.clear(); announced.clear(); list = new ArrayList<>();
+        }
         if (!inGame() || ++timer < 10) return;
         timer = 0;
         List<Spawner> out = new ArrayList<>();

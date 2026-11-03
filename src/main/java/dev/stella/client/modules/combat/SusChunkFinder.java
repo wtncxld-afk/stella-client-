@@ -127,8 +127,11 @@ public class SusChunkFinder extends Module {
         findings = new ArrayList<>();
     }
 
+    private Object lastWorld;
+
     @Override
     public void onTick() {
+        if (mc.world != lastWorld) { lastWorld = mc.world; notified.clear(); findings = new ArrayList<>(); }
         if (!inGame() || ++timer < 40) return;
         timer = 0;
         BlockPos center = mc.player.getBlockPos();
