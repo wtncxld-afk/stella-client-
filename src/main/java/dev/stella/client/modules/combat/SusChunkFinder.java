@@ -275,8 +275,17 @@ public class SusChunkFinder extends Module {
      * trial chamber / ancient city / stronghold blocks keep only evidence those structures can never
      * produce (concrete, observers...); everything else is dropped.
      */
+    private volatile List<String> lastExplained = List.of();
+    private volatile int lastMarkers;
+
+    /** For diagnostics: structure blocks seen and findings dropped as natural in the last analysis. */
+    public int structureMarkers() { return lastMarkers; }
+    public List<String> explainedByStructures() { return lastExplained; }
+
     private void explainByStructures(List<Finding> out, List<BlockPos> markers) {
-        if (markers.isEmpty()) return;
+        lastMarkers = markers.size();
+        if (markers.isEmpty()) { lastExplained = List.of(); return; }
+        List<String> explained = new ArrayList<>();
         List<BlockPos> strong = new ArrayList<>(), weak = new ArrayList<>();
         for (BlockPos p : markers) (STRONG_STRUCTURE.contains(mc.world.getBlockState(p).getBlock()) ? strong : weak).add(p);
         List<Finding> keep = new ArrayList<>();
@@ -285,6 +294,7 @@ public class SusChunkFinder extends Module {
             boolean natural = strong.stream().anyMatch(p -> area.expand(48).contains(Vec3d.ofCenter(p)))
                     || weak.stream().filter(p -> area.expand(20).contains(Vec3d.ofCenter(p))).limit(12).count() >= 12;
             if (!natural) { keep.add(f); continue; }
+            explained.add(f.type + " " + f.score + " at chunk " + (f.min.getX() >> 4) + " " + (f.min.getZ() >> 4) + " (" + f.reasons.get(0) + ")");
             if (f.type.equals("Unnatural Blocks")) {
                 List<String> reasons = new ArrayList<>(f.reasons);
                 reasons.add("next to a natural structure, but these blocks never generate in one");
@@ -293,6 +303,7 @@ public class SusChunkFinder extends Module {
         }
         out.clear();
         out.addAll(keep);
+        lastExplained = explained;
     }
 
     /** One suspected chunk with all of its findings; {@code score} 0-100. */
