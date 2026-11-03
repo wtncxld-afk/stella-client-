@@ -49,6 +49,61 @@ final class StellaSmokeTest {
     private static int ox, oy, oz, spawnX, spawnZ;
 
     /** Logs every chunk the Sus Chunk Finder scored, flagged or not, so false positives are visible in CI. */
+    private static final java.util.UUID STAFF_UUID = java.util.UUID.fromString("5e1a5a11-0000-4000-8000-00000000057a");
+    private static net.fabricmc.fabric.api.entity.FakePlayer staffPlayer;
+
+    /**
+     * Anti Vanish test on the real integrated server: a server-side player named in staff.json joins the tab
+     * list, then (1) goes into spectator mode near us, (2) turns visible but is removed from the tab list,
+     * like a leaky vanish plugin, (3) leaves. The client only sees the real packets the server sends.
+     */
+    private static void staffTest(MinecraftClient mc, int phase) {
+        var server = mc.getServer();
+        if (server == null) { StellaClient.LOGGER.warn("[smoke] anti vanish: no integrated server"); return; }
+        if (phase == 1) {
+            try {
+                java.nio.file.Files.writeString(dev.stella.client.data.StaffDatabase.file(),
+                        "{\"source\": \"smoke test\", \"staff\": [{\"name\": \"StaffTester\", \"rank\": \"Moderator\"}]}");
+            } catch (Exception e) { StellaClient.LOGGER.warn("[smoke] could not write staff.json", e); }
+            dev.stella.client.data.StaffDatabase.load();
+        }
+        var look = mc.player.getRotationVec(1f);
+        double x = mc.player.getX() + look.x * 5, y = mc.player.getY(), z = mc.player.getZ() + look.z * 5;
+        server.execute(() -> {
+            var world = server.getOverworld();
+            var pm = server.getPlayerManager();
+            if (phase == 1) {
+                staffPlayer = net.fabricmc.fabric.api.entity.FakePlayer.get(world, new com.mojang.authlib.GameProfile(STAFF_UUID, "StaffTester"));
+                staffPlayer.refreshPositionAndAngles(x, y, z, 90f, 0f);
+                staffPlayer.changeGameMode(net.minecraft.world.GameMode.SPECTATOR);
+                pm.sendToAll(net.minecraft.network.packet.s2c.play.PlayerListS2CPacket.entryFromPlayer(java.util.List.of(staffPlayer)));
+                world.onPlayerConnected(staffPlayer);
+            } else if (phase == 2 && staffPlayer != null) {
+                // out of spectator: the server now sends the body to nearby players
+                staffPlayer.changeGameMode(net.minecraft.world.GameMode.SURVIVAL);
+                staffPlayer.refreshPositionAndAngles(x, y, z, 90f, 0f);
+            } else if (phase == 4 && staffPlayer != null) {
+                // the vanish plugin removes them from the tab list but keeps sending the body
+                pm.sendToAll(new net.minecraft.network.packet.s2c.play.PlayerRemoveS2CPacket(java.util.List.of(STAFF_UUID)));
+            } else if (phase == 3 && staffPlayer != null) {
+                world.removePlayer(staffPlayer, net.minecraft.entity.Entity.RemovalReason.DISCARDED);
+                pm.sendToAll(new net.minecraft.network.packet.s2c.play.PlayerRemoveS2CPacket(java.util.List.of(STAFF_UUID)));
+                staffPlayer = null;
+            }
+        });
+    }
+
+    private static void logAntiVanish(String when) {
+        var av = ModuleManager.get(dev.stella.client.modules.combat.AntiVanish.class);
+        var tab = mc().getNetworkHandler().getPlayerListEntry(STAFF_UUID);
+        boolean entity = mc().world.getPlayers().stream().anyMatch(p -> p.getUuid().equals(STAFF_UUID));
+        StellaClient.LOGGER.info("[smoke] anti vanish {}: tab entry={} gamemode={} entity visible to client={} alerts={}", when,
+                tab != null, tab == null ? "-" : tab.getGameMode(), entity, av.log().size());
+        for (var e : av.log()) StellaClient.LOGGER.info("[smoke] anti vanish alert: {} {} - {}", e.confidence(), e.identity(), e.reason());
+    }
+
+    private static MinecraftClient mc() { return MinecraftClient.getInstance(); }
+
     private static void logSus(String when) {
         var sus = ModuleManager.get(dev.stella.client.modules.combat.SusChunkFinder.class);
         StellaClient.LOGGER.info("[smoke] sus {}: base chunk {} {}, trial chamber chunk {} {}", when, (ox + 40) >> 4, (oz - 56) >> 4, (ox + 40) >> 4, (oz + 70) >> 4);
@@ -250,12 +305,20 @@ final class StellaSmokeTest {
                         for (Module m : ModuleManager.all())
                             if (m.getCategory() == dev.stella.client.module.Category.HUD && !m.getName().equals("Stella Branding HUD")) m.setEnabled(false);
                         var av = ModuleManager.get(dev.stella.client.modules.combat.AntiVanish.class);
+                        av.setEnabled(false);
                         av.setEnabled(true);
+                        av.log().clear();
                         ModuleManager.get(dev.stella.client.modules.combat.MediaBaseFinder.class).setEnabled(true);
-                        av.showPopup("ExampleStaff", "HIGH", "tab list reports spectator mode");
                         mc.inGameHud.getChatHud().clear(false);
+                        // Case 1: a verified staff member switches to spectator mode near us (real server-side player)
+                        staffTest(mc, 1);
                     }
+                    if (inStage() == 366) logAntiVanish("case 1: staff in spectator mode");
                     if (inStage() == 368) shot(mc, "anti-vanish");
+                    if (inStage() == 370) staffTest(mc, 2); // Case 2: vanish plugin hides them from tab but still sends their body
+                    if (inStage() == 380) staffTest(mc, 4);
+                    if (inStage() == 400) logAntiVanish("case 2: hidden from tab list, entity still sent");
+                    if (inStage() == 402) staffTest(mc, 3); // clean up
                     if (inStage() == 372) mc.setScreen(new ClickGuiScreen());
                     if (inStage() == 385 && mc.currentScreen instanceof ClickGuiScreen gui) gui.openSettingsFor("Anti Vanish");
                     if (inStage() == 405) shot(mc, "anti-vanish-gui");
