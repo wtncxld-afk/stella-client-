@@ -18,12 +18,12 @@ import java.util.List;
  * Right-click the header to clear everything.
  */
 public class BlockNotifierHud extends HudElement {
-    private final NumberSetting rows = add(new NumberSetting("Visible Rows", "Entries shown before scrolling", 8, 1, 30, 1));
-    private final NumberSetting widthSetting = add(new NumberSetting("Width", "Dropdown width", 230, 140, 400, 5));
+    private final NumberSetting rows = add(new NumberSetting("Visible Rows", "Entries shown before scrolling", 5, 1, 30, 1));
+    private final NumberSetting widthSetting = add(new NumberSetting("Width", "Dropdown width", 190, 140, 400, 5));
     private boolean collapsed;
     private int scroll;
 
-    public BlockNotifierHud() { super("Block Notifier HUD", "Dropdown of Block Notifier detections (interact with chat open)", -4, 120, false); }
+    public BlockNotifierHud() { super("Block Notifier HUD", "Dropdown of Block Notifier detections (interact with chat open)", 4, -84, false); }
 
     private BlockNotifier notifier() { return ModuleManager.get(BlockNotifier.class); }
 

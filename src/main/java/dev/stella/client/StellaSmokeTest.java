@@ -121,6 +121,7 @@ final class StellaSmokeTest {
                     if (inStage() == 160) shot(mc, "sky-arctic-aurora");
                     if (inStage() == 162) setting("Custom Sky", "Preset", "Cosmic Stella");
                     if (inStage() == 165) { mc.player.setPitch(18f); mc.setScreen(new ClickGuiScreen()); }
+                    if (inStage() == 178) mc.inGameHud.getChatHud().clear(false);
                     if (inStage() == 182) shot(mc, "gui-clean");
                     if (inStage() == 185 && mc.currentScreen instanceof ClickGuiScreen gui) { gui.openSettingsFor("Player ESP"); gui.openSettingsFor("Custom Sky"); }
                     if (inStage() == 210) shot(mc, "world-gui");
@@ -138,12 +139,16 @@ final class StellaSmokeTest {
                             if (m.getCategory() == dev.stella.client.module.Category.CLIENT || m.getCategory() == dev.stella.client.module.Category.SETTINGS) continue;
                             if (!keep.contains(m.getName())) m.setEnabled(false);
                         }
-                        // step back and up so the red chunk box is seen from outside
-                        mc.player.networkHandler.sendChatCommand("tp @s ~-22 ~10 ~");
+                        // step back and up (flying, so we stay there) to see the red chunk box from outside
+                        mc.player.getAbilities().flying = true;
+                        mc.player.sendAbilitiesUpdate();
+                        mc.player.networkHandler.sendChatCommand("tp @s ~-24 ~14 ~");
                     }
                     if (inStage() == 252) { mc.player.setYaw(-90f); mc.player.setPitch(28f); }
+                    if (inStage() == 280) mc.inGameHud.getChatHud().clear(false);
                     if (inStage() == 285) shot(mc, "sus-chunk-finder");
                     if (inStage() == 288) ModuleManager.all().stream().filter(m -> m.getName().equals("Region Map HUD")).forEach(m -> m.setEnabled(true));
+                    if (inStage() == 298) mc.inGameHud.getChatHud().clear(false);
                     if (inStage() == 300) shot(mc, "region-map");
                     if (inStage() == 302) {
                         // every HUD element on, world modules off: a clean look at the HUD
@@ -157,6 +162,7 @@ final class StellaSmokeTest {
                         dev.stella.client.notification.NotificationManager.post("Staff", "Example alert toast",
                                 dev.stella.client.notification.Notification.Type.WARNING, 20000);
                     }
+                    if (inStage() == 318) mc.inGameHud.getChatHud().clear(false);
                     if (inStage() == 320) shot(mc, "hud-all");
                     if (inStage() == 322) mc.setScreen(new HudEditorScreen(null));
                     if (inStage() == 335) shot(mc, "hud-editor-all");

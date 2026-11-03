@@ -16,6 +16,8 @@ public class ClickGuiModule extends Module {
     public final ModeSetting theme = add(new ModeSetting("Theme", "Colour theme", "Stella", Theme.names())).onChange(this::applyTheme);
     public final ColorSetting customAccent = add(new ColorSetting("Custom Accent", "Accent used by the Custom theme", 0xFFA855F7))
             .visibleWhen(() -> this.theme.is(Theme.CUSTOM)).onChange(this::applyTheme);
+    public final dev.stella.client.setting.NumberSetting guiSize = add(new dev.stella.client.setting.NumberSetting("GUI Size",
+            "Size of the ClickGUI (1.0 = fit the window automatically)", 1.0, 0.6, 1.4, 0.05));
     public final BoolSetting blur = add(new BoolSetting("Blur Background", "Blur the game behind the GUI (uses the vanilla Menu Background Blurriness option)", true));
     public final BoolSetting descriptions = add(new BoolSetting("Descriptions", "Show module descriptions on hover", true));
     public final BoolSetting customFont = add(new BoolSetting("Custom Font", "Use the Stella (TNH Xuong) font for the GUI and HUD", true))

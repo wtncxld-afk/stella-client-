@@ -27,7 +27,7 @@ public class KeystrokesHud extends HudElement {
     private final Animation[] anims = new Animation[7];
 
     public KeystrokesHud() {
-        super("Keystrokes HUD", "WASD, space and mouse buttons with optional CPS", 4, -4, false);
+        super("Keystrokes HUD", "WASD, space and mouse buttons with optional CPS", -4, -72, false);
         for (int i = 0; i < anims.length; i++) anims[i] = new Animation(0, 22);
     }
 
