@@ -24,6 +24,8 @@ public class RegionMapHud extends HudElement {
     private final NumberSetting cellSize = add(new NumberSetting("Cell Size", "Pixel size of one grid cell", 13, 6, 24, 1));
     private final NumberSetting cellGap = add(new NumberSetting("Cell Gap", "Spacing between cells", 1, 0, 3, 1));
     private final BoolSetting numbers = add(new BoolSetting("Cell Numbers", "Print the number inside each cell", true));
+    private final dev.stella.client.setting.ModeSetting numbering = add(new dev.stella.client.setting.ModeSetting("Numbering",
+            "Server IDs as shown in game, or plain 1-81 order like region diagrams", "Server IDs", "Server IDs", "Sequential"));
     private final ColorSetting numberColor = add(new ColorSetting("Number Color", "Cell number colour", 0xFFF2F2F2)).visibleWhen(numbers::isOn);
     private final NumberSetting cellAlpha = add(new NumberSetting("Cell Opacity", "Fill opacity of the cells", 1.0, 0.1, 1, 0.05));
     private final BoolSetting playerArrow = add(new BoolSetting("Player Arrow", "Red arrow at your exact position and facing", true));
@@ -64,7 +66,7 @@ public class RegionMapHud extends HudElement {
                 int x = c * step, y = r * step;
                 ctx.fill(x, y, x + cs, y + cs, col(ColorUtil.mulAlpha(base, cellAlpha.get())));
                 if (numbers.isOn()) {
-                    String n = String.valueOf(RegionConfig.numbers[r][c]);
+                    String n = String.valueOf(number(r, c));
                     int tw = mc.textRenderer.getWidth(n);
                     float s = Math.min(0.62f, (cs - 2f) / Math.max(1, tw));
                     ctx.getMatrices().push();
@@ -95,7 +97,7 @@ public class RegionMapHud extends HudElement {
 
         String mark = RegionConfig.placeholder && unverifiedMark.isOn() ? "*" : "";
         String regionLine = RegionConfig.inGrid(pc, pr)
-                ? "Current Region: " + RegionConfig.numbers[pr][pc] + " (" + (current == null ? "None" : current.name()) + ")" + mark
+                ? "Current Region: " + number(pr, pc) + " (" + (current == null ? "None" : current.name()) + ")" + mark
                 : "Current Region: - (outside grid)" + mark;
         ctx.drawText(mc.textRenderer, regionLine, 0, y, tc, true);
         w = Math.max(w, mc.textRenderer.getWidth(regionLine));
@@ -135,6 +137,10 @@ public class RegionMapHud extends HudElement {
             }
         }
         setSize(w, y);
+    }
+
+    private int number(int r, int c) {
+        return numbering.is("Sequential") ? RegionConfig.sequentialNumber(r, c) : RegionConfig.numbers[r][c];
     }
 
     /** Small filled arrow pointing along the player's yaw (0 = south / +Z, 90 = west). */

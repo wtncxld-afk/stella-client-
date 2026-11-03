@@ -14,18 +14,18 @@ import java.util.List;
 /**
  * Region Map grid definition loaded from {@code config/stella/regions.json}.
  * <p>
- * The default 9x9 layout (cell numbers + region colours) was transcribed from
- * the user's reference screenshot of the DonutSMP region map. The geometry
- * (50,000-block cells centred on 0,0) is inferred from the single position
- * shown in that screenshot (X -129978, Z 215368 = region 107) and should be
- * verified in game; every value is editable in regions.json.
+ * The default 9x9 layout comes from two user-supplied references: an in-game
+ * screenshot of the DonutSMP region map (cell IDs and colours) and a region
+ * diagram spanning X -225k..+225k (region assignment, 1-81 order, and the
+ * 50,000-block cell geometry centred on 0,0). Every value is editable in
+ * regions.json.
  * Each cell is {@code cellSize} blocks square, starting at (originX, originZ).
  */
 public final class RegionConfig {
     public record Region(String name, int color) {}
 
     public static boolean placeholder = true;
-    public static final int LAYOUT_VERSION = 2;
+    public static final int LAYOUT_VERSION = 3;
     public static int originX = -225000, originZ = -225000, cellSize = 50000, columns = 9, rows = 9;
     public static List<Region> regions = new ArrayList<>();
     /** [row][col] region index (-1 = none). */
@@ -43,8 +43,10 @@ public final class RegionConfig {
         try {
             JsonObject o = JsonParser.parseString(Files.readString(f)).getAsJsonObject();
             // replace the old untouched v1 placeholder with the screenshot-based layout
-            if ((!o.has("layoutVersion") || o.get("layoutVersion").getAsInt() < LAYOUT_VERSION)
-                    && o.has("placeholder") && o.get("placeholder").getAsBoolean()) {
+            int ver = o.has("layoutVersion") ? o.get("layoutVersion").getAsInt() : 1;
+            boolean generated = o.has("generatedDefault") && o.get("generatedDefault").getAsBoolean();
+            boolean oldPlaceholder = ver < 2 && o.has("placeholder") && o.get("placeholder").getAsBoolean();
+            if (ver < LAYOUT_VERSION && (oldPlaceholder || generated || ver == 2)) {
                 writeDefault(f);
                 o = JsonParser.parseString(Files.readString(f)).getAsJsonObject();
             }
@@ -113,9 +115,9 @@ public final class RegionConfig {
             {5, 5, 5, 3, 2, 2, 2, 2, 2},
             {4, 4, 4, 4, 2, 2, 2, 2, 2},
             {4, 1, 1, 0, 0, 0, 0, 0, 2},
-            {4, 1, 1, 0, 0, 0, 0, 0, 0},
+            {4, 1, 1, 0, 0, 0, 0, 0, 2},
             {0, 1, 0, 0, 0, 0, 0, 0, 0},
-            {0, 1, 1, 1, 1, 1, 1, 1, 0}};
+            {0, 1, 1, 1, 1, 1, 1, 0, 0}};
 
     private static void defaults() {
         placeholder = false;
@@ -138,11 +140,12 @@ public final class RegionConfig {
     private static void writeDefault(Path f) {
         defaults();
         JsonObject o = new JsonObject();
-        o.addProperty("_readme", "Cell numbers and region colours transcribed from a DonutSMP region-map screenshot. "
-                + "Geometry (50,000-block cells centred on 0,0) is INFERRED from one position in that screenshot - verify in game "
-                + "and edit originX/originZ/cellSize if needed. 'cells' = region index per cell (-1 = none), 'numbers' = label per cell. "
+        o.addProperty("_readme", "9x9 grid of 50,000-block cells spanning -225k..+225k on X and Z, from user-supplied DonutSMP references. "
+                + "'numbers' = in-game cell IDs (transcribed from a low-resolution screenshot - correct any that differ), "
+                + "'cells' = region index per cell (-1 = none). The HUD can also show plain 1-81 numbering. "
                 + "Set \"placeholder\": true to show the * unverified marker. Use the Region Map HUD's 'Reload regions.json' to apply.");
         o.addProperty("layoutVersion", LAYOUT_VERSION);
+        o.addProperty("generatedDefault", true);
         o.addProperty("placeholder", false);
         o.addProperty("originX", originX);
         o.addProperty("originZ", originZ);
@@ -170,6 +173,9 @@ public final class RegionConfig {
         o.add("numbers", numArr);
         try { Files.writeString(f, ConfigManager.GSON.toJson(o)); } catch (Exception ignored) { }
     }
+
+    /** Plain row-major numbering (1..rows*columns), as used on region diagrams. */
+    public static int sequentialNumber(int row, int col) { return row * columns + col + 1; }
 
     public static int colOf(double x) { return (int) Math.floor((x - originX) / cellSize); }
     public static int rowOf(double z) { return (int) Math.floor((z - originZ) / cellSize); }
