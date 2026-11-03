@@ -142,16 +142,17 @@ final class StellaSmokeTest {
                             if (m.getCategory() == dev.stella.client.module.Category.CLIENT || m.getCategory() == dev.stella.client.module.Category.SETTINGS) continue;
                             if (!keep.contains(m.getName())) m.setEnabled(false);
                         }
-                        setting("Sus Chunk Finder", "Flat Y", Math.floor(mc.player.getY()) + 6.0);
+                        setting("Sus Chunk Finder", "Flat Y", Math.floor(mc.player.getY()) + 1.0);
                         setting("Sus Chunk Finder", "Only Below Y", false); // test blocks sit at the surface
                         // step back and up (flying, so we stay there) to see the red chunk squares from outside
-                        mc.player.getAbilities().flying = true;
-                        mc.player.sendAbilitiesUpdate();
-                        mc.player.networkHandler.sendChatCommand("tp @s ~-24 ~14 ~");
+                        // spectator mode so the camera stays in the air for the shot
+                        mc.player.networkHandler.sendChatCommand("gamemode spectator");
+                        mc.player.networkHandler.sendChatCommand("tp @s ~-26 ~22 ~4");
                     }
-                    if (inStage() == 252) { mc.player.setYaw(-90f); mc.player.setPitch(28f); }
+                    if (inStage() == 252) { mc.player.setYaw(-75f); mc.player.setPitch(38f); }
                     if (inStage() == 280) mc.inGameHud.getChatHud().clear(false);
                     if (inStage() == 285) shot(mc, "sus-chunk-finder");
+                    if (inStage() == 287) mc.player.networkHandler.sendChatCommand("gamemode creative");
                     if (inStage() == 288) ModuleManager.all().stream().filter(m -> m.getName().equals("Region Map HUD")).forEach(m -> m.setEnabled(true));
                     if (inStage() == 298) mc.inGameHud.getChatHud().clear(false);
                     if (inStage() == 300) shot(mc, "region-map");
