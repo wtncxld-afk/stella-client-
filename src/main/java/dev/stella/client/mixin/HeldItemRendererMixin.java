@@ -23,4 +23,24 @@ public abstract class HeldItemRendererMixin {
                               ItemStack item, float equipProgress, MatrixStack matrices, net.minecraft.client.render.command.OrderedRenderCommandQueue queue, int light, CallbackInfo ci) {
         if (StellaClient.isReady()) ModuleManager.get(ItemScale.class).applyHeld(matrices, hand);
     }
+
+    @org.spongepowered.asm.mixin.Unique private ItemStack stella$heldStack;
+
+    @Inject(method = "renderItem(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/ItemDisplayContext;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/command/OrderedRenderCommandQueue;I)V",
+            at = @At("HEAD"))
+    private void stella$captureHeld(net.minecraft.entity.LivingEntity entity, ItemStack stack, net.minecraft.item.ItemDisplayContext ctx, MatrixStack matrices,
+                                    net.minecraft.client.render.command.OrderedRenderCommandQueue queue, int light, CallbackInfo ci) {
+        stella$heldStack = stack;
+    }
+
+    /** Glow Outline "Held Items": give first-person items the same outline colour as dropped ones. */
+    @org.spongepowered.asm.mixin.injection.ModifyArg(
+            method = "renderItem(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/ItemDisplayContext;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/command/OrderedRenderCommandQueue;I)V",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/item/ItemRenderState;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/command/OrderedRenderCommandQueue;III)V"),
+            index = 4, require = 0)
+    private int stella$heldOutline(int outline) {
+        if (!StellaClient.isReady() || outline != 0) return outline;
+        int c = ModuleManager.get(dev.stella.client.modules.visuals.GlowOutline.class).heldOutline(stella$heldStack);
+        return c != 0 ? c : outline;
+    }
 }

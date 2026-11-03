@@ -286,6 +286,7 @@ final class StellaSmokeTest {
                     }
                     if (inStage() == 428) mc.inGameHud.getChatHud().clear(false);
                     if (inStage() == 432) shot(mc, "glow-outline");
+                    if (inStage() == 433) StellaClient.LOGGER.info("[smoke] held item outlines applied: {}", dev.stella.client.modules.visuals.GlowOutline.heldOutlineHits);
                     if (inStage() == 436) {
                         mc.setScreen(null);
                         mc.setScreen(null);

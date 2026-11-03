@@ -22,6 +22,7 @@ public class GlowOutline extends Module {
     private final ModeSetting itemColorMode = add(new ModeSetting("Item Color", "Rarity colours (white/yellow/aqua/pink) or one custom colour",
             "Rarity", "Rarity", "Custom", "Theme")).visibleWhen(items::isOn);
     private final ColorSetting itemColor = add(new ColorSetting("Custom Item Color", "", 0xFFD8B4FE)).visibleWhen(() -> items.isOn() && itemColorMode.is("Custom"));
+    private final BoolSetting held = add(new BoolSetting("Held Items", "Also outline the items in your hands (first person)", true));
     private final BoolSetting players = add(new BoolSetting("Players", "Outline other players", false));
     private final ColorSetting playerColor = add(new ColorSetting("Player Color", "", 0xFFA855F7)).visibleWhen(players::isOn);
     private final BoolSetting hostiles = add(new BoolSetting("Hostile Mobs", "Outline hostile mobs", false));
@@ -45,20 +46,32 @@ public class GlowOutline extends Module {
         return false;
     }
 
+    private int itemColor(net.minecraft.item.ItemStack stack) {
+        return switch (itemColorMode.get()) {
+            case "Custom" -> itemColor.argb() & 0xFFFFFF;
+            case "Theme" -> dev.stella.client.gui.theme.ThemeManager.get().accent() & 0xFFFFFF;
+            default -> {
+                Formatting f = stack.getRarity().getFormatting();
+                Integer c = f.getColorValue();
+                yield c == null ? 0xFFFFFF : c;
+            }
+        };
+    }
+
+    /** Outline colour (opaque ARGB) for an item held in first person, or 0 for none. */
+    /** Diagnostics: how often a held item was given an outline (checked by the smoke test). */
+    public static volatile int heldOutlineHits;
+
+    public int heldOutline(net.minecraft.item.ItemStack stack) {
+        if (!isEnabled() || !held.isOn() || stack == null || stack.isEmpty()) return 0;
+        heldOutlineHits++;
+        return 0xFF000000 | itemColor(stack);
+    }
+
     /** @return RGB colour, or -1 to keep vanilla. */
     public int color(Entity e) {
         if (!shouldGlow(e)) return -1;
-        if (e instanceof ItemEntity item) {
-            return switch (itemColorMode.get()) {
-                case "Custom" -> itemColor.argb() & 0xFFFFFF;
-                case "Theme" -> dev.stella.client.gui.theme.ThemeManager.get().accent() & 0xFFFFFF;
-                default -> {
-                    Formatting f = item.getStack().getRarity().getFormatting();
-                    Integer c = f.getColorValue();
-                    yield c == null ? 0xFFFFFF : c;
-                }
-            };
-        }
+        if (e instanceof ItemEntity item) return itemColor(item.getStack());
         if (e instanceof PlayerEntity) return playerColor.argb() & 0xFFFFFF;
         if (e instanceof HostileEntity) return hostileColor.argb() & 0xFFFFFF;
         return passiveColor.argb() & 0xFFFFFF;
