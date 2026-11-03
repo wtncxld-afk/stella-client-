@@ -45,13 +45,31 @@ jobs:
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
       - name: Install virtual display
-        run: sudo apt-get update && sudo apt-get install -y xvfb libgl1-mesa-dri mesa-utils
-      - name: Run smoke test
+        run: sudo apt-get update && sudo apt-get install -y xvfb libgl1-mesa-dri mesa-utils ffmpeg
+      - name: Run smoke test (recorded)
         run: |
           chmod +x gradlew
           export LIBGL_ALWAYS_SOFTWARE=1
-          timeout 1500 xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew runSmoke --no-daemon 2>&1 | tee smoke.log || true
+          Xvfb :99 -screen 0 1280x720x24 &
+          export DISPLAY=:99
+          touch smoke.log
+          # Start recording once the game window is up, so the video skips the Gradle/loading phase.
+          ( until grep -q "Stella Client ready" smoke.log; do sleep 1; done
+            exec ffmpeg -loglevel error -f x11grab -video_size 1280x720 -framerate 15 -i :99 \
+              -c:v libx264 -preset veryfast -crf 26 -pix_fmt yuv420p preview-raw.mp4 ) &
+          REC=$!
+          timeout 1500 ./gradlew runSmoke --no-daemon 2>&1 | tee smoke.log || true
+          pkill -INT -f "ffmpeg.*x11grab" || true
+          wait $REC || true
+          ls -la preview-raw.mp4 || true
           grep -q "STELLA_SMOKE_OK" smoke.log
+      - name: Upload preview video
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stella-preview-video
+          path: preview-raw.mp4
+          if-no-files-found: ignore
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4
@@ -95,6 +113,26 @@ jobs:
               for i in range(0, len(b), 4000): print('SHOT ' + b[i:i+4000])
               print(f'SHOT_END {f}')
           PY
+
+  video-preview:
+    # Shrinks the recorded smoke-test video and prints it as base64 so it can be
+    # retrieved from the job log. Safe to delete.
+    needs: smoke-test
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: stella-preview-video
+          path: vid
+      - name: Print video
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
+          ffmpeg -loglevel error -i vid/preview-raw.mp4 -vf "scale=960:-2,fps=15" -c:v libx264 -preset slow -crf 30 -an -movflags +faststart preview.mp4
+          ls -la preview.mp4
+          echo "VID_SHA256 $(sha256sum preview.mp4 | cut -d' ' -f1)"
+          base64 -w 4000 preview.mp4 | sed 's/^/VID /'
+          echo "VID_END"
 
   jar-audit:
     # Security audit of the exact jar the build job produced:
