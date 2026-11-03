@@ -3,31 +3,37 @@ package dev.stella.client.modules.hud;
 import dev.stella.client.data.RegionConfig;
 import dev.stella.client.data.StaffDatabase;
 import dev.stella.client.hud.HudElement;
+import dev.stella.client.render.Render2D;
 import dev.stella.client.setting.BoolSetting;
 import dev.stella.client.setting.ColorSetting;
 import dev.stella.client.setting.NumberSetting;
 import dev.stella.client.util.ColorUtil;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.PlayerSkinDrawer;
+import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.util.math.MathHelper;
 
 import java.util.List;
 
 /**
- * Compact top-left region grid: numbered square cells coloured by region, then
- * Position, Current Region, a vertical legend and the STAFF list. No card, no
- * rounded container, no heading — plain Minecraft text with tight spacing.
- * Grid data comes from regions.json (a flagged placeholder until verified).
+ * Compact top-left region grid matching the DonutSMP region-map reference:
+ * opaque numbered cells, "Position" and "Current Region" lines, a swatch
+ * legend and the STAFF list with player heads. No card, no heading.
  */
 public class RegionMapHud extends HudElement {
-    private final NumberSetting cellSize = add(new NumberSetting("Cell Size", "Pixel size of one grid cell", 9, 5, 16, 1));
+    private final NumberSetting cellSize = add(new NumberSetting("Cell Size", "Pixel size of one grid cell", 13, 6, 24, 1));
     private final NumberSetting cellGap = add(new NumberSetting("Cell Gap", "Spacing between cells", 1, 0, 3, 1));
     private final BoolSetting numbers = add(new BoolSetting("Cell Numbers", "Print the number inside each cell", true));
-    private final NumberSetting cellAlpha = add(new NumberSetting("Cell Opacity", "Fill opacity of inactive cells", 0.75, 0.1, 1, 0.05));
-    private final ColorSetting highlight = add(new ColorSetting("Highlight", "Outline of the cell you are in", 0xFFFFFFFF));
-    private final BoolSetting highlightRegion = add(new BoolSetting("Highlight Region", "Brighten every cell of your current region", true));
+    private final ColorSetting numberColor = add(new ColorSetting("Number Color", "Cell number colour", 0xFFF2F2F2)).visibleWhen(numbers::isOn);
+    private final NumberSetting cellAlpha = add(new NumberSetting("Cell Opacity", "Fill opacity of the cells", 1.0, 0.1, 1, 0.05));
+    private final BoolSetting playerArrow = add(new BoolSetting("Player Arrow", "Red arrow at your exact position and facing", true));
+    private final ColorSetting arrowColor = add(new ColorSetting("Arrow Color", "", 0xFFE53935)).visibleWhen(playerArrow::isOn);
+    private final BoolSetting outlineCell = add(new BoolSetting("Outline Current Cell", "Thin outline around the cell you are in", false));
+    private final ColorSetting highlight = add(new ColorSetting("Outline Color", "", 0xFFFFFFFF)).visibleWhen(outlineCell::isOn);
     private final BoolSetting legend = add(new BoolSetting("Legend", "Show the region legend", true));
-    private final BoolSetting staff = add(new BoolSetting("Staff", "Show STAFF count and names (from verified staff.json + tab list)", true));
-    private final BoolSetting unverifiedMark = add(new BoolSetting("Unverified Marker", "Append * while regions.json is a placeholder", true));
+    private final BoolSetting staff = add(new BoolSetting("Staff", "STAFF count and names (verified staff.json + tab list)", true));
+    private final BoolSetting staffHeads = add(new BoolSetting("Staff Heads", "Player heads next to staff names", true)).visibleWhen(staff::isOn);
+    private final BoolSetting unverifiedMark = add(new BoolSetting("Unverified Marker", "Append * while regions.json is marked as a placeholder", true));
     private final ColorSetting textColor = add(new ColorSetting("Text Color", "Info text colour", 0xFFFFFFFF));
     private final BoolSetting reload = add(new BoolSetting("Reload regions.json", "Toggle to re-read config/stella/regions.json", false))
             .onChange(this::reloadNow);
@@ -48,29 +54,33 @@ public class RegionMapHud extends HudElement {
         double px = mc.player != null ? mc.player.getX() : 0, pz = mc.player != null ? mc.player.getZ() : 0;
         int pc = RegionConfig.colOf(px), pr = RegionConfig.rowOf(pz);
         RegionConfig.Region current = RegionConfig.regionAt(pc, pr);
-
         int step = cs + gap;
+
+        // ---- grid
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
                 RegionConfig.Region reg = RegionConfig.regionAt(c, r);
                 int base = reg == null ? 0xFF2A2A2A : reg.color();
-                boolean here = c == pc && r == pr;
-                boolean sameRegion = highlightRegion.isOn() && current != null && reg == current;
-                double a = here ? 1.0 : sameRegion ? Math.min(1, cellAlpha.get() + 0.2) : cellAlpha.get();
                 int x = c * step, y = r * step;
-                ctx.fill(x, y, x + cs, y + cs, col(ColorUtil.mulAlpha(base, a)));
+                ctx.fill(x, y, x + cs, y + cs, col(ColorUtil.mulAlpha(base, cellAlpha.get())));
                 if (numbers.isOn()) {
                     String n = String.valueOf(RegionConfig.numbers[r][c]);
                     int tw = mc.textRenderer.getWidth(n);
-                    float s = Math.min(0.5f, (cs - 1f) / Math.max(1, tw));
+                    float s = Math.min(0.62f, (cs - 2f) / Math.max(1, tw));
                     ctx.getMatrices().push();
                     ctx.getMatrices().translate(x + cs / 2f - tw * s / 2f, y + cs / 2f - 3.5f * s, 0);
                     ctx.getMatrices().scale(s, s, 1);
-                    ctx.drawText(mc.textRenderer, n, 0, 0, col(0xFF101010), false);
+                    ctx.drawText(mc.textRenderer, n, 0, 0, col(numberColor.argb()), false);
                     ctx.getMatrices().pop();
                 }
-                if (here) ctx.drawBorder(x - 1, y - 1, cs + 2, cs + 2, col(highlight.argb()));
+                if (outlineCell.isOn() && c == pc && r == pr) ctx.drawBorder(x - 1, y - 1, cs + 2, cs + 2, col(highlight.argb()));
             }
+        }
+        if (playerArrow.isOn() && RegionConfig.inGrid(pc, pr)) {
+            double fx = (px - RegionConfig.originX) / RegionConfig.cellSize, fz = (pz - RegionConfig.originZ) / RegionConfig.cellSize;
+            double ax = pc * step + (fx - pc) * cs, az = pr * step + (fz - pr) * cs;
+            float yaw = mc.player != null ? mc.player.getYaw(tickDelta) : 180f;
+            drawArrow(ctx, ax, az, yaw, Math.max(4f, cs * 0.45f), col(arrowColor.argb()));
         }
 
         int gridW = cols * step - gap;
@@ -78,10 +88,10 @@ public class RegionMapHud extends HudElement {
         int tc = col(textColor.argb());
         int w = gridW;
 
-        String pos = "Position: X: " + MathHelper.floor(px) + " Z: " + MathHelper.floor(pz);
+        String pos = "Position: X: " + MathHelper.floor(px) + ", Z: " + MathHelper.floor(pz);
         ctx.drawText(mc.textRenderer, pos, 0, y, tc, true);
         w = Math.max(w, mc.textRenderer.getWidth(pos));
-        y += 10;
+        y += 9;
 
         String mark = RegionConfig.placeholder && unverifiedMark.isOn() ? "*" : "";
         String regionLine = RegionConfig.inGrid(pc, pr)
@@ -93,26 +103,54 @@ public class RegionMapHud extends HudElement {
 
         if (legend.isOn()) {
             for (RegionConfig.Region reg : RegionConfig.regions) {
-                ctx.fill(0, y + 1, 7, y + 8, col(reg.color()));
-                ctx.drawText(mc.textRenderer, reg.name(), 10, y, tc, true);
-                w = Math.max(w, 10 + mc.textRenderer.getWidth(reg.name()));
+                ctx.fill(0, y, 8, y + 8, col(reg.color()));
+                ctx.drawText(mc.textRenderer, reg.name(), 11, y, tc, true);
+                w = Math.max(w, 11 + mc.textRenderer.getWidth(reg.name()));
                 y += 9;
             }
-            y += 2;
+            y += 5;
         }
 
         if (staff.isOn()) {
             List<StaffDatabase.StaffMember> online = StaffDatabase.visibleInTab();
-            String head = "STAFF " + online.size();
-            ctx.drawText(mc.textRenderer, head, 0, y, tc, true);
-            w = Math.max(w, mc.textRenderer.getWidth(head));
-            y += 10;
+            ctx.getMatrices().push();
+            ctx.getMatrices().translate(0, y, 0);
+            ctx.getMatrices().scale(0.75f, 0.75f, 1);
+            ctx.drawText(mc.textRenderer, "STAFF", 0, 1, col(0xFF9A9A9A), true);
+            ctx.getMatrices().pop();
+            ctx.drawText(mc.textRenderer, String.valueOf(online.size()), 26, y, tc, true);
+            y += 12;
             for (StaffDatabase.StaffMember m : online) {
-                ctx.drawText(mc.textRenderer, m.name(), 0, y, tc, true);
-                w = Math.max(w, mc.textRenderer.getWidth(m.name()));
-                y += 9;
+                int rowW = 14 + mc.textRenderer.getWidth(m.name()) + 6;
+                Render2D.roundRect(ctx, -1, y - 2, rowW, 13, 3, col(0x70000000));
+                PlayerListEntry e = StaffDatabase.tabEntry(m);
+                int tx = 2;
+                if (staffHeads.isOn() && e != null) {
+                    PlayerSkinDrawer.draw(ctx, e.getSkinTextures(), 1, y, 9);
+                    tx = 13;
+                }
+                ctx.drawText(mc.textRenderer, m.name(), tx, y + 1, tc, true);
+                w = Math.max(w, rowW);
+                y += 15;
             }
         }
         setSize(w, y);
+    }
+
+    /** Small filled arrow pointing along the player's yaw (0 = south / +Z, 90 = west). */
+    private static void drawArrow(DrawContext ctx, double x, double y, float yaw, float size, int color) {
+        ctx.getMatrices().push();
+        ctx.getMatrices().translate(x, y, 50);
+        ctx.getMatrices().multiply(net.minecraft.util.math.RotationAxis.POSITIVE_Z.rotationDegrees(yaw + 180f));
+        // filled triangle from horizontal spans: tip at (0,-size), base at y=+size*0.6
+        float half = size * 0.55f;
+        int steps = Math.max(4, (int) (size * 2));
+        for (int i = 0; i < steps; i++) {
+            float t = i / (float) steps;
+            float yy = -size + t * size * 1.6f;
+            float hw = half * t;
+            Render2D.rect(ctx, -hw, yy, hw * 2, size * 1.6f / steps + 0.2f, color);
+        }
+        ctx.getMatrices().pop();
     }
 }

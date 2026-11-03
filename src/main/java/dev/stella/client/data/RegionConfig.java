@@ -14,16 +14,19 @@ import java.util.List;
 /**
  * Region Map grid definition loaded from {@code config/stella/regions.json}.
  * <p>
- * DonutSMP's real region boundaries and grid numbers are NOT bundled because
- * they have not been verified. The default file is an explicitly flagged
- * placeholder ("placeholder": true) that users replace with verified values.
+ * The default 9x9 layout (cell numbers + region colours) was transcribed from
+ * the user's reference screenshot of the DonutSMP region map. The geometry
+ * (50,000-block cells centred on 0,0) is inferred from the single position
+ * shown in that screenshot (X -129978, Z 215368 = region 107) and should be
+ * verified in game; every value is editable in regions.json.
  * Each cell is {@code cellSize} blocks square, starting at (originX, originZ).
  */
 public final class RegionConfig {
     public record Region(String name, int color) {}
 
     public static boolean placeholder = true;
-    public static int originX = -60000, originZ = -35000, cellSize = 5000, columns = 24, rows = 14;
+    public static final int LAYOUT_VERSION = 2;
+    public static int originX = -225000, originZ = -225000, cellSize = 50000, columns = 9, rows = 9;
     public static List<Region> regions = new ArrayList<>();
     /** [row][col] region index (-1 = none). */
     public static int[][] cells = new int[0][0];
@@ -39,6 +42,12 @@ public final class RegionConfig {
         if (!Files.exists(f)) writeDefault(f);
         try {
             JsonObject o = JsonParser.parseString(Files.readString(f)).getAsJsonObject();
+            // replace the old untouched v1 placeholder with the screenshot-based layout
+            if ((!o.has("layoutVersion") || o.get("layoutVersion").getAsInt() < LAYOUT_VERSION)
+                    && o.has("placeholder") && o.get("placeholder").getAsBoolean()) {
+                writeDefault(f);
+                o = JsonParser.parseString(Files.readString(f)).getAsJsonObject();
+            }
             placeholder = !o.has("placeholder") || o.get("placeholder").getAsBoolean();
             originX = o.get("originX").getAsInt();
             originZ = o.get("originZ").getAsInt();
@@ -85,29 +94,56 @@ public final class RegionConfig {
         return (int) v;
     }
 
-    /** Placeholder layout: six vertical bands, one per legend entry. NOT real DonutSMP data. */
+    /** Layout transcribed from the reference screenshot (see class docs). */
+    private static final int[][] DEFAULT_NUMBERS = {
+            {82, 100, 101, 102, 103, 104, 105, 106, 91},
+            {83, 44, 75, 42, 41, 40, 39, 38, 92},
+            {84, 45, 14, 13, 12, 11, 10, 37, 93},
+            {85, 46, 74, 3, 2, 1, 25, 36, 94},
+            {86, 47, 72, 71, 5, 4, 24, 35, 95},
+            {87, 51, 17, 9, 8, 7, 23, 34, 96},
+            {88, 54, 18, 61, 62, 21, 22, 33, 97},
+            {89, 26, 27, 28, 29, 30, 59, 32, 98},
+            {90, 107, 108, 109, 110, 111, 112, 113, 99}};
+    /** 0 EU Central, 1 EU West, 2 NA East, 3 NA West, 4 Asia, 5 Oceania. */
+    private static final int[][] DEFAULT_CELLS = {
+            {5, 3, 3, 3, 2, 2, 2, 2, 2},
+            {5, 3, 3, 3, 2, 2, 2, 2, 2},
+            {5, 3, 3, 3, 2, 2, 2, 2, 2},
+            {5, 5, 5, 3, 2, 2, 2, 2, 2},
+            {4, 4, 4, 4, 2, 2, 2, 2, 2},
+            {4, 1, 1, 0, 0, 0, 0, 0, 2},
+            {4, 1, 1, 0, 0, 0, 0, 0, 0},
+            {0, 1, 0, 0, 0, 0, 0, 0, 0},
+            {0, 1, 1, 1, 1, 1, 1, 1, 0}};
+
     private static void defaults() {
-        placeholder = true;
-        originX = -60000; originZ = -35000; cellSize = 5000; columns = 24; rows = 14;
+        placeholder = false;
+        originX = -225000; originZ = -225000; cellSize = 50000; columns = 9; rows = 9;
         regions = new ArrayList<>(List.of(
-                new Region("EU Central", 0xFF3B82F6),
-                new Region("EU West", 0xFF60C3F0),
-                new Region("NA East", 0xFF43B047),
-                new Region("NA West", 0xFF9ACD32),
-                new Region("Asia", 0xFFF2C230),
-                new Region("Oceania", 0xFFF28C28)));
+                new Region("EU Central", 0xFF8A9868),
+                new Region("EU West", 0xFF3A7356),
+                new Region("NA East", 0xFF5A84B0),
+                new Region("NA West", 0xFF3A5592),
+                new Region("Asia", 0xFFC99A5E),
+                new Region("Oceania", 0xFFC27632)));
         cells = new int[rows][columns];
-        for (int r = 0; r < rows; r++) for (int c = 0; c < columns; c++) cells[r][c] = Math.min(5, c * 6 / columns);
-        numbers = sequential();
+        numbers = new int[rows][columns];
+        for (int r = 0; r < rows; r++) {
+            System.arraycopy(DEFAULT_CELLS[r], 0, cells[r], 0, columns);
+            System.arraycopy(DEFAULT_NUMBERS[r], 0, numbers[r], 0, columns);
+        }
     }
 
     private static void writeDefault(Path f) {
         defaults();
         JsonObject o = new JsonObject();
-        o.addProperty("_readme", "PLACEHOLDER LAYOUT - not real DonutSMP data. Replace originX/originZ/cellSize/columns/rows, "
-                + "the region list, 'cells' (region index per cell, -1 = none) and 'numbers' (label per cell) with verified values, "
-                + "then set \"placeholder\": false. Use the Region Map HUD's 'Reload regions.json' option to apply.");
-        o.addProperty("placeholder", true);
+        o.addProperty("_readme", "Cell numbers and region colours transcribed from a DonutSMP region-map screenshot. "
+                + "Geometry (50,000-block cells centred on 0,0) is INFERRED from one position in that screenshot - verify in game "
+                + "and edit originX/originZ/cellSize if needed. 'cells' = region index per cell (-1 = none), 'numbers' = label per cell. "
+                + "Set \"placeholder\": true to show the * unverified marker. Use the Region Map HUD's 'Reload regions.json' to apply.");
+        o.addProperty("layoutVersion", LAYOUT_VERSION);
+        o.addProperty("placeholder", false);
         o.addProperty("originX", originX);
         o.addProperty("originZ", originZ);
         o.addProperty("cellSize", cellSize);

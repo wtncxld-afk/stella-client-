@@ -142,7 +142,9 @@ final class StellaSmokeTest {
                     }
                     if (inStage() == 252) { mc.player.setYaw(-90f); mc.player.setPitch(28f); }
                     if (inStage() == 285) shot(mc, "sus-chunk-finder");
-                    if (inStage() == 288) {
+                    if (inStage() == 288) ModuleManager.all().stream().filter(m -> m.getName().equals("Region Map HUD")).forEach(m -> m.setEnabled(true));
+                    if (inStage() == 300) shot(mc, "region-map");
+                    if (inStage() == 302) {
                         mc.setScreen(null);
                         for (Module m : ModuleManager.all()) if (m.isEnabled()) m.setEnabled(false);
                         for (Module m : ModuleManager.all()) if (m.isDefaultEnabled()) m.setEnabled(true);
