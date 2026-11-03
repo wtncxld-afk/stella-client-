@@ -22,6 +22,9 @@ import org.joml.Matrix4f;
 public final class Render3D {
     private static final BufferAllocator LINE_ALLOC = new BufferAllocator(1 << 20);
     private static final BufferAllocator FILL_ALLOC = new BufferAllocator(1 << 20);
+    private static final BufferAllocator TRACER_ALLOC = new BufferAllocator(1 << 18);
+    private BufferBuilder tracers;
+    private float tracerWidth = 1f;
 
     private final MatrixStack matrices;
     private final Vec3d cam;
@@ -89,7 +92,16 @@ public final class Render3D {
         if (drawOutline) boxOutline(box, outline);
     }
 
-    public void line(Vec3d a, Vec3d b, int argb) {
+    /** Thin anti-blocky tracer line (drawn in real screen pixels, not GUI pixels). */
+    public void tracer(Vec3d from, Vec3d to, int argb, float width) {
+        if (tracers == null) tracers = new BufferBuilder(TRACER_ALLOC, VertexFormat.DrawMode.LINES, VertexFormats.LINES);
+        tracerWidth = Math.max(tracerWidth, width);
+        emitLine(tracers, from, to, argb);
+    }
+
+    public void line(Vec3d a, Vec3d b, int argb) { emitLine(lines(), a, b, argb); }
+
+    private void emitLine(BufferBuilder buf, Vec3d a, Vec3d b, int argb) {
         Matrix4f m = matrices.peek().getPositionMatrix();
         float ax = (float) (a.x - cam.x), ay = (float) (a.y - cam.y), az = (float) (a.z - cam.z);
         float bx = (float) (b.x - cam.x), by = (float) (b.y - cam.y), bz = (float) (b.z - cam.z);
@@ -99,8 +111,8 @@ public final class Render3D {
         nx /= len; ny /= len; nz /= len;
         int r = (argb >> 16) & 0xFF, g = (argb >> 8) & 0xFF, bl = argb & 0xFF, al = (argb >>> 24) & 0xFF;
         MatrixStack.Entry e = matrices.peek();
-        lines().vertex(m, ax, ay, az).color(r, g, bl, al).normal(e, nx, ny, nz);
-        lines().vertex(m, bx, by, bz).color(r, g, bl, al).normal(e, nx, ny, nz);
+        buf.vertex(m, ax, ay, az).color(r, g, bl, al).normal(e, nx, ny, nz);
+        buf.vertex(m, bx, by, bz).color(r, g, bl, al).normal(e, nx, ny, nz);
     }
 
     /** Flushes all batched geometry. Rendered through walls (no depth test). */
@@ -126,6 +138,17 @@ public final class Render3D {
             if (built != null) {
                 RenderSystem.setShader(ShaderProgramKeys.RENDERTYPE_LINES);
                 RenderSystem.lineWidth(lineWidth);
+                BufferRenderer.drawWithGlobalProgram(built);
+                RenderSystem.lineWidth(1f);
+            }
+        }
+
+        if (tracers != null) {
+            BuiltBuffer built = tracers.endNullable();
+            tracers = null;
+            if (built != null) {
+                RenderSystem.setShader(ShaderProgramKeys.RENDERTYPE_LINES);
+                RenderSystem.lineWidth(tracerWidth);
                 BufferRenderer.drawWithGlobalProgram(built);
                 RenderSystem.lineWidth(1f);
             }

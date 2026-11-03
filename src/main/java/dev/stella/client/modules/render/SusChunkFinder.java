@@ -62,7 +62,7 @@ public class SusChunkFinder extends Module {
     private final BoolSetting confidenceFill = add(new BoolSetting("Confidence Opacity", "Stronger red for higher confidence", true));
     private final BoolSetting showBlocks = add(new BoolSetting("Show Blocks", "Also outline the exact suspicious blocks", true));
     private final BoolSetting tracers = add(new BoolSetting("Tracers", "Lines to each sus chunk", false));
-    private final NumberSetting tracerWidth = add(new NumberSetting("Tracer Width", "", 1.5, 0.5, 3, 0.5)).visibleWhen(tracers::isOn);
+    private final NumberSetting tracerWidth = add(new NumberSetting("Tracer Width", "Line thickness in screen pixels", 2, 0.5, 5, 0.5)).visibleWhen(tracers::isOn);
     private final BoolSetting labels = add(new BoolSetting("Labels", "Show reason and confidence labels", true));
     private final BoolSetting notify = add(new BoolSetting("Notify", "Notify on new Medium/High findings", true));
 
@@ -243,7 +243,13 @@ public class SusChunkFinder extends Module {
     public void onRender3D(Render3D r) {
         if (!inGame()) return;
         r.setLineWidth(2.5f);
+        Vec3d origin = Tracers.start("Crosshair", 50, 50);
         for (SusChunk c : chunks()) {
+            if (tracers.isOn()) {
+                Box tb = chunkBox(c);
+                Vec3d center = new Vec3d((tb.minX + tb.maxX) / 2, Math.min(tb.maxY, Math.max(tb.minY, mc.player.getY())) + 1, (tb.minZ + tb.maxZ) / 2);
+                Tracers.draw(r, origin, center, tracerWidth.getFloat(), ColorUtil.mulAlpha(color.argb(), 0.85));
+            }
             double a = alphaFor(c.confidence);
             int outline = ColorUtil.mulAlpha(color.argb(), Math.max(0.6, a));
             int fill = ColorUtil.withAlpha(color.argb(), (int) (0x46 * a));
@@ -263,11 +269,9 @@ public class SusChunkFinder extends Module {
     @Override
     public void onRenderOverlay(DrawContext ctx, float tickDelta) {
         if (!inGame()) return;
-        double[] origin = Tracers.origin("Crosshair", 50, 50);
         for (SusChunk c : chunks()) {
             Box b = chunkBox(c);
             Vec3d center = new Vec3d((b.minX + b.maxX) / 2, Math.min(b.maxY, Math.max(b.minY, mc.player.getY())) + 1, (b.minZ + b.maxZ) / 2);
-            if (tracers.isOn()) Tracers.draw(ctx, origin, center, tracerWidth.getFloat(), ColorUtil.mulAlpha(color.argb(), 0.85));
             if (!labels.isOn()) continue;
             Vec3d s = Projection.toScreen(center.add(0, 1.5, 0));
             if (!Projection.onScreen(s)) continue;

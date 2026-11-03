@@ -65,7 +65,7 @@ public class StorageESP extends Module {
     private final NumberSetting originY = add(new NumberSetting("Origin Y %", "", 50, 0, 100, 1)).visibleWhen(() -> tracers.isOn() && tracerOrigin.is("Custom"));
     private final BoolSetting tracerBlockColor = add(new BoolSetting("Tracer Uses Block Color", "Colour tracers like their box", true)).visibleWhen(tracers::isOn);
     private final ColorSetting tracerColor = add(new ColorSetting("Tracer Color", "", 0xC0D8B4FE)).visibleWhen(() -> tracers.isOn() && !tracerBlockColor.isOn());
-    private final NumberSetting tracerWidth = add(new NumberSetting("Tracer Width", "", 1, 0.5, 3, 0.5)).visibleWhen(tracers::isOn);
+    private final NumberSetting tracerWidth = add(new NumberSetting("Tracer Width", "Line thickness in screen pixels", 1.5, 0.5, 5, 0.5)).visibleWhen(tracers::isOn);
     private final NumberSetting maxTracers = add(new NumberSetting("Max Tracers", "Tracers to the nearest N blocks", 40, 1, 300, 1)).visibleWhen(tracers::isOn);
     private final BoolSetting tracerFade = add(new BoolSetting("Tracer Distance Fade", "Fade tracers to far blocks", true)).visibleWhen(tracers::isOn);
 
@@ -130,17 +130,17 @@ public class StorageESP extends Module {
             int fillC = dev.stella.client.util.ColorUtil.withAlpha(e.color, (int) (fillAlpha.get() * 255));
             r.box(e.box, e.color, fillC, outline.isOn(), fill.isOn());
         }
+        if (tracers.isOn() && inGame()) {
+            java.util.Map<BlockPos, Integer> colors = new java.util.HashMap<>();
+            List<BlockPos> targets = new ArrayList<>();
+            for (Entry e : cache) { targets.add(e.pos); colors.put(e.pos, e.color); }
+            drawTracers(r, targets, p -> colors.getOrDefault(p, otherColor.argb()));
+        }
     }
 
     @Override
     public void onRenderOverlay(DrawContext ctx, float tickDelta) {
         if (!inGame()) return;
-        if (tracers.isOn()) {
-            java.util.Map<BlockPos, Integer> colors = new java.util.HashMap<>();
-            List<BlockPos> targets = new ArrayList<>();
-            for (Entry e : cache) { targets.add(e.pos); colors.put(e.pos, e.color); }
-            drawTracers(ctx, targets, p -> colors.getOrDefault(p, otherColor.argb()));
-        }
         if (!labels.isOn()) return;
         int n = 0;
         for (Entry e : cache) {
@@ -153,9 +153,9 @@ public class StorageESP extends Module {
         }
     }
 
-    private void drawTracers(DrawContext ctx, java.util.List<BlockPos> targets, java.util.function.Function<BlockPos, Integer> colorOf) {
+    private void drawTracers(Render3D r, java.util.List<BlockPos> targets, java.util.function.Function<BlockPos, Integer> colorOf) {
         if (!tracers.isOn() || !inGame()) return;
-        double[] origin = Tracers.origin(tracerOrigin.get(), originX.get(), originY.get());
+        Vec3d origin = Tracers.start(tracerOrigin.get(), originX.get(), originY.get());
         int n = 0;
         for (BlockPos p : targets) {
             if (n++ >= maxTracers.getInt()) break;
@@ -164,7 +164,7 @@ public class StorageESP extends Module {
                 double d = Math.sqrt(p.getSquaredDistance(mc.player.getPos()));
                 c = ColorUtil.mulAlpha(c, 1 - 0.7 * Math.min(1, d / range.get()));
             }
-            Tracers.draw(ctx, origin, Vec3d.ofCenter(p), tracerWidth.getFloat(), c);
+            Tracers.draw(r, origin, Vec3d.ofCenter(p), tracerWidth.getFloat(), c);
         }
     }
 }

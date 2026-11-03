@@ -1,10 +1,13 @@
 package dev.stella.client.render;
 
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
 import net.minecraft.util.math.Vec3d;
 
-/** 2D tracers drawn on the HUD layer from a configurable screen point to a projected world position. */
+/**
+ * Tracers are drawn as real 3D lines (RENDERTYPE_LINES) from a point just in
+ * front of the camera under the chosen screen position to the target, so they
+ * are thin and smooth at any GUI scale instead of blocky GUI-pixel rectangles.
+ */
 public final class Tracers {
     public static final String[] ORIGINS = {"Crosshair", "Top", "Bottom", "Custom"};
 
@@ -22,11 +25,13 @@ public final class Tracers {
         };
     }
 
-    /** Draws one tracer; returns false if the target could not be projected. */
-    public static boolean draw(DrawContext ctx, double[] origin, Vec3d target, float width, int color) {
-        Vec3d s = Projection.toScreen(target);
-        if (s == null) return false;
-        Render2D.line(ctx, origin[0], origin[1], s.x, s.y, width, color);
-        return true;
+    /** World-space start point for tracers from the given screen origin. */
+    public static Vec3d start(String mode, double xPercent, double yPercent) {
+        double[] o = origin(mode, xPercent, yPercent);
+        return Projection.unproject(o[0], o[1], 0.6);
+    }
+
+    public static void draw(Render3D r, Vec3d start, Vec3d target, float width, int color) {
+        r.tracer(start, target, color, width);
     }
 }

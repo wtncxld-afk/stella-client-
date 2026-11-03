@@ -41,7 +41,7 @@ public class PlayerESP extends Module {
     private final NumberSetting originY = add(new NumberSetting("Origin Y %", "", 50, 0, 100, 1)).visibleWhen(() -> tracers.isOn() && tracerOrigin.is("Custom"));
     private final ModeSetting tracerTarget = add(new ModeSetting("Tracer Target", "Body part tracers point to", "Body", "Feet", "Body", "Head")).visibleWhen(tracers::isOn);
     private final ColorSetting tracerColor = add(new ColorSetting("Tracer Color", "", 0xC0D8B4FE)).visibleWhen(tracers::isOn);
-    private final NumberSetting tracerWidth = add(new NumberSetting("Tracer Width", "", 1, 0.5, 3, 0.5)).visibleWhen(tracers::isOn);
+    private final NumberSetting tracerWidth = add(new NumberSetting("Tracer Width", "Line thickness in screen pixels", 1.5, 0.5, 5, 0.5)).visibleWhen(tracers::isOn);
     private final BoolSetting distanceFade = add(new BoolSetting("Distance Fade", "Fade tracers for far players", true)).visibleWhen(tracers::isOn);
 
     // labels
@@ -63,11 +63,24 @@ public class PlayerESP extends Module {
 
     @Override
     public void onRender3D(Render3D r) {
-        if (!inGame() || (!box.isOn() && !fill.isOn())) return;
+        if (!inGame()) return;
         r.setLineWidth(lineWidth.getFloat());
         float td = r.tickDelta();
+        Vec3d origin = dev.stella.client.render.Tracers.start(tracerOrigin.get(), originX.get(), originY.get());
         for (PlayerEntity p : mc.world.getPlayers()) {
             if (!valid(p)) continue;
+            if (tracers.isOn()) {
+                double ty = switch (tracerTarget.get()) {
+                    case "Feet" -> 0;
+                    case "Head" -> p.getHeight() * 0.9;
+                    default -> p.getHeight() / 2;
+                };
+                double dist = Math.sqrt(mc.player.squaredDistanceTo(p));
+                int c = staff(p) ? staffCol.argb() : tracerColor.argb();
+                if (distanceFade.isOn()) c = dev.stella.client.util.ColorUtil.mulAlpha(c, 1 - 0.7 * Math.min(1, dist / range.get()));
+                dev.stella.client.render.Tracers.draw(r, origin, p.getLerpedPos(td).add(0, ty, 0), tracerWidth.getFloat(), c);
+            }
+            if (!box.isOn() && !fill.isOn()) continue;
             Vec3d lerp = p.getLerpedPos(td);
             Box b = p.getBoundingBox().offset(lerp.subtract(p.getPos()));
             int oc = staff(p) ? staffCol.argb() : boxColor.argb();
@@ -78,21 +91,10 @@ public class PlayerESP extends Module {
     @Override
     public void onRenderOverlay(DrawContext ctx, float tickDelta) {
         if (!inGame()) return;
-        double[] origin = dev.stella.client.render.Tracers.origin(tracerOrigin.get(), originX.get(), originY.get());
         for (PlayerEntity p : mc.world.getPlayers()) {
             if (!valid(p)) continue;
             Vec3d pos = p.getLerpedPos(tickDelta);
             double dist = Math.sqrt(mc.player.squaredDistanceTo(p));
-            if (tracers.isOn()) {
-                double ty = switch (tracerTarget.get()) {
-                    case "Feet" -> 0;
-                    case "Head" -> p.getHeight() * 0.9;
-                    default -> p.getHeight() / 2;
-                };
-                int c = staff(p) ? staffCol.argb() : tracerColor.argb();
-                if (distanceFade.isOn()) c = dev.stella.client.util.ColorUtil.mulAlpha(c, 1 - 0.7 * Math.min(1, dist / range.get()));
-                dev.stella.client.render.Tracers.draw(ctx, origin, pos.add(0, ty, 0), tracerWidth.getFloat(), c);
-            }
             if (names.isOn() || distance.isOn() || health.isOn()) {
                 Vec3d s = Projection.toScreen(pos.add(0, p.getHeight() + 0.35, 0));
                 if (!Projection.onScreen(s)) continue;

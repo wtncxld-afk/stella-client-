@@ -82,7 +82,8 @@ final class StellaSmokeTest {
                 case 4 -> {
                     if (mc.world != null && mc.player != null && mc.currentScreen == null) {
                         for (Module m : ModuleManager.all()) {
-                            if (m instanceof AutoRelog || m instanceof HudEditorModule || m instanceof Zoom) continue;
+                            if (m instanceof AutoRelog || m instanceof HudEditorModule || m instanceof Zoom
+                                    || m instanceof dev.stella.client.modules.misc.Freecam) continue;
                             m.setEnabled(true);
                         }
                         // disable modules that would clutter the preview shots
@@ -162,17 +163,29 @@ final class StellaSmokeTest {
                         dev.stella.client.notification.NotificationManager.post("Staff", "Example alert toast",
                                 dev.stella.client.notification.Notification.Type.WARNING, 20000);
                     }
+                    if (inStage() == 312) {
+                        // user-style toggles show the compact toggle popups
+                        ModuleManager.get(dev.stella.client.modules.visuals.Fullbright.class).toggle();
+                        ModuleManager.get(dev.stella.client.modules.combat.PlayerESP.class).toggle();
+                    }
                     if (inStage() == 318) mc.inGameHud.getChatHud().clear(false);
                     if (inStage() == 320) shot(mc, "hud-all");
                     if (inStage() == 322) mc.setScreen(new HudEditorScreen(null));
                     if (inStage() == 335) shot(mc, "hud-editor-all");
                     if (inStage() == 337) {
                         mc.setScreen(null);
+                        ModuleManager.get(dev.stella.client.modules.misc.Freecam.class).setEnabled(true);
+                    }
+                    if (inStage() == 338) mc.player.networkHandler.sendChatCommand("say freecam");
+                    if (inStage() == 352) shot(mc, "freecam");
+                    if (inStage() == 354) {
+                        ModuleManager.get(dev.stella.client.modules.misc.Freecam.class).setEnabled(false);
+                        mc.setScreen(null);
                         mc.setScreen(null);
                         for (Module m : ModuleManager.all()) if (m.isEnabled()) m.setEnabled(false);
                         for (Module m : ModuleManager.all()) if (m.isDefaultEnabled()) m.setEnabled(true);
                     }
-                    if (inStage() == 360) {
+                    if (inStage() == 380) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {

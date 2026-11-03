@@ -17,6 +17,9 @@ public class NotificationsHud extends HudElement {
     private final NumberSetting cardWidth = add(new NumberSetting("Width", "Toast width", 160, 110, 260, 5));
     private final ColorSetting background = add(new ColorSetting("Background", "Toast background", 0xE00E0C12));
     private final ColorSetting textColor = add(new ColorSetting("Text Color", "Message colour", 0xFFE6E1EE));
+    private final dev.stella.client.setting.BoolSetting togglePopups = add(new dev.stella.client.setting.BoolSetting(
+            "Module Toggle Popups", "Show a popup whenever a module is turned on or off", true))
+            .onChange(() -> NotificationManager.setTogglePopups(this.togglePopups.isOn()));
 
     public NotificationsHud() {
         super("Notifications HUD", "Toasts for module alerts (falls back to chat when disabled)", -4, -40, true);
@@ -31,8 +34,13 @@ public class NotificationsHud extends HudElement {
         }
         int w = cardWidth.getInt(), h = 28, y = 0;
         long now = System.currentTimeMillis();
+        NotificationManager.setTogglePopups(togglePopups.isOn());
         for (Notification n : list) {
             float p = n.progress(now);
+            if (n.type() == Notification.Type.ENABLED || n.type() == Notification.Type.DISABLED) {
+                y = togglePill(ctx, n, now, w, y);
+                continue;
+            }
             double slide = Animation.easeOutCubic(Math.min(1, (now - n.createdAt()) / 280.0));
             double fade = p > 0.9 ? (1 - p) / 0.1 : 1;
             float ox = (float) ((1 - slide) * (w + 10));
@@ -60,6 +68,27 @@ public class NotificationsHud extends HudElement {
             y += h + 4;
         }
         setSize(w, Math.max(h, y - 4));
+    }
+
+    /** Compact pill: "● MODULE NAME   ENABLED". */
+    private int togglePill(DrawContext ctx, Notification n, long now, int w, int y) {
+        float p = n.progress(now);
+        double slide = Animation.easeOutCubic(Math.min(1, (now - n.createdAt()) / 220.0));
+        double fade = p > 0.8 ? (1 - p) / 0.2 : 1;
+        boolean on = n.type() == Notification.Type.ENABLED;
+        int accent = on ? ThemeManager.get().accent() : 0xFF8C8696;
+        String name = n.title().toUpperCase(java.util.Locale.ROOT);
+        String state = on ? "ENABLED" : "DISABLED";
+        int pw = Math.min(w, 22 + dev.stella.client.render.StellaFont.width(name) + 8 + dev.stella.client.render.StellaFont.width(state) + 8);
+        float ox = (float) (w - pw + (1 - slide) * (pw + 10));
+        int h = 16;
+        Render2D.shadow(ctx, ox, y, pw, h, 8, 3, col(ColorUtil.mulAlpha(0x60000000, fade)));
+        Render2D.roundRect(ctx, ox, y, pw, h, 8, col(ColorUtil.mulAlpha(background.argb(), fade)));
+        Render2D.roundRect(ctx, ox + 5, y + 5, 6, 6, 3, col(ColorUtil.mulAlpha(accent, fade)));
+        dev.stella.client.render.StellaFont.draw(ctx, name, (int) ox + 16, y + 4, col(ColorUtil.mulAlpha(textColor.argb(), fade)), false);
+        dev.stella.client.render.StellaFont.draw(ctx, state, (int) (ox + pw - 8 - dev.stella.client.render.StellaFont.width(state)), y + 4,
+                col(ColorUtil.mulAlpha(on ? accent : 0xFFB0A8BC, fade)), false);
+        return y + h + 3;
     }
 
     private String trim(String s, int w) {

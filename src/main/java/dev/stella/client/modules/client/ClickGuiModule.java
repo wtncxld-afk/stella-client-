@@ -42,6 +42,7 @@ public class ClickGuiModule extends Module {
     }
 
     @Override public boolean keybindToggles() { return false; }
+    @Override protected boolean showTogglePopup() { return false; }
 
     public void open() {
         if (mc.currentScreen == null) mc.setScreen(new ClickGuiScreen());

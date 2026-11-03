@@ -41,6 +41,8 @@ enabled, takes screenshots, and fails if anything errors.
 | HUD editor | THEMES panel → *HUD Editor*, or the *HUD Editor* module keybind |
 | Profiles | **CONFIGS** button at the bottom centre |
 | Zoom | Hold **C** |
+| Freecam | **V** (toggle) |
+| Free Look | Hold **Left Alt** |
 | Auto Relog emergency stop | **End** |
 | Interact with the Block Notifier list | Open chat, then click it |
 
@@ -51,14 +53,16 @@ Every module has its own keybind setting (click the value, press a key; right-cl
 **Combat:** Player ESP (hitbox outline, optional fill, tracers from a configurable screen point, names,
 distance, health, each with its own settings), Player Detector.
 
-**Misc:** Auto Relog, Staff List, Staff Spectator Alerts.
+**Misc:** Auto Relog, Staff List, Staff Spectator Alerts, Freecam (press **V** to fly the camera away
+from your player, who stays put), Free Look (hold **Left Alt** to look around without turning your head,
+in third or first person).
 
 **Render:** Storage ESP (chests, trapped chests, barrels, shulkers, ender chests, hoppers, dispensers,
 plus your own block list, with optional tracers), Block ESP (with optional tracers), Sus Chunk Finder
 (red box over each suspected chunk, with Column, Flat or Full Height modes, reasons, confidence and
 optional tracers), Waypoints.
 
-**World:** Block Notifier, Amethyst Detector.
+**World:** Block Notifier, Amethyst Detector, Weather Notifier (alerts when rain or thunder starts or stops).
 
 **Visuals:** Custom FOV, Custom Crosshair (with presets and a live preview in its settings), Custom Sky
 (Cosmic Stella, Lavender Sunset, Blood Moon, Arctic Aurora, Midnight, Custom), Fullbright, Ambience,
@@ -70,6 +74,8 @@ Item Physics, Enchantment Glint, Damage Tint.
 **HUD (one module per element):** Stella Branding, Keystrokes (+CPS), FPS, TPS, Coordinates, Ping,
 Region Map, Notifications, Staff List, Block Notifier list, Player Detector list. Each element has its
 own toggle, position, scale, opacity and colours, and moving or disabling one never affects another.
+Turning any module on or off shows a small popup; switch this off with *Module Toggle Popups* in the
+Notifications HUD settings.
 
 **Settings:** Config (auto-save), Animations.
 
@@ -120,6 +126,9 @@ Stella only uses information the server actually sends to your client. These are
 * **TPS** is estimated from world-time packets. It shows `...` until it has enough samples, and it is
   affected by network jitter.
 * **Player health** is whatever the server sends. Many servers hide or fake other players' health.
+* **Tracers** are drawn as real 3D lines in screen pixels, so they stay thin and smooth at any GUI scale.
+* **Freecam** is client-side only. Your real player stays where you left it, and the server can still
+  see it. **Weather Notifier** reports changes as the server sends them; servers send no forecasts.
 * **World Time, Weather, Custom Sky, Ambience and Fog** are visual only. They do not change anything
   on the server.
 * **Auto Relog** connects through the normal login flow. It does not bypass authentication, queues,

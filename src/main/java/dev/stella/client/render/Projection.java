@@ -53,6 +53,26 @@ public final class Projection {
         return new Vec3d(sx, sy, behind ? -1 : 1);
     }
 
+    /**
+     * World-space point a short distance in front of the camera that lies under
+     * the given screen pixel (scaled GUI coordinates). Used as the start of 3D tracers.
+     */
+    public static Vec3d unproject(double sx, double sy, double distance) {
+        if (!valid) return camPos;
+        MinecraftClient mc = MinecraftClient.getInstance();
+        int sw = mc.getWindow().getScaledWidth(), sh = mc.getWindow().getScaledHeight();
+        float nx = (float) (sx / sw * 2 - 1), ny = (float) (1 - sy / sh * 2);
+        Matrix4f inv = new Matrix4f(PROJ).mul(VIEW).invert();
+        Vector4f near = new Vector4f(nx, ny, -1f, 1f);
+        Vector4f far = new Vector4f(nx, ny, 1f, 1f);
+        inv.transform(near);
+        inv.transform(far);
+        near.div(near.w);
+        far.div(far.w);
+        Vec3d dir = new Vec3d(far.x - near.x, far.y - near.y, far.z - near.z).normalize();
+        return camPos.add(dir.multiply(distance));
+    }
+
     public static boolean onScreen(Vec3d s) {
         if (s == null || s.z < 0) return false;
         MinecraftClient mc = MinecraftClient.getInstance();

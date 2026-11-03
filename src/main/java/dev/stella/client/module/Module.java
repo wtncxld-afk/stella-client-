@@ -73,7 +73,14 @@ public abstract class Module {
     /** Restores state without firing callbacks loudly (used by config load). */
     public void loadEnabled(boolean value) { setEnabled(value); }
 
-    public void toggle() { setEnabled(!enabled); }
+    /** User-initiated toggle (GUI click or keybind): also shows a toggle popup. */
+    public void toggle() {
+        setEnabled(!enabled);
+        if (showTogglePopup()) dev.stella.client.notification.NotificationManager.moduleToggled(name, enabled);
+    }
+
+    /** Modules that act as buttons (ClickGUI, HUD Editor) don't announce toggles. */
+    protected boolean showTogglePopup() { return true; }
 
     public void resetSettings() {
         for (Setting<?> s : settings) s.reset();

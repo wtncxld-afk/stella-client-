@@ -9,6 +9,7 @@ public class HudEditorModule extends Module {
     public HudEditorModule() { super("HUD Editor", "Drag, resize, preview and reset HUD elements", Category.CLIENT); }
 
     @Override public boolean keybindToggles() { return false; }
+    @Override protected boolean showTogglePopup() { return false; }
 
     @Override
     protected void onEnable() {

@@ -43,6 +43,8 @@ public final class ModuleManager {
         register(new AutoRelog());
         register(new StaffList());
         register(new StaffSpectatorAlerts());
+        register(new dev.stella.client.modules.misc.Freecam());
+        register(new dev.stella.client.modules.misc.FreeLook());
         // Render
         register(new StorageESP());
         register(new BlockESP());
@@ -51,6 +53,7 @@ public final class ModuleManager {
         // World
         register(new BlockNotifier());
         register(new AmethystDetector());
+        register(new dev.stella.client.modules.world.WeatherNotifier());
         // Visuals
         register(new CustomFov());
         register(new CustomCrosshair());
