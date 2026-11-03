@@ -77,8 +77,7 @@ public class SusChunkFinder extends Module {
     private final BoolSetting tracers = add(new BoolSetting("Tracers", "Lines to each sus chunk", false));
     private final NumberSetting tracerWidth = add(new NumberSetting("Tracer Width", "Line thickness in screen pixels", 2, 0.5, 5, 0.5)).visibleWhen(tracers::isOn);
     private final dev.stella.client.render.TracerStyle tracerStyle = new dev.stella.client.render.TracerStyle(st -> add(st), tracers::isOn);
-    private final BoolSetting labels = add(new BoolSetting("Labels", "Show reason and confidence labels", false));
-    private final BoolSetting notify = add(new BoolSetting("Notify", "Notify on new Medium/High findings", true));
+    private final BoolSetting notify = add(new BoolSetting("Chat Message", "Send a chat message (only you see it) when a new sus chunk is found", true));
 
     private final ScanTarget redstoneTarget;
     private final ScanTarget clusterTarget;
@@ -116,6 +115,9 @@ public class SusChunkFinder extends Module {
 
     public List<Finding> findings() { return findings; }
 
+    /** Announce every currently flagged chunk again on the next scan. */
+    public void resetChatMessages() { notified.clear(); }
+
     @Override
     protected void onEnable() {
         redstoneTarget.invalidate(); clusterTarget.invalidate(); budTarget.invalidate(); deepslateTarget.invalidate();
@@ -139,9 +141,11 @@ public class SusChunkFinder extends Module {
         if (notify.isOn()) {
             for (SusChunk c : suspectChunks()) {
                 if (!notified.add(c.cx + "," + c.cz)) continue;
-                NotificationManager.post("Sus Chunk Finder",
-                        "Score " + c.score + " (" + c.confidence.name().toLowerCase() + ") at chunk " + (c.cx << 4) + " " + (c.cz << 4),
-                        c.confidence == Confidence.HIGH ? Notification.Type.WARNING : Notification.Type.INFO);
+                int x = (c.cx << 4) + 8, z = (c.cz << 4) + 8;
+                int dist = (int) Math.sqrt(mc.player.squaredDistanceTo(x, mc.player.getY(), z));
+                dev.stella.client.util.ChatUtil.send(net.minecraft.text.Text.literal("Sus chunk found at ").formatted(net.minecraft.util.Formatting.GRAY)
+                        .append(net.minecraft.text.Text.literal(x + ", " + z).formatted(net.minecraft.util.Formatting.RED))
+                        .append(net.minecraft.text.Text.literal(" (" + dist + "m away)").formatted(net.minecraft.util.Formatting.DARK_GRAY)));
             }
         }
     }
@@ -391,26 +395,6 @@ public class SusChunkFinder extends Module {
                     Box b = new Box(f.min.getX(), f.min.getY(), f.min.getZ(), f.max.getX() + 1, f.max.getY() + 1, f.max.getZ() + 1).expand(0.03);
                     r.box(b, ColorUtil.withAlpha(color.argb(), 0xE0), 0, true, false);
                 }
-            }
-        }
-    }
-
-    @Override
-    public void onRenderOverlay(DrawContext ctx, float tickDelta) {
-        if (!inGame()) return;
-        for (SusChunk c : suspectChunks()) {
-            Box b = chunkBox(c);
-            Vec3d center = new Vec3d((b.minX + b.maxX) / 2, Math.min(b.maxY, Math.max(b.minY, mc.player.getY())) + 1, (b.minZ + b.maxZ) / 2);
-            if (!labels.isOn()) continue;
-            Vec3d s = Projection.toScreen(center.add(0, 1.5, 0));
-            if (!Projection.onScreen(s)) continue;
-            int dist = (int) Math.sqrt(mc.player.squaredDistanceTo(center));
-            Render2D.label(ctx, "SUS CHUNK  " + c.score + "/100  " + c.confidence.name() + "  " + dist + "m", s.x, s.y - 11, 0.85f, 0xFFFF5555, 0xB0000000);
-            int line = 0;
-            for (Finding f : c.findings) {
-                if (line >= 3) break;
-                Render2D.label(ctx, f.type + ": " + f.reasons.get(0), s.x, s.y + line * 8, 0.6f, 0xFFF2E6E6, 0xB0000000);
-                line++;
             }
         }
     }

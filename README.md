@@ -132,7 +132,7 @@ Stella only uses information the server actually sends to your client. These are
   has received. Nothing is ever reported for chunks you have never loaded. Block Notifier remembers each
   position once per session, so a chunk that reloads does not create a duplicate.
 * **Sus Chunk Finder** only checks blocks between *Min Y* and *Max Y* (by default at or below Y 0, where
-  hidden bases usually are). Turn off *Only Below Y* to check every height. It gives hints, not proof. Each red chunk shows its reasons and a confidence level.
+  hidden bases usually are). Turn off *Only Below Y* to check every height. It gives hints, not proof. *Sensitivity* (0–20) sets how much evidence a chunk needs: higher means fewer flags that are more likely real bases. *Opacity* sets how see-through the red squares are. New finds are announced with a chat message (only you see it). Findings next to trial chambers, ancient cities and strongholds are ignored unless they include blocks those structures never generate.
   Temples, trial chambers, mineshafts and geodes can all cause false positives. Sideways deepslate is the
   strongest signal, because world generation always places deepslate vertically.
 * **Staff live status:** add optional channel handles to an entry in `staff.json`, for example

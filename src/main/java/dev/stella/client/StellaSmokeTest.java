@@ -195,7 +195,6 @@ final class StellaSmokeTest {
                         // real-world settings: only below Y 0, default sensitivity
                         setting("Sus Chunk Finder", "Flat Y", (double) oy + 1);
                         setting("Sus Chunk Finder", "Only Below Y", true);
-                        setting("Sus Chunk Finder", "Labels", false);
                         // spectator camera in the air, looking down (north) at the hidden base's chunk
                         mc.player.networkHandler.sendChatCommand("gamemode spectator");
                         mc.player.networkHandler.sendChatCommand("tp @s " + (ox + 44) + " " + (oy + 45) + " " + (oz - 26));
@@ -203,9 +202,8 @@ final class StellaSmokeTest {
                     if (inStage() == 252) { mc.player.setYaw(180f); mc.player.setPitch(58f); }
                     if (inStage() == 276) logSus("hidden base shot");
                     if (inStage() == 278) shot(mc, "sus-chunk-finder");
-                    if (inStage() == 279) setting("Sus Chunk Finder", "Labels", true);
-                    if (inStage() == 280) mc.inGameHud.getChatHud().clear(false);
-                    if (inStage() == 285) shot(mc, "sus-chunk-labels");
+                    if (inStage() == 256) { mc.inGameHud.getChatHud().clear(false); ModuleManager.get(dev.stella.client.modules.combat.SusChunkFinder.class).resetChatMessages(); }
+                    if (inStage() == 285) shot(mc, "sus-chunk-chat");
                     if (inStage() == 287) mc.player.networkHandler.sendChatCommand("gamemode creative");
                     if (inStage() == 288) ModuleManager.all().stream().filter(m -> m.getName().equals("Region Map HUD")).forEach(m -> m.setEnabled(true));
                     if (inStage() == 298) mc.inGameHud.getChatHud().clear(false);
@@ -316,7 +314,6 @@ final class StellaSmokeTest {
                         setting("Storage ESP", "Tracers", false);
                         for (String n : new String[]{"Storage ESP", "Block ESP", "Sus Chunk Finder"})
                             ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> { m.setEnabled(false); m.setEnabled(true); });
-                        setting("Sus Chunk Finder", "Labels", true);
                         ModuleManager.all().stream().filter(m -> m.getName().equals("Coordinates HUD") || m.getName().equals("Stella Branding HUD")).forEach(m -> m.setEnabled(true));
                         mc.player.networkHandler.sendChatCommand("gamemode spectator");
                         mc.player.networkHandler.sendChatCommand("tp @s " + (ox + 44) + " " + (oy + 30) + " " + (oz + 118));
