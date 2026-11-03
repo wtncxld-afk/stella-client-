@@ -75,9 +75,13 @@ Every module has its own keybind setting (click the value, press a key; right-cl
 distance, health, each with its own settings), Player Detector, Storage ESP (chests, trapped chests, barrels,
 shulkers, ender chests, hoppers, dispensers, plus your own block list, with optional tracers), Block ESP
 (with optional tracers), Sus Chunk Finder (flat red squares over suspected chunks below a Y-level you choose),
-Staff List, Anti Vanish, Media Base Finder (lists media / content creators in your region with their heads).
+Staff List, Anti Vanish, Media Base Finder (lists media / content creators in your region with their heads), Spawner Finder
+(beacon-style beam above every spawner, plus a dropdown with each spawner's mob type, direction arrow and distance).
 
-**Misc:** Auto Relog, Freecam (press **V** to fly the camera away from your player, who stays put),
+**Combat:** Auto Totem, Auto Inv Totem, Hover Totem, Auto Crystal, Auto Anchor, Double Anchor (keybind macro), Totem Pop Counter.
+These send real actions to the server; servers such as DonutSMP may ban automation, and anticheats can detect it.
+
+**Misc:** Toggle Sprint, Death Coordinates (chat message + waypoint where you died), Durability Warning, Auto Relog, Freecam (press **V** to fly the camera away from your player, who stays put),
 Free Look (hold **Left Alt** to look around without turning your head, in third or first person).
 
 **Render:** Waypoints.
@@ -98,7 +102,7 @@ be switched back to vanilla).
 **HUD (one module per element):** Stella Branding, Keystrokes (+CPS), FPS, TPS, Coordinates, Ping,
 Region Map (with its own *Map Scale* slider up to 6×), Music HUD (cover, title, artist, progress and
 ⏮ ⏯ ⏭ controls), Notifications, Staff List, Block Notifier list,
-Player Detector list. Each element has its
+Player Detector list, Armor (durability), Potions (time left), Item Counter (totems, crystals, pearls...). Each element has its
 own toggle, position, scale, opacity and colours, and moving or disabling one never affects another.
 Turning any module on or off shows a small popup; switch this off with *Module Toggle Popups* in the
 Notifications HUD settings.
@@ -145,6 +149,7 @@ Stella only uses information the server actually sends to your client. These are
   toggle *Reload staff.json*. "In tab" means the name is in the tab list. If a staff member is missing
   from the tab list, the client cannot tell whether they are offline or vanished.
 * **Anti Vanish** can only report evidence it can observe:
+  * any player's tab entry switches to spectator mode (e.g. `/gmsp`), staff.json or not (*Any Player In Spectator*);
   * a verified staff member's tab entry shows spectator mode;
   * a spectator-mode player entity is nearby;
   * a player entity is nearby but missing from the tab list;
