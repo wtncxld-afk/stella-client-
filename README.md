@@ -112,10 +112,11 @@ Stella only uses information the server actually sends to your client. These are
 
   Most vanish plugins send nothing at all, so a normal client cannot detect fully vanished staff.
   **No alert does not mean nobody is watching.**
-* **Region Map** has no real DonutSMP region boundaries or cell numbers built in. Those have not been
-  verified. `regions.json` ships as a clearly labelled placeholder (`"placeholder": true`, and a `*`
-  appears after the region name) until you enter verified values and toggle *Reload regions.json*.
-  The STAFF section uses the same verified `staff.json` plus tab-list data.
+* **Region Map** uses a 9×9 layout whose cell numbers and region colours were transcribed from a
+  reference screenshot of the DonutSMP region map. The geometry (50,000-block cells centred on 0,0)
+  is **inferred** from the one position visible in that screenshot, so check it in game. Everything
+  can be edited in `regions.json`; toggle *Reload regions.json* to apply changes. The STAFF section
+  uses your verified `staff.json` plus tab-list data.
 * **TPS** is estimated from world-time packets. It shows `...` until it has enough samples, and it is
   affected by network jitter.
 * **Player health** is whatever the server sends. Many servers hide or fake other players' health.
