@@ -1,4 +1,4 @@
-package dev.stella.client.modules.render;
+package dev.stella.client.modules.combat;
 
 import dev.stella.client.module.Category;
 import dev.stella.client.module.Module;
@@ -74,7 +74,7 @@ public class StorageESP extends Module {
     private int timer;
 
     public StorageESP() {
-        super("Storage ESP", "Highlights chests, barrels, shulkers and other storage", Category.RENDER);
+        super("Storage ESP", "Highlights chests, barrels, shulkers and other storage", Category.DONUTSMP);
         extraTarget = BlockScanner.register(new ScanTarget("Storage/Extra", s -> extra.contains(s.getBlock()), () -> isEnabled() && !extra.get().isEmpty()));
         extra.setListener(extraTarget::invalidate);
     }

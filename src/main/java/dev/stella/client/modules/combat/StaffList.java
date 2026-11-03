@@ -1,4 +1,4 @@
-package dev.stella.client.modules.misc;
+package dev.stella.client.modules.combat;
 
 import dev.stella.client.data.StaffDatabase;
 import dev.stella.client.module.Category;
@@ -26,7 +26,7 @@ public class StaffList extends Module {
     private boolean primed;
     private int timer;
 
-    public StaffList() { super("Staff List", "Verified DonutSMP staff roster with tab-list join/leave alerts", Category.MISC); }
+    public StaffList() { super("Staff List", "Verified DonutSMP staff roster with tab-list join/leave alerts", Category.DONUTSMP); }
 
     private void reloadNow() {
         if (!reload.isOn()) return;

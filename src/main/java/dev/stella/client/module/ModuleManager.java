@@ -4,13 +4,18 @@ import dev.stella.client.modules.client.ClickGuiModule;
 import dev.stella.client.modules.client.HudEditorModule;
 import dev.stella.client.modules.combat.PlayerDetector;
 import dev.stella.client.modules.combat.PlayerESP;
+import dev.stella.client.modules.combat.AntiVanish;
+import dev.stella.client.modules.combat.BlockESP;
+import dev.stella.client.modules.combat.StaffList;
+import dev.stella.client.modules.combat.StorageESP;
+import dev.stella.client.modules.combat.SusChunkFinder;
 import dev.stella.client.modules.hud.*;
 import dev.stella.client.modules.misc.AutoRelog;
-import dev.stella.client.modules.misc.StaffList;
-import dev.stella.client.modules.misc.StaffSpectatorAlerts;
-import dev.stella.client.modules.render.BlockESP;
-import dev.stella.client.modules.render.StorageESP;
-import dev.stella.client.modules.render.SusChunkFinder;
+import dev.stella.client.modules.combat.StaffList;
+import dev.stella.client.modules.combat.AntiVanish;
+import dev.stella.client.modules.combat.BlockESP;
+import dev.stella.client.modules.combat.StorageESP;
+import dev.stella.client.modules.combat.SusChunkFinder;
 import dev.stella.client.modules.render.WaypointsModule;
 import dev.stella.client.modules.settings.AnimationsModule;
 import dev.stella.client.modules.settings.ConfigModule;
@@ -36,19 +41,19 @@ public final class ModuleManager {
     private ModuleManager() {}
 
     public static void init() {
-        // Combat
+        // DonutSMP
         register(new PlayerESP());
         register(new PlayerDetector());
-        // Misc
-        register(new AutoRelog());
-        register(new StaffList());
-        register(new StaffSpectatorAlerts());
-        register(new dev.stella.client.modules.misc.Freecam());
-        register(new dev.stella.client.modules.misc.FreeLook());
-        // Render
         register(new StorageESP());
         register(new BlockESP());
         register(new SusChunkFinder());
+        register(new StaffList());
+        register(new AntiVanish());
+        // Misc
+        register(new AutoRelog());
+        register(new dev.stella.client.modules.misc.Freecam());
+        register(new dev.stella.client.modules.misc.FreeLook());
+        // Render
         register(new WaypointsModule());
         // World
         register(new BlockNotifier());

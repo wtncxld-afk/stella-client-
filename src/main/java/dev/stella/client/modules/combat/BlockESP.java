@@ -1,4 +1,4 @@
-package dev.stella.client.modules.render;
+package dev.stella.client.modules.combat;
 
 import dev.stella.client.module.Category;
 import dev.stella.client.module.Module;
@@ -46,7 +46,7 @@ public class BlockESP extends Module {
     private final ScanTarget target;
 
     public BlockESP() {
-        super("Block ESP", "Highlights the blocks you choose", Category.RENDER);
+        super("Block ESP", "Highlights the blocks you choose", Category.DONUTSMP);
         target = BlockScanner.register(new ScanTarget("Block ESP", s -> blocks.contains(s.getBlock()), this::isEnabled));
         blocks.setListener(target::invalidate);
     }

@@ -51,7 +51,7 @@ public class PlayerESP extends Module {
     private final BoolSetting health = add(new BoolSetting("Health", "Show server-reported health", false));
     private final NumberSetting labelScale = add(new NumberSetting("Label Scale", "", 0.85, 0.4, 2, 0.05));
 
-    public PlayerESP() { super("Player ESP", "Hitboxes, tracers, names, distance and health for players", Category.COMBAT); }
+    public PlayerESP() { super("Player ESP", "Hitboxes, tracers, names, distance and health for players", Category.DONUTSMP); }
 
     private boolean valid(PlayerEntity p) {
         if (p == mc.player || p.isRemoved()) return false;

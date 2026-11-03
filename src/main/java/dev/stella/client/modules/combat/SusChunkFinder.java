@@ -1,4 +1,4 @@
-package dev.stella.client.modules.render;
+package dev.stella.client.modules.combat;
 
 import dev.stella.client.module.Category;
 import dev.stella.client.module.Module;
@@ -89,7 +89,7 @@ public class SusChunkFinder extends Module {
             Blocks.SLIME_BLOCK, Blocks.HONEY_BLOCK, Blocks.CRAFTER);
 
     public SusChunkFinder() {
-        super("Sus Chunk Finder", "Red boxes over chunks with suspicious redstone, grown amethyst or sideways deepslate (hints, not proof)", Category.RENDER);
+        super("Sus Chunk Finder", "Red boxes over chunks with suspicious redstone, grown amethyst or sideways deepslate (hints, not proof)", Category.DONUTSMP);
         redstoneTarget = BlockScanner.register(new ScanTarget("Sus/Redstone", s -> REDSTONE.contains(s.getBlock()), () -> isEnabled() && redstone.isOn()));
         clusterTarget = BlockScanner.register(new ScanTarget("Sus/Cluster", s -> s.isOf(Blocks.AMETHYST_CLUSTER), () -> isEnabled() && amethyst.isOn()));
         budTarget = BlockScanner.register(new ScanTarget("Sus/Buds", s -> s.isOf(Blocks.SMALL_AMETHYST_BUD) || s.isOf(Blocks.MEDIUM_AMETHYST_BUD) || s.isOf(Blocks.LARGE_AMETHYST_BUD), () -> isEnabled() && amethyst.isOn()));

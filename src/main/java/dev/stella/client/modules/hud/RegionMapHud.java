@@ -41,7 +41,7 @@ public class RegionMapHud extends HudElement {
     private final BoolSetting reload = add(new BoolSetting("Reload regions.json", "Toggle to re-read config/stella/regions.json", false))
             .onChange(this::reloadNow);
 
-    public RegionMapHud() { super("Region Map HUD", "Numbered region grid with position, region, legend and staff", 2, 2, false); }
+    public RegionMapHud() { super("Region Map HUD", "Numbered region grid with position, region, legend and staff", 2, 2, false, "Map Scale", 6.0); }
 
     private void reloadNow() {
         if (reload.isOn()) {

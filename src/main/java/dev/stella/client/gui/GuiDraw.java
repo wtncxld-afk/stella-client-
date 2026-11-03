@@ -81,7 +81,7 @@ public final class GuiDraw {
 
     public static String icon(dev.stella.client.module.Category c) {
         return switch (c) {
-            case COMBAT -> "⚔";
+            case DONUTSMP -> "♦";
             case MISC -> "✦";
             case RENDER -> "◉";
             case VISUALS -> "◈";

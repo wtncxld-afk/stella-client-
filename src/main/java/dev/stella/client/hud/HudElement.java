@@ -19,12 +19,18 @@ public abstract class HudElement extends Module {
     protected int width = 40, height = 12;
 
     protected HudElement(String name, String description, double defaultX, double defaultY, boolean defaultEnabled) {
+        this(name, description, defaultX, defaultY, defaultEnabled, "Scale", 4.0);
+    }
+
+    /** @param scaleName label of this element's size slider (e.g. "Map Scale") */
+    protected HudElement(String name, String description, double defaultX, double defaultY, boolean defaultEnabled,
+                         String scaleName, double maxScale) {
         super(name, description, Category.HUD, defaultEnabled);
         this.defX = defaultX;
         this.defY = defaultY;
         posX = add(new NumberSetting("X", "Horizontal position", defaultX, -10000, 10000, 0.5)).hide();
         posY = add(new NumberSetting("Y", "Vertical position", defaultY, -10000, 10000, 0.5)).hide();
-        scale = add(new NumberSetting("Scale", "Size of this element", 1.0, 0.3, 4.0, 0.05).suffix("x"));
+        scale = add(new NumberSetting(scaleName, "Size of this element (also resizable in the HUD Editor)", 1.0, 0.3, maxScale, 0.05).suffix("x"));
         opacity = add(new NumberSetting("Opacity", "Transparency of this element", 1.0, 0.05, 1.0, 0.05));
     }
 

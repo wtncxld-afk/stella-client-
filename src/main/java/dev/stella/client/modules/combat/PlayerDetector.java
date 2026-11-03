@@ -35,7 +35,7 @@ public class PlayerDetector extends Module {
     private final Set<UUID> inRange = new HashSet<>();
     private List<Seen> current = new ArrayList<>();
 
-    public PlayerDetector() { super("Player Detector", "Detects observable players nearby with names and distances", Category.COMBAT); }
+    public PlayerDetector() { super("Player Detector", "Detects observable players nearby with names and distances", Category.DONUTSMP); }
 
     public List<Seen> current() { return current; }
 

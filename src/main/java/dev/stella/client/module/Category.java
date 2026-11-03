@@ -1,7 +1,7 @@
 package dev.stella.client.module;
 
 public enum Category {
-    COMBAT("Combat"),
+    DONUTSMP("DonutSMP"),
     MISC("Misc"),
     RENDER("Render"),
     VISUALS("Visuals"),

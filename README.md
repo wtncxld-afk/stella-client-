@@ -50,17 +50,16 @@ Every module has its own keybind setting (click the value, press a key; right-cl
 
 ## Modules
 
-**Combat:** Player ESP (hitbox outline, optional fill, tracers from a configurable screen point, names,
-distance, health, each with its own settings), Player Detector.
+**DonutSMP:** Player ESP (hitbox outline, optional fill, tracers from a configurable screen point, names,
+distance, health, each with its own settings), Player Detector, Storage ESP (chests, trapped chests, barrels,
+shulkers, ender chests, hoppers, dispensers, plus your own block list, with optional tracers), Block ESP
+(with optional tracers), Sus Chunk Finder (flat red squares over suspected chunks below a Y-level you choose),
+Staff List, Anti Vanish.
 
-**Misc:** Auto Relog, Staff List, Staff Spectator Alerts, Freecam (press **V** to fly the camera away
-from your player, who stays put), Free Look (hold **Left Alt** to look around without turning your head,
-in third or first person).
+**Misc:** Auto Relog, Freecam (press **V** to fly the camera away from your player, who stays put),
+Free Look (hold **Left Alt** to look around without turning your head, in third or first person).
 
-**Render:** Storage ESP (chests, trapped chests, barrels, shulkers, ender chests, hoppers, dispensers,
-plus your own block list, with optional tracers), Block ESP (with optional tracers), Sus Chunk Finder
-(red box over each suspected chunk, with Column, Flat or Full Height modes, reasons, confidence and
-optional tracers), Waypoints.
+**Render:** Waypoints.
 
 **World:** Block Notifier, Amethyst Detector, Weather Notifier (alerts when rain or thunder starts or stops).
 
@@ -72,7 +71,8 @@ Item Physics, Enchantment Glint, Damage Tint.
 **Client:** ClickGUI (theme and GUI key), HUD Editor.
 
 **HUD (one module per element):** Stella Branding, Keystrokes (+CPS), FPS, TPS, Coordinates, Ping,
-Region Map, Notifications, Staff List, Block Notifier list, Player Detector list. Each element has its
+Region Map (with its own *Map Scale* slider up to 6×), Notifications, Staff List, Block Notifier list,
+Player Detector list. Each element has its
 own toggle, position, scale, opacity and colours, and moving or disabling one never affects another.
 Turning any module on or off shows a small popup; switch this off with *Module Toggle Popups* in the
 Notifications HUD settings.
@@ -111,11 +111,14 @@ Stella only uses information the server actually sends to your client. These are
 * **Staff List** has no built-in staff data. Add names you have verified yourself to `staff.json`, then
   toggle *Reload staff.json*. "In tab" means the name is in the tab list. If a staff member is missing
   from the tab list, the client cannot tell whether they are offline or vanished.
-* **Staff Spectator Alerts** can only report evidence it can observe:
+* **Anti Vanish** can only report evidence it can observe:
   * a verified staff member's tab entry shows spectator mode;
   * a spectator-mode player entity is nearby;
   * a player entity is nearby but missing from the tab list;
-  * an invisible verified staff member is nearby.
+  * an invisible verified staff member is nearby;
+  * (opt-in *Tab-Complete Check*) a name the server suggests for `/msg` that is missing from the tab list.
+    This sends a command-suggestion request to the server every 30 seconds or more, and it only works if the
+    server's vanish plugin leaks hidden names into suggestions.
 
   Most vanish plugins send nothing at all, so a normal client cannot detect fully vanished staff.
   **No alert does not mean nobody is watching.**
