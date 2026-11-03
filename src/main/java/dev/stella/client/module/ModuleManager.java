@@ -55,6 +55,13 @@ public final class ModuleManager {
         register(new dev.stella.client.modules.pvp.AutoCrystal());
         register(new dev.stella.client.modules.pvp.AutoAnchor());
         register(new dev.stella.client.modules.pvp.DoubleAnchor());
+        register(new dev.stella.client.modules.pvp.TotemPopCounter());
+        register(new dev.stella.client.modules.misc.ToggleSprint());
+        register(new dev.stella.client.modules.misc.DeathCoordinates());
+        register(new dev.stella.client.modules.misc.DurabilityWarning());
+        register(new dev.stella.client.modules.hud.ArmorHud());
+        register(new dev.stella.client.modules.hud.PotionHud());
+        register(new dev.stella.client.modules.hud.ItemCounterHud());
         register(new StaffList());
         register(new AntiVanish());
         register(new dev.stella.client.modules.combat.MediaBaseFinder());

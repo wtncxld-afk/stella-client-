@@ -430,7 +430,39 @@ final class StellaSmokeTest {
                     if (inStage() == 624) setting("ClickGUI", "Theme", "Galaxy");
                     if (inStage() == 634) shot(mc, "theme-galaxy");
                     if (inStage() == 636) { setting("ClickGUI", "Theme", "Stella"); mc.setScreen(null); }
-                    if (inStage() == 640) {
+                    if (inStage() == 638) {
+                        // New HUDs + Totem Pop Counter: damaged armor, effects, PvP items, then a real totem pop
+                        for (Module m : ModuleManager.all())
+                            if (m.getCategory() == dev.stella.client.module.Category.HUD && !m.getName().equals("Stella Branding HUD")) m.setEnabled(false);
+                        for (String n : new String[]{"Spawner Finder", "Sus Chunk Finder", "Storage ESP", "Block ESP"})
+                            ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> m.setEnabled(false));
+                        for (Class<? extends Module> c : java.util.List.of(dev.stella.client.modules.hud.ArmorHud.class, dev.stella.client.modules.hud.PotionHud.class,
+                                dev.stella.client.modules.hud.ItemCounterHud.class, dev.stella.client.modules.pvp.TotemPopCounter.class))
+                            ModuleManager.get(c).setEnabled(true);
+                        var h3 = mc.player.networkHandler;
+                        h3.sendChatCommand("gamemode survival");
+                        h3.sendChatCommand("tp @s " + ox + " " + (oy + 1) + " " + oz);
+                        h3.sendChatCommand("item replace entity @s armor.head with minecraft:diamond_helmet[damage=300]");
+                        h3.sendChatCommand("item replace entity @s armor.chest with minecraft:netherite_chestplate[damage=100]");
+                        h3.sendChatCommand("item replace entity @s armor.legs with minecraft:diamond_leggings");
+                        h3.sendChatCommand("item replace entity @s armor.feet with minecraft:diamond_boots[damage=410]");
+                        h3.sendChatCommand("item replace entity @s weapon.mainhand with minecraft:netherite_sword");
+                        h3.sendChatCommand("item replace entity @s weapon.offhand with minecraft:totem_of_undying");
+                        h3.sendChatCommand("give @s minecraft:totem_of_undying 3");
+                        h3.sendChatCommand("give @s minecraft:end_crystal 64");
+                        h3.sendChatCommand("give @s minecraft:obsidian 32");
+                        h3.sendChatCommand("give @s minecraft:ender_pearl 16");
+                        h3.sendChatCommand("give @s minecraft:golden_apple 12");
+                        h3.sendChatCommand("effect give @s minecraft:strength 90 1");
+                        h3.sendChatCommand("effect give @s minecraft:speed 45 0");
+                        mc.inGameHud.getChatHud().clear(false);
+                    }
+                    if (inStage() == 644) mc.player.networkHandler.sendChatCommand("damage @s 100");
+                    if (inStage() == 656) StellaClient.LOGGER.info("[smoke] totem pops counted for self: {}",
+                            ModuleManager.get(dev.stella.client.modules.pvp.TotemPopCounter.class).pops(mc.player.getUuid()));
+                    if (inStage() == 658) shot(mc, "new-huds");
+                    if (inStage() == 660) mc.player.networkHandler.sendChatCommand("gamemode creative");
+                    if (inStage() == 664) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {
