@@ -84,6 +84,13 @@ final class StellaSmokeTest {
                             if (m instanceof AutoRelog || m instanceof HudEditorModule || m instanceof Zoom) continue;
                             m.setEnabled(true);
                         }
+                        // disable modules that would clutter the preview shots
+                        for (String n : new String[]{"Fullbright", "Ambience", "Fog Customizer", "World Time", "Motion Blur", "Weather Customizer", "Damage Tint"})
+                            ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> m.setEnabled(false));
+                        setting("Block ESP", "Tracers", true);
+                        setting("Storage ESP", "Tracers", true);
+                        setting("Storage ESP", "Labels", true);
+                        setting("Sus Chunk Finder", "Tracers", true);
                         var h = mc.player.networkHandler;
                         h.sendChatCommand("time set 18000");
                         h.sendChatCommand("gamerule doDaylightCycle false");
@@ -111,12 +118,16 @@ final class StellaSmokeTest {
                             .ifPresent(m -> m.getSettings().stream().filter(s -> s.getName().equals("Preset")).findFirst()
                                     .ifPresent(s -> ((dev.stella.client.setting.ModeSetting) s).set("Arctic Aurora")));
                     if (inStage() == 160) shot(mc, "sky-arctic-aurora");
+                    if (inStage() == 162) setting("Custom Sky", "Preset", "Cosmic Stella");
                     if (inStage() == 165) { mc.player.setPitch(18f); mc.setScreen(new ClickGuiScreen()); }
                     if (inStage() == 185 && mc.currentScreen instanceof ClickGuiScreen gui) { gui.openSettingsFor("Player ESP"); gui.openSettingsFor("Custom Sky"); }
                     if (inStage() == 210) shot(mc, "world-gui");
-                    if (inStage() == 215) mc.setScreen(new HudEditorScreen(null));
-                    if (inStage() == 235) shot(mc, "world-hudeditor");
-                    if (inStage() == 240) {
+                    if (inStage() == 212) setting("ClickGUI", "Theme", "Pink");
+                    if (inStage() == 225) shot(mc, "world-gui-pink");
+                    if (inStage() == 228) { setting("ClickGUI", "Theme", "Stella"); mc.setScreen(null); }
+                    if (inStage() == 229) mc.setScreen(new HudEditorScreen(null));
+                    if (inStage() == 245) shot(mc, "world-hudeditor");
+                    if (inStage() == 250) {
                         mc.setScreen(null);
                         for (Module m : ModuleManager.all()) if (m.isEnabled()) m.setEnabled(false);
                         for (Module m : ModuleManager.all()) if (m.isDefaultEnabled()) m.setEnabled(true);
@@ -137,6 +148,14 @@ final class StellaSmokeTest {
         } catch (Throwable t) {
             StellaClient.LOGGER.error("[smoke] exception", t);
             fail(t.toString());
+        }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void setting(String module, String setting, Object value) {
+        for (Module m : ModuleManager.all()) {
+            if (!m.getName().equals(module)) continue;
+            for (var st : m.getSettings()) if (st.getName().equals(setting)) ((dev.stella.client.setting.Setting) st).set(value);
         }
     }
 
