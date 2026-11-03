@@ -95,3 +95,51 @@ jobs:
               for i in range(0, len(b), 4000): print('SHOT ' + b[i:i+4000])
               print(f'SHOT_END {f}')
           PY
+
+  jar-audit:
+    # Security audit of the exact jar the build job produced:
+    # SHA-256, full file listing, bytecode scan for network / process /
+    # class-loading calls, ClamAV antivirus scan, then the jar printed as
+    # base64 so it can be verified and delivered byte-for-byte.
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: stella-client-jar
+          path: jar
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Hash and list contents
+        run: |
+          cd jar
+          sha256sum *.jar
+          for j in *.jar; do echo "== $j"; unzip -l "$j"; done
+      - name: Bytecode scan
+        run: |
+          J=$(ls jar/*.jar | grep -v sources)
+          mkdir x && cd x && unzip -q "../$J"
+          find . -name '*.class' > classes.txt
+          echo "classes: $(wc -l < classes.txt)"
+          echo "== classes referencing network / process / classloading / reflection APIs"
+          for c in $(cat classes.txt); do
+            hits=$(javap -c -p "$c" 2>/dev/null | grep -oE 'java/net/[A-Za-z/]+|java/lang/ProcessBuilder|java/lang/Runtime\.exec|java/lang/ClassLoader|java/net/URLClassLoader|defineClass|java/lang/reflect/[A-Za-z]+|sun/misc/Unsafe|java/util/Base64|javax/script' | sort -u | tr '\n' ' ')
+            [ -n "$hits" ] && echo "$c: $hits"
+          done
+          echo "== end of bytecode scan"
+      - name: ClamAV scan
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq clamav > /dev/null
+          sudo systemctl stop clamav-freshclam || true
+          sudo freshclam --quiet || sudo freshclam
+          clamscan --scan-archive=yes -r jar/ | tee clamscan.txt
+          grep -q "Infected files: 0" clamscan.txt
+      - name: Export jar (base64)
+        run: |
+          J=$(ls jar/*.jar | grep -v sources)
+          echo "JAR_NAME $(basename $J)"
+          echo "JAR_SHA256 $(sha256sum $J | cut -d' ' -f1)"
+          base64 -w 4000 "$J" | sed 's/^/JAR /'
+          echo "JAR_END"
