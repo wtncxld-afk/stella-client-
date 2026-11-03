@@ -167,6 +167,17 @@ public final class Render3D {
         }
     }
 
+    /** Horizontal quad with a colour per corner (x1z1, x2z1, x2z2, x1z2); {@code glow} = additive light. */
+    public void quadXZ4(double x1, double z1, double x2, double z2, double y, int c11, int c21, int c22, int c12, boolean glow) {
+        Matrix4f m = matrices.peek().getPositionMatrix();
+        VertexConsumer f = glow ? consumers.getBuffer(StellaPipelines.FILLS_GLOW) : fills();
+        float ax = (float) (x1 - cam.x), az = (float) (z1 - cam.z), bx = (float) (x2 - cam.x), bz = (float) (z2 - cam.z), yy = (float) (y - cam.y);
+        f.vertex(m, ax, yy, az).color(c11);
+        f.vertex(m, bx, yy, az).color(c21);
+        f.vertex(m, bx, yy, bz).color(c22);
+        f.vertex(m, ax, yy, bz).color(c12);
+    }
+
     /** Single horizontal translucent quad — used for flat chunk overlays. */
     public void quadXZ(double x1, double z1, double x2, double z2, double y, int argb) {
         Matrix4f m = matrices.peek().getPositionMatrix();
