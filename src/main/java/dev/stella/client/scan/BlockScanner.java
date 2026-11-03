@@ -75,6 +75,20 @@ public final class BlockScanner {
     }
 
     public static int queued() { return QUEUE.size(); }
+
+    /** Diagnostics for the smoke test: how the scanner sees one block. */
+    public static String debug(BlockPos pos, ScanTarget target) {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        WorldChunk chunk = mc.world.getChunkManager().getWorldChunk(pos.getX() >> 4, pos.getZ() >> 4);
+        if (chunk == null) return "chunk not loaded";
+        int si = mc.world.getSectionIndex(pos.getY());
+        ChunkSection sec = chunk.getSectionArray()[si];
+        boolean palette = sec.hasAny(target::test);
+        BlockState st = sec.getBlockState(pos.getX() & 15, pos.getY() & 15, pos.getZ() & 15);
+        return "sectionIndex=" + si + " sectionBaseY=" + (mc.world.sectionIndexToCoord(si) << 4) + " paletteHas=" + palette
+                + " sectionState=" + st + " loadedKnown=" + LOADED.contains(chunk.getPos().toLong())
+                + " inTarget=" + !target.near(pos, 1, 4).isEmpty() + " targetSize=" + target.size() + " targetIndex=" + TARGETS.indexOf(target);
+    }
     public static int loadedChunks() { return LOADED.size(); }
 
     public static void tick() {

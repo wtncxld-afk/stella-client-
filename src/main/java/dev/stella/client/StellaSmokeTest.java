@@ -405,7 +405,8 @@ final class StellaSmokeTest {
                             for (int dy = -2; dy <= 2; dy++) {
                                 var bp = new net.minecraft.util.math.BlockPos(spawnX + o[0], oy + dy, spawnZ + o[1]);
                                 var st = mc.world.getBlockState(bp);
-                                if (!st.isAir()) StellaClient.LOGGER.info("[smoke] spawner check {} -> {} be={}", bp, st, mc.world.getBlockEntity(bp));
+                                if (st.isOf(net.minecraft.block.Blocks.SPAWNER)) StellaClient.LOGGER.info("[smoke] spawner check {} -> {}", bp,
+                                        dev.stella.client.scan.BlockScanner.debug(bp, sf.scanTarget()));
                             }
                         }
                         StellaClient.LOGGER.info("[smoke] scanner queued={} loaded={}", dev.stella.client.scan.BlockScanner.queued(), dev.stella.client.scan.BlockScanner.loadedChunks());

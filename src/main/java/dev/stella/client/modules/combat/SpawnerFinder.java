@@ -67,6 +67,7 @@ public class SpawnerFinder extends HudElement {
     @Override protected void onEnable() { target.invalidate(); types.clear(); timer = 100; }
 
     public List<Spawner> spawners() { return list; }
+    public ScanTarget scanTarget() { return target; }
 
     /** Mob type of a spawner ("Zombie"), or "Unknown" if the server sent no mob. */
     private String typeAt(BlockPos p) {
