@@ -68,7 +68,7 @@ public final class StellaClient implements ClientModInitializer {
             if (!ready) return;
             frameDelta = ctx.tickCounter().getTickProgress(true);
             Projection.capture(new org.joml.Matrix4f(ctx.viewMatrix()), new org.joml.Matrix4f(ctx.cullProjectionMatrix()),
-                    dev.stella.client.mixin.CameraAccessor.pos(ctx.camera()));
+                    dev.stella.client.util.CameraPos.of(ctx.camera()));
         });
 
         WorldRenderEvents.BEFORE_ENTITIES.register(ctx -> {

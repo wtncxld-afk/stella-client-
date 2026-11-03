@@ -60,7 +60,8 @@ jobs:
           REC=$!
           timeout 1500 ./gradlew runSmoke --no-daemon 2>&1 | tee smoke.log || true
           pkill -INT -f "ffmpeg.*x11grab" || true
-          wait $REC || true
+          sleep 3
+          kill $REC 2>/dev/null || true
           ls -la preview-raw.mp4 || true
           grep -q "STELLA_SMOKE_OK" smoke.log
       - name: Upload preview video

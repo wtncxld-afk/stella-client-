@@ -10,6 +10,4 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 public interface CameraAccessor {
     @Accessor("pos")
     Vec3d stella$getPos();
-
-    static Vec3d pos(Camera camera) { return ((CameraAccessor) camera).stella$getPos(); }
 }
