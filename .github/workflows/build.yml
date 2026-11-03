@@ -67,3 +67,31 @@ jobs:
             smoke.log
             run-smoke/logs/latest.log
             run-smoke/crash-reports/
+
+  screenshot-preview:
+    # Re-encodes the smoke-test screenshots as small JPEGs and prints them as
+    # base64 so they can be retrieved from the job log by tools without
+    # artifact-storage access. Safe to delete.
+    needs: smoke-test
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: stella-screenshots
+          path: shots
+      - name: Print screenshots
+        run: |
+          pip install --quiet pillow
+          python3 - <<'PY'
+          import base64, io, os
+          from PIL import Image
+          for f in sorted(os.listdir('shots')):
+              if not f.endswith('.png'): continue
+              im = Image.open(os.path.join('shots', f)).convert('RGB')
+              buf = io.BytesIO(); im.save(buf, 'JPEG', quality=82)
+              b = base64.b64encode(buf.getvalue()).decode()
+              print(f'SHOT_BEGIN {f}')
+              for i in range(0, len(b), 4000): print('SHOT ' + b[i:i+4000])
+              print(f'SHOT_END {f}')
+          PY
