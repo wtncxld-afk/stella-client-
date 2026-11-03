@@ -32,11 +32,23 @@ public class StellaMainMenu extends Screen {
     public static boolean bypass;
 
     private final List<MenuButton> buttons = new ArrayList<>();
+    private int logoTop;
     private CosmicBackground bg;
     private final long openedAt = System.currentTimeMillis();
     private final Animation fade = new Animation(0, 5).target(1);
 
     public StellaMainMenu() { super(Text.literal("Stella Client")); }
+
+    /** Content is laid out on a virtual canvas and scaled down when the window is too small. */
+    private float ui = 1f;
+    private int vw, vh;
+
+    private void computeScale() {
+        int needed = 128 + buttons.size() * 24 + 30; // logo/title block + buttons + footer
+        ui = Math.min(1f, Math.min(height / (float) Math.max(needed, 1), width / 300f));
+        vw = (int) (width / ui);
+        vh = (int) (height / ui);
+    }
 
     @Override public boolean shouldCloseOnEsc() { return false; }
 
@@ -58,26 +70,34 @@ public class StellaMainMenu extends Screen {
         buttons.add(new MenuButton("✦", "STELLA CLICKGUI", () -> client.setScreen(new ClickGuiScreen()), false, false));
         buttons.add(new MenuButton("⚙", "OPTIONS", () -> client.setScreen(new OptionsScreen(this, client.options)), false, false));
         buttons.add(new MenuButton("✕", "QUIT GAME", () -> client.scheduleStop(), false, true));
-        int bw = 170, x = width / 2 - bw / 2, y = height / 2 - 8;
+        computeScale();
+        int bw = 170, x = vw / 2 - bw / 2;
+        int top = Math.max(4, (vh - (128 + buttons.size() * 24 + 18)) / 2);
+        int y = top + 128;
         for (MenuButton b : buttons) {
             b.x = x; b.y = y; b.w = bw;
             y += b.h + 4;
         }
+        logoTop = top;
     }
 
     @Override
     public void renderBackground(DrawContext ctx, int mouseX, int mouseY, float delta) { }
 
     @Override
-    public void render(DrawContext ctx, int mx, int my, float delta) {
+    public void render(DrawContext ctx, int rawX, int rawY, float delta) {
         double a = fade.get();
         bg.render(ctx, width, height, 1, true);
+        ctx.getMatrices().push();
+        ctx.getMatrices().scale(ui, ui, 1);
+        int mx = (int) (rawX / ui), my = (int) (rawY / ui);
+        int width = vw, height = vh;
         long age = System.currentTimeMillis() - openedAt;
         double t = age / 1000.0;
         var theme = ThemeManager.get();
 
         // ---- logo
-        int logoY = height / 2 - 100;
+        int logoY = logoTop;
         float bob = (float) Math.sin(t * 1.4) * 2;
         int glowA = (int) (150 + 80 * Math.sin(t * 2));
         int gs = 72;
@@ -119,13 +139,16 @@ public class StellaMainMenu extends Screen {
         StellaFont.draw(ctx, ver, width - 6 - StellaFont.width(ver), height - 12, ColorUtil.mulAlpha(theme.textDim(), a), false);
         String vanilla = "Vanilla menu";
         int vx = width - 6 - StellaFont.width(vanilla);
-        boolean vh = mx >= vx && my >= height - 24 && my < height - 14;
-        StellaFont.draw(ctx, vanilla, vx, height - 24, ColorUtil.mulAlpha(vh ? theme.accent() : 0xFF6E6878, a), false);
-        super.render(ctx, mx, my, delta);
+        boolean vHover = mx >= vx && my >= height - 24 && my < height - 14;
+        StellaFont.draw(ctx, vanilla, vx, height - 24, ColorUtil.mulAlpha(vHover ? theme.accent() : 0xFF6E6878, a), false);
+        ctx.getMatrices().pop();
+        super.render(ctx, rawX, rawY, delta);
     }
 
     @Override
-    public boolean mouseClicked(double mx, double my, int button) {
+    public boolean mouseClicked(double rawX, double rawY, int button) {
+        double mx = rawX / ui, my = rawY / ui;
+        int width = vw, height = vh;
         for (MenuButton b : buttons) {
             if (b.over(mx, my) && button == 0) {
                 Sounds.menuClick();
@@ -141,6 +164,6 @@ public class StellaMainMenu extends Screen {
             bypass = false;
             return true;
         }
-        return super.mouseClicked(mx, my, button);
+        return super.mouseClicked(rawX, rawY, button);
     }
 }
