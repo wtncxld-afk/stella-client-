@@ -26,6 +26,11 @@ public class PlayerDetector extends Module {
     private final BoolSetting notifyEnter = add(new BoolSetting("Notify Enter", "Alert when a player enters range", true));
     private final BoolSetting notifyLeave = add(new BoolSetting("Notify Leave", "Alert when a player leaves range", false));
     private final BoolSetting sound = add(new BoolSetting("Sound", "Play a sound on enter", true));
+    private final BoolSetting ignoreInvisible = add(new BoolSetting("Ignore Invisible", "Skip players with invisibility", false));
+    private final BoolSetting staffOnly = add(new BoolSetting("Staff Only Alerts", "Only alert for verified staff (staff.json)", false));
+    private final dev.stella.client.setting.TextSetting ignoreList = add(new dev.stella.client.setting.TextSetting("Ignore Names", "Comma-separated names that never alert (friends)", "", 256));
+    private final NumberSetting cooldown = add(new NumberSetting("Alert Cooldown", "Seconds before the same player can alert again", 30, 0, 600, 5).suffix("s"));
+    private final java.util.Map<UUID, Long> lastAlert = new java.util.HashMap<>();
 
     private final Set<UUID> inRange = new HashSet<>();
     private List<Seen> current = new ArrayList<>();
@@ -43,12 +48,13 @@ public class PlayerDetector extends Module {
         Set<UUID> now = new HashSet<>();
         List<Seen> list = new ArrayList<>();
         for (PlayerEntity p : mc.world.getPlayers()) {
-            if (p == mc.player) continue;
+            if (p == mc.player || (ignoreInvisible.isOn() && p.isInvisible())) continue;
             double d2 = mc.player.squaredDistanceTo(p);
             if (d2 > r2) continue;
             now.add(p.getUuid());
             list.add(new Seen(p.getGameProfile().getName(), Math.sqrt(d2)));
-            if (!inRange.contains(p.getUuid()) && notifyEnter.isOn()) {
+            if (!inRange.contains(p.getUuid()) && notifyEnter.isOn() && shouldAlert(p)) {
+                lastAlert.put(p.getUuid(), System.currentTimeMillis());
                 NotificationManager.post("Player Detected", p.getGameProfile().getName() + " (" + (int) Math.sqrt(d2) + "m)", Notification.Type.WARNING);
                 if (sound.isOn()) Sounds.ping(0.8f);
             }
@@ -63,6 +69,18 @@ public class PlayerDetector extends Module {
         }
         inRange.clear();
         inRange.addAll(now);
+        finishTick(list);
+    }
+
+    private boolean shouldAlert(PlayerEntity p) {
+        String name = p.getGameProfile().getName();
+        for (String n : ignoreList.get().split(",")) if (!n.isBlank() && n.trim().equalsIgnoreCase(name)) return false;
+        if (staffOnly.isOn() && !dev.stella.client.data.StaffDatabase.isStaff(name)) return false;
+        Long last = lastAlert.get(p.getUuid());
+        return last == null || System.currentTimeMillis() - last >= cooldown.get() * 1000;
+    }
+
+    private void finishTick(List<Seen> list) {
         list.sort((a, b) -> Double.compare(a.distance(), b.distance()));
         current = list;
     }

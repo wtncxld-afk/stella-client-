@@ -83,7 +83,9 @@ public final class ConfigManager {
 
     public static void tick() {
         if (!isAutoSave()) return;
-        if (++ticksSinceSave >= 100) { // check every 5 s
+        dev.stella.client.modules.settings.ConfigModule cm = ModuleManager.get(dev.stella.client.modules.settings.ConfigModule.class);
+        int every = cm == null ? 100 : cm.interval.getInt() * 20;
+        if (++ticksSinceSave >= every) {
             ticksSinceSave = 0;
             if (SettingsDirty.consume()) save();
         }

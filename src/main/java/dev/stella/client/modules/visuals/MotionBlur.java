@@ -21,6 +21,9 @@ import org.lwjgl.opengl.GL30;
 public class MotionBlur extends Module {
     private static final Identifier HISTORY_ID = Identifier.of(StellaClient.MOD_ID, "motion_blur_history");
     private final NumberSetting strength = add(new NumberSetting("Strength", "Amount of trail kept from previous frames", 0.5, 0.05, 0.9, 0.05));
+    private final dev.stella.client.setting.BoolSetting pauseInMenus = add(new dev.stella.client.setting.BoolSetting("Pause In Menus", "No blur while a screen (GUI, inventory) is open", true));
+    private final dev.stella.client.setting.BoolSetting onlyMoving = add(new dev.stella.client.setting.BoolSetting("Only When Turning", "Blur only while the camera is turning", false));
+    private float lastYaw, lastPitch;
 
     private Framebuffer history;
     private HistoryTexture texture;
@@ -51,7 +54,14 @@ public class MotionBlur extends Module {
         }
         texture.setId(history.getColorAttachment());
 
-        if (!fresh) {
+        boolean skip = (pauseInMenus.isOn() && mc.currentScreen != null);
+        if (onlyMoving.isOn() && mc.player != null) {
+            float dy = Math.abs(mc.player.getYaw() - lastYaw) + Math.abs(mc.player.getPitch() - lastPitch);
+            lastYaw = mc.player.getYaw();
+            lastPitch = mc.player.getPitch();
+            if (dy < 0.5f) skip = true;
+        }
+        if (!fresh && !skip) {
             int sw = ctx.getScaledWindowWidth(), sh = ctx.getScaledWindowHeight();
             int alpha = (int) (strength.get() * 255);
             ctx.getMatrices().push();

@@ -35,6 +35,26 @@ public abstract class InGameHudMixin {
         }
     }
 
+    @Inject(method = "renderVignetteOverlay", at = @At("HEAD"), cancellable = true)
+    private void stella$vignette(CallbackInfo ci) {
+        if (StellaClient.isReady()) { var n = ModuleManager.get(NoPumpkinOverlay.class); if (n.hide(n.vignette)) ci.cancel(); }
+    }
+
+    @Inject(method = "renderSpyglassOverlay", at = @At("HEAD"), cancellable = true)
+    private void stella$spyglass(CallbackInfo ci) {
+        if (StellaClient.isReady()) { var n = ModuleManager.get(NoPumpkinOverlay.class); if (n.hide(n.spyglass)) ci.cancel(); }
+    }
+
+    @Inject(method = "renderPortalOverlay", at = @At("HEAD"), cancellable = true)
+    private void stella$portal(CallbackInfo ci) {
+        if (StellaClient.isReady()) { var n = ModuleManager.get(NoPumpkinOverlay.class); if (n.hide(n.portal)) ci.cancel(); }
+    }
+
+    @Inject(method = "renderNauseaOverlay", at = @At("HEAD"), cancellable = true)
+    private void stella$nausea(CallbackInfo ci) {
+        if (StellaClient.isReady()) { var n = ModuleManager.get(NoPumpkinOverlay.class); if (n.hide(n.nausea)) ci.cancel(); }
+    }
+
     @Inject(method = "renderOverlay", at = @At("HEAD"), cancellable = true)
     private void stella$overlay(DrawContext context, Identifier texture, float opacity, CallbackInfo ci) {
         if (StellaClient.isReady() && ModuleManager.get(NoPumpkinOverlay.class).shouldHide(texture)) ci.cancel();

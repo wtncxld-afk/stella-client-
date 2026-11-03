@@ -17,7 +17,13 @@ import org.lwjgl.glfw.GLFW;
 public class Freecam extends Module {
     private final NumberSetting speed = add(new NumberSetting("Speed", "Blocks per tick", 1.0, 0.1, 5, 0.1));
     private final NumberSetting sprintMultiplier = add(new NumberSetting("Sprint Multiplier", "Speed while holding sprint", 2.5, 1, 6, 0.5));
+    private final NumberSetting verticalSpeed = add(new NumberSetting("Vertical Speed", "Up/down speed as a fraction of Speed", 1, 0.1, 2, 0.05));
+    private final NumberSetting sensitivity = add(new NumberSetting("Sensitivity", "Mouse sensitivity multiplier", 1, 0.2, 3, 0.05));
     private final BoolSetting showPlayer = add(new BoolSetting("Show Player", "Render your own player while flying", true));
+    private final BoolSetting exitOnDamage = add(new BoolSetting("Exit On Damage", "Snap back to your player if you take damage", true));
+    private final BoolSetting resetOnEnable = add(new BoolSetting("Start At Player", "Start at your eyes each time (off = resume where you left the camera)", true));
+    private float lastHealth = -1;
+    private boolean started;
 
     private Vec3d pos = Vec3d.ZERO, prevPos = Vec3d.ZERO;
     private float yaw, pitch;
@@ -49,15 +55,26 @@ public class Freecam extends Module {
     @Override
     protected void onEnable() {
         if (!inGame()) { setEnabled(false); return; }
-        pos = mc.gameRenderer.getCamera().getPos();
-        prevPos = pos;
-        yaw = mc.player.getYaw();
-        pitch = mc.player.getPitch();
+        lastHealth = mc.player.getHealth();
+        if (resetOnEnable.isOn() || !started) {
+            pos = mc.gameRenderer.getCamera().getPos();
+            prevPos = pos;
+            yaw = mc.player.getYaw();
+            pitch = mc.player.getPitch();
+        }
+        started = true;
     }
 
     @Override
     public void onTick() {
         if (!inGame()) { setEnabled(false); return; }
+        if (exitOnDamage.isOn() && mc.player.getHealth() < lastHealth - 0.01f) {
+            dev.stella.client.notification.NotificationManager.post("Freecam", "Took damage - camera returned",
+                    dev.stella.client.notification.Notification.Type.WARNING, 2500);
+            setEnabled(false);
+            return;
+        }
+        lastHealth = mc.player.getHealth();
         prevPos = pos;
         double f = 0, s = 0, v = 0;
         if (mc.options.forwardKey.isPressed()) f++;
@@ -73,7 +90,7 @@ public class Freecam extends Module {
         double dx = (-sin * f + cos * s), dz = (cos * f + sin * s);
         double len = Math.sqrt(dx * dx + dz * dz);
         if (len > 1e-4) { dx /= len; dz /= len; }
-        pos = pos.add(dx * sp, v * sp, dz * sp);
+        pos = pos.add(dx * sp, v * sp * verticalSpeed.get(), dz * sp);
     }
 
     public Vec3d lerpedPos(float tickDelta) { return prevPos.lerp(pos, tickDelta); }
@@ -82,7 +99,8 @@ public class Freecam extends Module {
 
     /** Mouse movement turns the camera instead of the player. */
     public void look(double cursorDeltaX, double cursorDeltaY) {
-        yaw += (float) cursorDeltaX * 0.15f;
-        pitch = MathHelper.clamp(pitch + (float) cursorDeltaY * 0.15f, -90f, 90f);
+        float k = 0.15f * sensitivity.getFloat();
+        yaw += (float) cursorDeltaX * k;
+        pitch = MathHelper.clamp(pitch + (float) cursorDeltaY * k, -90f, 90f);
     }
 }

@@ -56,6 +56,9 @@ public class SusChunkFinder extends Module {
     private final dev.stella.client.setting.BlockListSetting unnaturalBlocks = add(new dev.stella.client.setting.BlockListSetting("Unnatural Block List",
             "Blocks that only players place. Edit to add your own", defaultUnnatural())).visibleWhen(unnatural::isOn);
     private final NumberSetting range = add(new NumberSetting("Range", "Analysis radius in blocks", 128, 16, 512, 16));
+    private final BoolSetting belowY = add(new BoolSetting("Only Below Y", "Only count suspicious blocks at or below Max Y", true));
+    private final NumberSetting maxY = add(new NumberSetting("Max Y", "Highest Y-level that is checked", 0, -64, 320, 1)).visibleWhen(belowY::isOn);
+    private final NumberSetting minYSetting = add(new NumberSetting("Min Y", "Lowest Y-level that is checked", -64, -64, 320, 1));
     private final ModeSetting minConfidence = add(new ModeSetting("Min Confidence", "Hide findings below this level", "Low", "Low", "Medium", "High"));
     private final ModeSetting boxMode = add(new ModeSetting("Box Mode", "Flat translucent square at a Y-level, a column around the detections, or the full chunk height",
             "Flat", "Flat", "Column", "Full Height"));
@@ -117,10 +120,10 @@ public class SusChunkFinder extends Module {
         BlockPos center = mc.player.getBlockPos();
         double r = range.get();
         List<Finding> out = new ArrayList<>();
-        if (redstone.isOn()) analyseRedstone(redstoneTarget.near(center, r, 5000), out);
-        if (amethyst.isOn()) analyseAmethyst(clusterTarget.near(center, r, 5000), budTarget.near(center, r, 5000), out);
-        if (deepslate.isOn()) analyseDeepslate(deepslateTarget.near(center, r, 5000), out);
-        if (unnatural.isOn()) analyseUnnatural(unnaturalTarget.near(center, r, 5000), out);
+        if (redstone.isOn()) analyseRedstone(inY(redstoneTarget.near(center, r, 5000)), out);
+        if (amethyst.isOn()) analyseAmethyst(inY(clusterTarget.near(center, r, 5000)), inY(budTarget.near(center, r, 5000)), out);
+        if (deepslate.isOn()) analyseDeepslate(inY(deepslateTarget.near(center, r, 5000)), out);
+        if (unnatural.isOn()) analyseUnnatural(inY(unnaturalTarget.near(center, r, 5000)), out);
         Confidence min = Confidence.valueOf(minConfidence.get().toUpperCase());
         out.removeIf(f -> f.confidence.ordinal() < min.ordinal());
         findings = out;
@@ -132,6 +135,13 @@ public class SusChunkFinder extends Module {
                         f.confidence == Confidence.HIGH ? Notification.Type.WARNING : Notification.Type.INFO);
             }
         }
+    }
+
+    /** Applies the user's Y-level window. */
+    private List<BlockPos> inY(List<BlockPos> list) {
+        int lo = minYSetting.getInt(), hi = belowY.isOn() ? maxY.getInt() : Integer.MAX_VALUE;
+        list.removeIf(p -> p.getY() < lo || p.getY() > hi);
+        return list;
     }
 
     /** Groups positions into 16x16x16 buckets. */

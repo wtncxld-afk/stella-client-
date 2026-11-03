@@ -18,6 +18,10 @@ public class FreeLook extends Module {
     private final KeySetting lookKey = add(new KeySetting("Look Key", "Hold to free-look", GLFW.GLFW_KEY_LEFT_ALT));
     private final ModeSetting mode = add(new ModeSetting("Mode", "Orbit in third person or look around in first person", "Third Person", "Third Person", "First Person"));
     private final NumberSetting distance = add(new NumberSetting("Distance", "Third-person camera distance", 4, 1, 12, 0.5)).visibleWhen(() -> mode.is("Third Person"));
+    private final dev.stella.client.setting.BoolSetting toggleMode = add(new dev.stella.client.setting.BoolSetting("Toggle Instead Of Hold", "Press once to start, again to stop", false));
+    private final NumberSetting sensitivity = add(new NumberSetting("Sensitivity", "Mouse sensitivity multiplier", 1, 0.2, 3, 0.05));
+    private final dev.stella.client.setting.BoolSetting invertPitch = add(new dev.stella.client.setting.BoolSetting("Invert Pitch", "Invert up/down while free-looking", false));
+    private boolean keyWasDown;
 
     private boolean looking;
     private float yaw, pitch;
@@ -35,8 +39,14 @@ public class FreeLook extends Module {
     public void onTick() {
         boolean held = inGame() && mc.currentScreen == null && lookKey.isBound()
                 && InputUtil.isKeyPressed(mc.getWindow().getHandle(), lookKey.key());
-        if (held && !looking) start();
-        else if (!held && looking) stop();
+        if (toggleMode.isOn()) {
+            if (held && !keyWasDown) { if (looking) stop(); else start(); }
+            if (!inGame() && looking) stop();
+        } else {
+            if (held && !looking) start();
+            else if (!held && looking) stop();
+        }
+        keyWasDown = held;
     }
 
     private void start() {
@@ -60,7 +70,8 @@ public class FreeLook extends Module {
     @Override protected void onDisable() { if (looking) stop(); }
 
     public void look(double cursorDeltaX, double cursorDeltaY) {
-        yaw += (float) cursorDeltaX * 0.15f;
-        pitch = MathHelper.clamp(pitch + (float) cursorDeltaY * 0.15f, -90f, 90f);
+        float k = 0.15f * sensitivity.getFloat();
+        yaw += (float) cursorDeltaX * k;
+        pitch = MathHelper.clamp(pitch + (float) cursorDeltaY * k * (invertPitch.isOn() ? -1 : 1), -90f, 90f);
     }
 }

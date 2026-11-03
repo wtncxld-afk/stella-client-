@@ -22,7 +22,8 @@ public class HudEditorScreen extends Screen {
     private double dragOffX, dragOffY;
     private double resizeStartScale, resizeStartX;
     private HudElement selected;
-    private boolean snap = true;
+    private final dev.stella.client.modules.client.HudEditorModule cfg = dev.stella.client.module.ModuleManager.get(dev.stella.client.modules.client.HudEditorModule.class);
+    private boolean snap = cfg == null || cfg.snap.isOn();
 
     public HudEditorScreen(Screen parent) {
         super(Text.literal("Stella HUD Editor"));
@@ -41,8 +42,10 @@ public class HudEditorScreen extends Screen {
         super.render(ctx, mouseX, mouseY, delta);
         Theme t = ThemeManager.get();
         // centre guides
-        ctx.fill(width / 2, 0, width / 2 + 1, height, 0x18FFFFFF);
-        ctx.fill(0, height / 2, width, height / 2 + 1, 0x18FFFFFF);
+        if (cfg == null || cfg.guides.isOn()) {
+            ctx.fill(width / 2, 0, width / 2 + 1, height, 0x18FFFFFF);
+            ctx.fill(0, height / 2, width, height / 2 + 1, 0x18FFFFFF);
+        }
 
         List<HudElement> elements = HudManager.elements();
         for (HudElement h : elements) {
@@ -127,13 +130,14 @@ public class HudEditorScreen extends Screen {
         if (dragging != null) {
             double nx = mx - dragOffX, ny = my - dragOffY;
             if (snap) {
+                double sd = cfg == null ? 4 : cfg.snapDistance.get();
                 double w = dragging.scaledWidth(), hh = dragging.scaledHeight();
-                if (Math.abs(nx) < 4) nx = 0;
-                if (Math.abs(ny) < 4) ny = 0;
-                if (Math.abs(nx + w - width) < 4) nx = width - w;
-                if (Math.abs(ny + hh - height) < 4) ny = height - hh;
-                if (Math.abs(nx + w / 2 - width / 2.0) < 4) nx = width / 2.0 - w / 2;
-                if (Math.abs(ny + hh / 2 - height / 2.0) < 4) ny = height / 2.0 - hh / 2;
+                if (Math.abs(nx) < sd) nx = 0;
+                if (Math.abs(ny) < sd) ny = 0;
+                if (Math.abs(nx + w - width) < sd) nx = width - w;
+                if (Math.abs(ny + hh - height) < sd) ny = height - hh;
+                if (Math.abs(nx + w / 2 - width / 2.0) < sd) nx = width / 2.0 - w / 2;
+                if (Math.abs(ny + hh / 2 - height / 2.0) < sd) ny = height / 2.0 - hh / 2;
             }
             dragging.setPos(nx, ny);
             return true;
@@ -167,7 +171,7 @@ public class HudEditorScreen extends Screen {
 
     @Override
     public boolean keyPressed(int key, int scan, int mods) {
-        if (key == GLFW.GLFW_KEY_S) { snap = !snap; return true; }
+        if (key == GLFW.GLFW_KEY_S) { snap = !snap; if (cfg != null) cfg.snap.set(snap); return true; }
         if (selected != null) {
             double step = (mods & GLFW.GLFW_MOD_SHIFT) != 0 ? 5 : 1;
             switch (key) {

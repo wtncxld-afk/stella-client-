@@ -104,7 +104,8 @@ Stella only uses information the server actually sends to your client. These are
 * **Block Notifier, Block ESP, Storage ESP, Amethyst Detector and Sus Chunk Finder** can only see chunks your client
   has received. Nothing is ever reported for chunks you have never loaded. Block Notifier remembers each
   position once per session, so a chunk that reloads does not create a duplicate.
-* **Sus Chunk Finder** gives hints, not proof. Each red chunk shows its reasons and a confidence level.
+* **Sus Chunk Finder** only checks blocks between *Min Y* and *Max Y* (by default at or below Y 0, where
+  hidden bases usually are). Turn off *Only Below Y* to check every height. It gives hints, not proof. Each red chunk shows its reasons and a confidence level.
   Temples, trial chambers, mineshafts and geodes can all cause false positives. Sideways deepslate is the
   strongest signal, because world generation always places deepslate vertically.
 * **Staff List** has no built-in staff data. Add names you have verified yourself to `staff.json`, then

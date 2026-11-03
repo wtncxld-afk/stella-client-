@@ -3,6 +3,8 @@ package dev.stella.client.modules.hud;
 import net.minecraft.client.network.PlayerListEntry;
 
 public class PingHud extends TextHud {
+    private final dev.stella.client.setting.BoolSetting colorByValue = add(new dev.stella.client.setting.BoolSetting("Color By Value", "Green / yellow / red depending on latency", true));
+
     public PingHud() { super("Ping HUD", "Your latency as reported by the server's player list", -4, 45, true); }
     @Override protected String label() { return "Ping"; }
 
@@ -16,7 +18,7 @@ public class PingHud extends TextHud {
 
     @Override
     protected int valueColorFor() {
-        if (mc.getNetworkHandler() == null || mc.player == null) return valueColor.argb();
+        if (!colorByValue.isOn() || mc.getNetworkHandler() == null || mc.player == null) return valueColor.argb();
         PlayerListEntry e = mc.getNetworkHandler().getPlayerListEntry(mc.player.getUuid());
         if (e == null) return valueColor.argb();
         int p = e.getLatency();

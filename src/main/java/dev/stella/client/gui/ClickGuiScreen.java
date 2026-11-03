@@ -113,7 +113,8 @@ public class ClickGuiScreen extends Screen {
         Theme t = ThemeManager.get();
         double a = open.get();
         if (closing && a < 0.05) { super.close(); return; }
-        int slide = (int) ((1 - a) * -12);
+        var anims = ModuleManager.get(dev.stella.client.modules.settings.AnimationsModule.class);
+        int slide = anims != null && anims.isEnabled() && !anims.guiSlide.isOn() ? 0 : (int) ((1 - a) * -12);
         hovered = null;
 
         ctx.getMatrices().push();
@@ -261,6 +262,8 @@ public class ClickGuiScreen extends Screen {
     @Override
     public void removed() {
         TextInput.unfocusAll();
+        var cm = ModuleManager.get(dev.stella.client.modules.settings.ConfigModule.class);
+        if (cm != null && cm.saveOnClose.isOn()) dev.stella.client.config.ConfigManager.save();
         super.removed();
     }
 }

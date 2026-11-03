@@ -29,12 +29,15 @@ public abstract class ItemEntityRendererMixin {
         matrices.push();
         matrices.translate(0f, depth ? 0f : 0.02f, 0f);
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(angle));
+        float sc = ip.scale.getFloat();
+        matrices.scale(sc, sc, sc);
+        float spread = ip.stackSpread.getFloat();
         if (!depth) matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(90f));
         for (int i = 0; i < count; i++) {
             matrices.push();
             if (i > 0) {
-                if (depth) matrices.translate((i % 2) * 0.06f - 0.03f, i * 0.05f, ((i / 2) % 2) * 0.06f - 0.03f);
-                else matrices.translate(0f, 0f, -i * 0.035f);
+                if (depth) matrices.translate(((i % 2) * 0.06f - 0.03f) * spread, i * 0.05f, (((i / 2) % 2) * 0.06f - 0.03f) * spread);
+                else matrices.translate(0.02f * spread * (i % 2 == 0 ? 1 : -1), 0.02f * spread * ((i / 2) % 2 == 0 ? 1 : -1), -i * 0.035f);
             }
             state.itemRenderState.render(matrices, vcp, light, OverlayTexture.DEFAULT_UV);
             matrices.pop();

@@ -143,6 +143,7 @@ final class StellaSmokeTest {
                             if (!keep.contains(m.getName())) m.setEnabled(false);
                         }
                         setting("Sus Chunk Finder", "Flat Y", Math.floor(mc.player.getY()) + 6.0);
+                        setting("Sus Chunk Finder", "Only Below Y", false); // test blocks sit at the surface
                         // step back and up (flying, so we stay there) to see the red chunk squares from outside
                         mc.player.getAbilities().flying = true;
                         mc.player.sendAbilitiesUpdate();
