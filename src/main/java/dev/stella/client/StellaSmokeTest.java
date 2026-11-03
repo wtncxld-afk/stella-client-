@@ -51,6 +51,12 @@ final class StellaSmokeTest {
             switch (stage) {
                 case 0 -> {
                     if (tick < 40 || mc.getOverlay() != null) return;
+                    // a fresh install first shows vanilla's one-time accessibility screen: continue past it
+                    if (mc.currentScreen != null && mc.currentScreen.getClass().getSimpleName().contains("Onboarding")) {
+                        mc.options.onboardAccessibility = false;
+                        mc.setScreen(new net.minecraft.client.gui.screen.TitleScreen(false));
+                        return;
+                    }
                     if (menuShownAt < 0) {
                         mc.options.tutorialStep = net.minecraft.client.tutorial.TutorialStep.NONE;
                         MixinEnvironment.getCurrentEnvironment().audit();
