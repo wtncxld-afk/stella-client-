@@ -46,7 +46,7 @@ final class StellaSmokeTest {
     }
 
     private static int slow;
-    private static int ox, oy, oz;
+    private static int ox, oy, oz, spawnX, spawnZ;
 
     /** Logs every chunk the Sus Chunk Finder scored, flagged or not, so false positives are visible in CI. */
     private static void logSus(String when) {
@@ -141,6 +141,7 @@ final class StellaSmokeTest {
                         h.sendChatCommand("summon minecraft:item ~4 ~ ~1 {Item:{id:\"minecraft:diamond_sword\",count:1}}");
                         // A realistic hidden base below Y 0 (sideways-deepslate room, storage, small redstone farm)
                         ox = mc.player.getBlockX(); oy = mc.player.getBlockY(); oz = mc.player.getBlockZ();
+                        spawnX = ox; spawnZ = oz;
                         int bx = ox + 40, by = -40, bz = oz - 56;
                         h.sendChatCommand("fill " + bx + " " + by + " " + bz + " " + (bx + 9) + " " + (by + 5) + " " + (bz + 9) + " minecraft:deepslate[axis=z] hollow");
                         h.sendChatCommand("setblock " + (bx + 2) + " " + (by + 1) + " " + (bz + 2) + " minecraft:chest");
@@ -336,6 +337,15 @@ final class StellaSmokeTest {
                     if (inStage() == 592) {
                         var sf = ModuleManager.get(dev.stella.client.modules.combat.SpawnerFinder.class);
                         StellaClient.LOGGER.info("[smoke] spawners: {}", sf.spawners());
+                        int[][] test = {{8, -2}, {10, 5}, {14, -6}};
+                        for (int[] o : test) {
+                            for (int dy = -2; dy <= 2; dy++) {
+                                var bp = new net.minecraft.util.math.BlockPos(spawnX + o[0], oy + dy, spawnZ + o[1]);
+                                var st = mc.world.getBlockState(bp);
+                                if (!st.isAir()) StellaClient.LOGGER.info("[smoke] spawner check {} -> {} be={}", bp, st, mc.world.getBlockEntity(bp));
+                            }
+                        }
+                        StellaClient.LOGGER.info("[smoke] scanner queued={} loaded={}", dev.stella.client.scan.BlockScanner.queued(), dev.stella.client.scan.BlockScanner.loadedChunks());
                     }
                     if (inStage() == 594) shot(mc, "spawner-finder");
                     if (inStage() == 596) { setting("ClickGUI", "Theme", "Sunset"); mc.setScreen(new ClickGuiScreen()); }
