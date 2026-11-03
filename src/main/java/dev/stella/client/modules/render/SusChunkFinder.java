@@ -247,7 +247,10 @@ public class SusChunkFinder extends Module {
             double a = alphaFor(c.confidence);
             int outline = ColorUtil.mulAlpha(color.argb(), Math.max(0.6, a));
             int fill = ColorUtil.withAlpha(color.argb(), (int) (0x46 * a));
-            r.box(chunkBox(c), outline, fill, true, true);
+            Box box = chunkBox(c);
+            // never tint the whole screen: inside a sus chunk only the outline is drawn
+            boolean inside = box.expand(0.5).contains(r.cameraPos());
+            r.box(box, outline, fill, true, !inside);
             if (showBlocks.isOn()) {
                 for (Finding f : c.findings) {
                     Box b = new Box(f.min.getX(), f.min.getY(), f.min.getZ(), f.max.getX() + 1, f.max.getY() + 1, f.max.getZ() + 1).expand(0.03);

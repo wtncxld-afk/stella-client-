@@ -50,6 +50,7 @@ final class StellaSmokeTest {
             switch (stage) {
                 case 0 -> {
                     if (tick < 40 || mc.getOverlay() != null) return;
+                    mc.options.tutorialStep = net.minecraft.client.tutorial.TutorialStep.NONE;
                     MixinEnvironment.getCurrentEnvironment().audit();
                     StellaClient.LOGGER.info("[smoke] mixin audit passed");
                     mc.setScreen(new ClickGuiScreen());
@@ -127,12 +128,26 @@ final class StellaSmokeTest {
                     if (inStage() == 228) { setting("ClickGUI", "Theme", "Stella"); mc.setScreen(null); }
                     if (inStage() == 229) mc.setScreen(new HudEditorScreen(null));
                     if (inStage() == 245) shot(mc, "world-hudeditor");
-                    if (inStage() == 250) {
+                    if (inStage() == 247) {
+                        mc.setScreen(null);
+                        mc.inGameHud.getChatHud().clear(false);
+                        java.util.Set<String> keep = java.util.Set.of("Sus Chunk Finder", "Storage ESP", "Block ESP", "Custom Sky",
+                                "Stella Branding HUD", "FPS HUD", "Coordinates HUD", "Notifications HUD", "Amethyst Detector");
+                        for (Module m : ModuleManager.all()) {
+                            if (m.getCategory() == dev.stella.client.module.Category.CLIENT || m.getCategory() == dev.stella.client.module.Category.SETTINGS) continue;
+                            if (!keep.contains(m.getName())) m.setEnabled(false);
+                        }
+                        // step back and up so the red chunk box is seen from outside
+                        mc.player.networkHandler.sendChatCommand("tp @s ~-22 ~10 ~");
+                    }
+                    if (inStage() == 252) { mc.player.setYaw(-90f); mc.player.setPitch(28f); }
+                    if (inStage() == 285) shot(mc, "sus-chunk-finder");
+                    if (inStage() == 288) {
                         mc.setScreen(null);
                         for (Module m : ModuleManager.all()) if (m.isEnabled()) m.setEnabled(false);
                         for (Module m : ModuleManager.all()) if (m.isDefaultEnabled()) m.setEnabled(true);
                     }
-                    if (inStage() == 290) {
+                    if (inStage() == 330) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {
