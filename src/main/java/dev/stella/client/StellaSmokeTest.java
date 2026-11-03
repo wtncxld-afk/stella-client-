@@ -271,6 +271,10 @@ final class StellaSmokeTest {
                             h2.sendChatCommand("summon item " + (ox + 3 + (i % 2)) + " " + (oy + 2) + " " + (oz - 2 + i) + " {Item:{id:\"minecraft:" + items[i] + "\",count:1},PickupDelay:32767}");
                         h2.sendChatCommand("summon pig " + (ox + 6) + " " + (oy + 1) + " " + (oz + 3) + " {NoAI:1b}");
                         h2.sendChatCommand("summon zombie " + (ox + 6) + " " + (oy + 1) + " " + (oz - 3) + " {NoAI:1b,PersistenceRequired:1b}");
+                        // hold a totem in both hands for the shot
+                        mc.player.getInventory().setSelectedSlot(0);
+                        h2.sendChatCommand("item replace entity @s weapon.mainhand with minecraft:totem_of_undying");
+                        h2.sendChatCommand("item replace entity @s weapon.offhand with minecraft:totem_of_undying");
                         mc.player.setYaw(-90f);
                         mc.player.setPitch(30f);
                     }
