@@ -38,6 +38,8 @@ public class AntiVanish extends Module {
     public record Evidence(String identity, String reason, String confidence, String time) {}
 
     private final NumberSetting range = add(new NumberSetting("Range", "Entity evidence radius", 64, 8, 256, 8));
+    private final BoolSetting anySpectator = add(new BoolSetting("Any Player In Spectator",
+            "Flag anyone whose tab entry switches to spectator (/gmsp), not only names in staff.json. Normal players cannot use spectator on most servers", true));
     private final BoolSetting onlyStaff = add(new BoolSetting("Only Verified Staff", "Ignore non-staff spectators (entity checks)", false));
     private final BoolSetting sound = add(new BoolSetting("Sound", "Play a sound with alerts", true));
     private final BoolSetting chat = add(new BoolSetting("Chat Log", "Print each alert in chat", true));
@@ -191,6 +193,14 @@ public class AntiVanish extends Module {
             PlayerListEntry e = StaffDatabase.tabEntry(m);
             if (e != null && e.getGameMode() == GameMode.SPECTATOR) {
                 raise(m.name() + " [" + m.rank() + "]", "tab list reports spectator mode", "HIGH", "tab:" + m.name());
+            }
+        }
+        if (anySpectator.isOn()) {
+            for (PlayerListEntry e : mc.getNetworkHandler().getPlayerList()) {
+                if (e.getGameMode() != GameMode.SPECTATOR || e.getProfile().id().equals(mc.player.getUuid())) continue;
+                String name = e.getProfile().name();
+                if (StaffDatabase.isStaff(name)) continue; // already reported above with its rank
+                raise(name, "switched to spectator mode (tab list)", "HIGH", "tab:" + name);
             }
         }
 

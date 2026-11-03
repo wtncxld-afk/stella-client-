@@ -51,6 +51,7 @@ final class StellaSmokeTest {
     /** Logs every chunk the Sus Chunk Finder scored, flagged or not, so false positives are visible in CI. */
     private static final java.util.UUID STAFF_UUID = java.util.UUID.fromString("5e1a5a11-0000-4000-8000-00000000057a");
     private static net.fabricmc.fabric.api.entity.FakePlayer staffPlayer;
+    private static final java.util.UUID OTHER_UUID = java.util.UUID.fromString("5e1a5a11-0000-4000-8000-0000000000b2");
 
     /**
      * Anti Vanish test on the real integrated server: a server-side player named in staff.json joins the tab
@@ -85,6 +86,14 @@ final class StellaSmokeTest {
             } else if (phase == 4 && staffPlayer != null) {
                 // the vanish plugin removes them from the tab list but keeps sending the body
                 pm.sendToAll(new net.minecraft.network.packet.s2c.play.PlayerRemoveS2CPacket(java.util.List.of(STAFF_UUID)));
+            } else if (phase == 5) {
+                // Case 3: someone NOT in staff.json runs /gmsp (same server call as /gamemode spectator)
+                var other = net.fabricmc.fabric.api.entity.FakePlayer.get(world, new com.mojang.authlib.GameProfile(OTHER_UUID, "UnlistedMod"));
+                other.refreshPositionAndAngles(x, y, z, 90f, 0f);
+                pm.sendToAll(net.minecraft.network.packet.s2c.play.PlayerListS2CPacket.entryFromPlayer(java.util.List.of(other)));
+                other.changeGameMode(net.minecraft.world.GameMode.SPECTATOR);
+            } else if (phase == 6) {
+                pm.sendToAll(new net.minecraft.network.packet.s2c.play.PlayerRemoveS2CPacket(java.util.List.of(OTHER_UUID)));
             } else if (phase == 3 && staffPlayer != null) {
                 world.removePlayer(staffPlayer, net.minecraft.entity.Entity.RemovalReason.DISCARDED);
                 pm.sendToAll(new net.minecraft.network.packet.s2c.play.PlayerRemoveS2CPacket(java.util.List.of(STAFF_UUID)));
@@ -318,7 +327,9 @@ final class StellaSmokeTest {
                     if (inStage() == 370) staffTest(mc, 2); // Case 2: vanish plugin hides them from tab but still sends their body
                     if (inStage() == 380) staffTest(mc, 4);
                     if (inStage() == 400) logAntiVanish("case 2: hidden from tab list, entity still sent");
-                    if (inStage() == 402) staffTest(mc, 3); // clean up
+                    if (inStage() == 401) staffTest(mc, 3); // clean up
+                    if (inStage() == 402) staffTest(mc, 5); // Case 3: unlisted player does /gmsp
+                    if (inStage() == 409) { logAntiVanish("case 3: player not in staff.json does /gmsp"); staffTest(mc, 6); }
                     if (inStage() == 372) mc.setScreen(new ClickGuiScreen());
                     if (inStage() == 385 && mc.currentScreen instanceof ClickGuiScreen gui) gui.openSettingsFor("Anti Vanish");
                     if (inStage() == 405) shot(mc, "anti-vanish-gui");
