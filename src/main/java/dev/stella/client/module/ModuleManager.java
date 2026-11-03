@@ -49,6 +49,7 @@ public final class ModuleManager {
         register(new SusChunkFinder());
         register(new StaffList());
         register(new AntiVanish());
+        register(new dev.stella.client.modules.combat.MediaBaseFinder());
         // Misc
         register(new AutoRelog());
         register(new dev.stella.client.modules.misc.Freecam());

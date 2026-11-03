@@ -163,6 +163,7 @@ final class StellaSmokeTest {
                             else if (m.getCategory() != dev.stella.client.module.Category.CLIENT
                                     && m.getCategory() != dev.stella.client.module.Category.SETTINGS && !m.getName().equals("Custom Sky")) m.setEnabled(false);
                         }
+                        ModuleManager.get(dev.stella.client.modules.combat.MediaBaseFinder.class).setEnabled(true);
                         dev.stella.client.notification.NotificationManager.post("Block Notifier", "Spawner at 16 113 8",
                                 dev.stella.client.notification.Notification.Type.INFO, 20000);
                         dev.stella.client.notification.NotificationManager.post("Staff", "Example alert toast",
@@ -194,6 +195,7 @@ final class StellaSmokeTest {
                             if (m.getCategory() == dev.stella.client.module.Category.HUD && !m.getName().equals("Stella Branding HUD")) m.setEnabled(false);
                         var av = ModuleManager.get(dev.stella.client.modules.combat.AntiVanish.class);
                         av.setEnabled(true);
+                        ModuleManager.get(dev.stella.client.modules.combat.MediaBaseFinder.class).setEnabled(true);
                         av.showPopup("ExampleStaff", "HIGH", "tab list reports spectator mode");
                         mc.inGameHud.getChatHud().clear(false);
                     }

@@ -25,7 +25,13 @@ public abstract class HudElement extends Module {
     /** @param scaleName label of this element's size slider (e.g. "Map Scale") */
     protected HudElement(String name, String description, double defaultX, double defaultY, boolean defaultEnabled,
                          String scaleName, double maxScale) {
-        super(name, description, Category.HUD, defaultEnabled);
+        this(name, description, Category.HUD, defaultX, defaultY, defaultEnabled, scaleName, maxScale);
+    }
+
+    /** HUD element listed under another GUI category (still draggable in the HUD Editor). */
+    protected HudElement(String name, String description, Category category, double defaultX, double defaultY, boolean defaultEnabled,
+                         String scaleName, double maxScale) {
+        super(name, description, category, defaultEnabled);
         this.defX = defaultX;
         this.defY = defaultY;
         posX = add(new NumberSetting("X", "Horizontal position", defaultX, -10000, 10000, 0.5)).hide();

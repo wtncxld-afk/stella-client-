@@ -41,6 +41,7 @@ public final class StellaClient implements ClientModInitializer {
         // Config needs GameOptions and the window, so load once the client has started.
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
             StaffDatabase.load();
+            dev.stella.client.data.MediaDatabase.load();
             RegionConfig.load();
             Waypoints.load();
             ConfigManager.init();

@@ -54,7 +54,7 @@ Every module has its own keybind setting (click the value, press a key; right-cl
 distance, health, each with its own settings), Player Detector, Storage ESP (chests, trapped chests, barrels,
 shulkers, ender chests, hoppers, dispensers, plus your own block list, with optional tracers), Block ESP
 (with optional tracers), Sus Chunk Finder (flat red squares over suspected chunks below a Y-level you choose),
-Staff List, Anti Vanish.
+Staff List, Anti Vanish, Media Base Finder (lists media / content creators in your region with their heads).
 
 **Misc:** Auto Relog, Freecam (press **V** to fly the camera away from your player, who stays put),
 Free Look (hold **Left Alt** to look around without turning your head, in third or first person).
@@ -126,6 +126,10 @@ Stella only uses information the server actually sends to your client. These are
 
   Most vanish plugins send nothing at all, so a normal client cannot detect fully vanished staff.
   **No alert does not mean nobody is watching.**
+* **Media Base Finder** lists players in your server's tab list whose displayed rank (tab name or team
+  prefix/suffix) contains one of its keywords (`media`, `youtube`, `streamer`… — editable), plus any names
+  you add to `config/stella/media.json`. The client only knows who is in your tab list, so "your region"
+  means the server you are connected to; it cannot see where those players' bases are.
 * **Region Map** is a 9×9 grid of 50,000-block cells spanning −225k…+225k on X and Z. The layout comes
   from two references you supplied: an in-game screenshot (cell IDs and colours) and a region diagram
   (region shapes and geometry). The cell IDs were read from a low-resolution image, so correct any that
