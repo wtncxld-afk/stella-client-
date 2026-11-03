@@ -44,13 +44,13 @@ public class BrandingHud extends HudElement {
             double tri = p < 0.5 ? p * 2 : (1 - p) * 2;
             int c = ColorUtil.lerp(c1, c2, tri);
             String ch = String.valueOf(text.charAt(i));
-            ctx.drawText(mc.textRenderer, ch, x, 4, col(c), true);
-            x += mc.textRenderer.getWidth(ch) + 1;
+            dev.stella.client.render.StellaFont.draw(ctx, ch, x, 4, col(c), true);
+            x += dev.stella.client.render.StellaFont.width(ch) + 1;
         }
         if (showVersion.isOn()) {
             String v = " " + StellaClient.VERSION;
-            ctx.drawText(mc.textRenderer, v, x, 4, col(0xFF8E879A), true);
-            x += mc.textRenderer.getWidth(v);
+            dev.stella.client.render.StellaFont.draw(ctx, v, x, 4, col(0xFF8E879A), true);
+            x += dev.stella.client.render.StellaFont.width(v);
         }
         setSize(x, 16);
     }

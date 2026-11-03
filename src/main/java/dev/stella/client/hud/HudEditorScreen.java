@@ -57,27 +57,27 @@ public class HudEditorScreen extends Screen {
             if (hover || h == selected) {
                 String label = h.getName() + "  " + String.format("%.2fx", h.scale.get());
                 int ly = y - 11 < 0 ? y + hh + 2 : y - 11;
-                ctx.fill(x - 1, ly - 1, x + textRenderer.getWidth(label) + 3, ly + 9, 0xC0000000);
-                ctx.drawText(textRenderer, label, x + 1, ly, t.accentSoft(), false);
+                ctx.fill(x - 1, ly - 1, x + dev.stella.client.render.StellaFont.width(label) + 3, ly + 9, 0xC0000000);
+                dev.stella.client.render.StellaFont.draw(ctx, label, x + 1, ly, t.accentSoft(), false);
             }
         }
 
         // element list on the left
         int lx = 6, ly = 26;
         ctx.fill(lx - 4, 4, lx + 120, ly + elements.size() * 12 + 4, t.background());
-        ctx.drawText(textRenderer, "✦ HUD Editor", lx, 9, t.accent(), true);
+        dev.stella.client.render.StellaFont.draw(ctx, "✦ HUD Editor", lx, 9, t.accent(), true);
         for (HudElement h : elements) {
             boolean hover = mouseX >= lx - 4 && mouseX <= lx + 120 && mouseY >= ly - 2 && mouseY < ly + 10;
             if (hover) ctx.fill(lx - 4, ly - 2, lx + 120, ly + 10, t.rowHover());
             ctx.fill(lx, ly + 1, lx + 6, ly + 7, h.isEnabled() ? t.accent() : 0xFF3A3542);
-            ctx.drawText(textRenderer, h.getName(), lx + 10, ly, h.isEnabled() ? t.text() : t.textDim(), false);
+            dev.stella.client.render.StellaFont.draw(ctx, h.getName(), lx + 10, ly, h.isEnabled() ? t.text() : t.textDim(), false);
             ly += 12;
         }
 
         String help = "Drag: move  •  Corner/scroll: resize  •  Right-click: reset  •  Middle-click: hide  •  S: snap " + (snap ? "on" : "off") + "  •  Esc: done";
-        int hw = textRenderer.getWidth(help);
+        int hw = dev.stella.client.render.StellaFont.width(help);
         ctx.fill(width / 2 - hw / 2 - 4, height - 16, width / 2 + hw / 2 + 4, height - 3, 0xB0000000);
-        ctx.drawText(textRenderer, help, width / 2 - hw / 2, height - 13, t.textDim(), false);
+        dev.stella.client.render.StellaFont.draw(ctx, help, width / 2 - hw / 2, height - 13, t.textDim(), false);
     }
 
     private boolean isOver(HudElement h, double mx, double my) {

@@ -97,6 +97,7 @@ public class ThemesPanel {
 
         cy = section(ctx, "CLIENT", x, cy, t, a);
         cy = check(ctx, "BLUR BACKGROUND", gui.blur, x, cy, mx, my, t, a);
+        cy = check(ctx, "CUSTOM FONT", gui.customFont, x, cy, mx, my, t, a);
         cy = check(ctx, "UPPERCASE NAMES", gui.uppercase, x, cy, mx, my, t, a);
         cy = check(ctx, "DESCRIPTIONS", gui.descriptions, x, cy, mx, my, t, a);
         cy = check(ctx, "AUTO SAVE", ModuleManager.get(ConfigModule.class).autoSave, x, cy, mx, my, t, a);

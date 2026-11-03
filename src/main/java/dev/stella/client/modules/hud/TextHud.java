@@ -27,12 +27,12 @@ public abstract class TextHud extends HudElement {
         String l = showLabel.isOn() ? label().toUpperCase() : "";
         String v = value();
         String lt = l.isEmpty() ? "" : l + " ";
-        int lw = mc.textRenderer.getWidth(lt);
-        int w = lw + mc.textRenderer.getWidth(v);
+        int lw = dev.stella.client.render.StellaFont.width(lt);
+        int w = lw + dev.stella.client.render.StellaFont.width(v);
         card.draw(ctx, this, w, 8);
         int px = card.padLeft(), py = card.pad();
-        if (!lt.isEmpty()) ctx.drawText(mc.textRenderer, lt, px, py, col(card.accent(labelColor.argb())), shadow.isOn());
-        ctx.drawText(mc.textRenderer, v, px + lw, py, col(valueColorFor()), shadow.isOn());
+        if (!lt.isEmpty()) dev.stella.client.render.StellaFont.draw(ctx, lt, px, py, col(card.accent(labelColor.argb())), shadow.isOn());
+        dev.stella.client.render.StellaFont.draw(ctx, v, px + lw, py, col(valueColorFor()), shadow.isOn());
         setSize(w + px + card.pad(), 8 + py * 2);
     }
 }

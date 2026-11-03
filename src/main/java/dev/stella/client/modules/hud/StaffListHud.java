@@ -42,28 +42,28 @@ public class StaffListHud extends HudElement {
             rows.add(new String[]{m.name(), m.rank(), inTab ? "in tab" : "not visible", inTab ? "1" : "0"});
         }
         String header = "STAFF  " + visible + "/" + all.size() + " in tab";
-        int w = mc.textRenderer.getWidth(header);
+        int w = dev.stella.client.render.StellaFont.width(header);
         List<String[]> shown = rows.subList(0, Math.min(rows.size(), maxRows.getInt()));
-        for (String[] r : shown) w = Math.max(w, mc.textRenderer.getWidth(r[0] + " [" + r[1] + "]  " + r[2]));
+        for (String[] r : shown) w = Math.max(w, dev.stella.client.render.StellaFont.width(r[0] + " [" + r[1] + "]  " + r[2]));
         String empty = all.isEmpty() ? "No verified staff - edit config/stella/staff.json" : "No matches";
-        if (shown.isEmpty()) w = Math.max(w, mc.textRenderer.getWidth(empty));
+        if (shown.isEmpty()) w = Math.max(w, dev.stella.client.render.StellaFont.width(empty));
         int h = 12 + Math.max(1, shown.size()) * 10 - 2;
         card.draw(ctx, this, w, h);
         int px = card.padLeft(), py = card.pad();
         ctx.getMatrices().push();
         ctx.getMatrices().translate(px, py, 0);
-        ctx.drawText(mc.textRenderer, header, 0, 0, col(card.accent(headerColor.argb())), true);
+        dev.stella.client.render.StellaFont.draw(ctx, header, 0, 0, col(card.accent(headerColor.argb())), true);
         int y = 12;
         if (shown.isEmpty()) {
-            ctx.drawText(mc.textRenderer, empty, 0, y, col(0xFF8E879A), false);
+            dev.stella.client.render.StellaFont.draw(ctx, empty, 0, y, col(0xFF8E879A), false);
         }
         for (String[] r : shown) {
             int x = 0;
-            ctx.drawText(mc.textRenderer, r[0], x, y, col(nameColor.argb()), true);
-            x += mc.textRenderer.getWidth(r[0] + " ");
-            ctx.drawText(mc.textRenderer, "[" + r[1] + "]", x, y, col(rankColor.argb()), true);
-            x += mc.textRenderer.getWidth("[" + r[1] + "]  ");
-            ctx.drawText(mc.textRenderer, r[2], x, y, col(r[3].equals("1") ? 0xFF7CF29A : 0xFF6E6878), false);
+            dev.stella.client.render.StellaFont.draw(ctx, r[0], x, y, col(nameColor.argb()), true);
+            x += dev.stella.client.render.StellaFont.width(r[0] + " ");
+            dev.stella.client.render.StellaFont.draw(ctx, "[" + r[1] + "]", x, y, col(rankColor.argb()), true);
+            x += dev.stella.client.render.StellaFont.width("[" + r[1] + "]  ");
+            dev.stella.client.render.StellaFont.draw(ctx, r[2], x, y, col(r[3].equals("1") ? 0xFF7CF29A : 0xFF6E6878), false);
             y += 10;
         }
         ctx.getMatrices().pop();

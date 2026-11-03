@@ -84,7 +84,7 @@ public final class Render2D {
     public static void text(DrawContext ctx, String s, float x, float y, int color, boolean shadow) {
         ctx.getMatrices().push();
         ctx.getMatrices().translate(x, y, 0);
-        ctx.drawText(font(), s, 0, 0, color, shadow);
+        dev.stella.client.render.StellaFont.draw(ctx, s, 0, 0, color, shadow);
         ctx.getMatrices().pop();
     }
 
@@ -92,23 +92,23 @@ public final class Render2D {
         ctx.getMatrices().push();
         ctx.getMatrices().translate(x, y, 0);
         ctx.getMatrices().scale(scale, scale, 1);
-        ctx.drawText(font(), s, 0, 0, color, shadow);
+        dev.stella.client.render.StellaFont.draw(ctx, s, 0, 0, color, shadow);
         ctx.getMatrices().pop();
     }
 
     public static void centeredText(DrawContext ctx, String s, float cx, float y, int color, boolean shadow) {
-        text(ctx, s, cx - font().getWidth(s) / 2f, y, color, shadow);
+        text(ctx, s, cx - dev.stella.client.render.StellaFont.width(s) / 2f, y, color, shadow);
     }
 
     /** Label with translucent backing, centred at (cx, y). */
     public static void label(DrawContext ctx, String s, double cx, double y, float scale, int textColor, int bgColor) {
         TextRenderer f = font();
-        int w = f.getWidth(s);
+        int w = StellaFont.width(s);
         ctx.getMatrices().push();
         ctx.getMatrices().translate(cx, y, 0);
         ctx.getMatrices().scale(scale, scale, 1);
         if ((bgColor >>> 24) != 0) ctx.fill(-w / 2 - 2, -1, w / 2 + 2, 9, bgColor);
-        ctx.drawText(f, s, -w / 2, 0, textColor, true);
+        dev.stella.client.render.StellaFont.draw(ctx, s, -w / 2, 0, textColor, true);
         ctx.getMatrices().pop();
     }
 }

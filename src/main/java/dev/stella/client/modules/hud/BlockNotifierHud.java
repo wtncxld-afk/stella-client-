@@ -38,32 +38,32 @@ public class BlockNotifierHud extends HudElement {
         dev.stella.client.render.Render2D.roundRect(ctx, 0, 0, w, 12, 4, col(t.header()));
         ctx.fill(0, 11, w, 12, col(t.accent()));
         String head = (collapsed ? "▶ " : "▼ ") + "BLOCK NOTIFIER  " + list.size() + (bn.isEnabled() ? "" : "  (off)");
-        ctx.drawText(mc.textRenderer, head, 4, 2, col(t.text()), false);
+        dev.stella.client.render.StellaFont.draw(ctx, head, 4, 2, col(t.text()), false);
         int y = 12;
         if (!collapsed) {
             int max = rows.getInt();
             scroll = MathHelper.clamp(scroll, 0, Math.max(0, list.size() - max));
             if (list.isEmpty()) {
-                ctx.drawText(mc.textRenderer, "No detections yet", 3, y + 2, col(t.textDim()), false);
+                dev.stella.client.render.StellaFont.draw(ctx, "No detections yet", 3, y + 2, col(t.textDim()), false);
                 y += 11;
             }
             for (int i = scroll; i < Math.min(list.size(), scroll + max); i++) {
                 BlockNotifier.Detection d = list.get(i);
                 if (i % 2 == 1) ctx.fill(1, y, w - 1, y + 20, col(t.row()));
-                ctx.drawText(mc.textRenderer, trim(d.blockName(), w - 60), 3, y + 1, col(t.accentSoft()), false);
+                dev.stella.client.render.StellaFont.draw(ctx, trim(d.blockName(), w - 60), 3, y + 1, col(t.accentSoft()), false);
                 String dist = d.distanceText();
-                ctx.drawText(mc.textRenderer, dist, w - 3 - mc.textRenderer.getWidth(dist), y + 1, col(t.textDim()), false);
+                dev.stella.client.render.StellaFont.draw(ctx, dist, w - 3 - dev.stella.client.render.StellaFont.width(dist), y + 1, col(t.textDim()), false);
                 String line2 = d.x() + " " + d.y() + " " + d.z() + "  " + d.dimensionShort() + "  " + d.blockId();
                 ctx.getMatrices().push();
                 ctx.getMatrices().translate(3, y + 11, 0);
                 ctx.getMatrices().scale(0.75f, 0.75f, 1);
-                ctx.drawText(mc.textRenderer, trim(line2, (int) ((w - 6) / 0.75f)), 0, 0, col(t.text()), false);
+                dev.stella.client.render.StellaFont.draw(ctx, trim(line2, (int) ((w - 6) / 0.75f)), 0, 0, col(t.text()), false);
                 ctx.getMatrices().pop();
                 y += 20;
             }
             if (list.size() > max) {
                 String more = (scroll + 1) + "-" + Math.min(list.size(), scroll + max) + " of " + list.size() + " (scroll)";
-                ctx.drawText(mc.textRenderer, more, 3, y + 1, col(t.textDim()), false);
+                dev.stella.client.render.StellaFont.draw(ctx, more, 3, y + 1, col(t.textDim()), false);
                 y += 10;
             }
         }
@@ -71,7 +71,7 @@ public class BlockNotifierHud extends HudElement {
     }
 
     private String trim(String s, int w) {
-        return mc.textRenderer.getWidth(s) <= w ? s : mc.textRenderer.trimToWidth(s, w - 6) + "..";
+        return dev.stella.client.render.StellaFont.width(s) <= w ? s : dev.stella.client.render.StellaFont.trimToWidth(s, w - 6) + "..";
     }
 
     @Override

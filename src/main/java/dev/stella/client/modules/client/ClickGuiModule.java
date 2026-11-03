@@ -18,6 +18,8 @@ public class ClickGuiModule extends Module {
             .visibleWhen(() -> this.theme.is(Theme.CUSTOM)).onChange(this::applyTheme);
     public final BoolSetting blur = add(new BoolSetting("Blur Background", "Blur the game behind the GUI (uses the vanilla Menu Background Blurriness option)", true));
     public final BoolSetting descriptions = add(new BoolSetting("Descriptions", "Show module descriptions on hover", true));
+    public final BoolSetting customFont = add(new BoolSetting("Custom Font", "Use the Stella (TNH Xuong) font for the GUI and HUD", true))
+            .onChange(() -> dev.stella.client.render.StellaFont.setEnabled(this.customFont.isOn()));
     public final BoolSetting uppercase = add(new BoolSetting("Uppercase Names", "Compact uppercase module names", true));
 
     // ---- UI sounds
@@ -32,7 +34,10 @@ public class ClickGuiModule extends Module {
         keybind.set(GLFW.GLFW_KEY_RIGHT_SHIFT);
     }
 
-    public void applyTheme() { ThemeManager.select(theme.get(), customAccent.argb()); }
+    public void applyTheme() {
+        ThemeManager.select(theme.get(), customAccent.argb());
+        dev.stella.client.render.StellaFont.setEnabled(customFont.isOn());
+    }
 
     @Override public boolean keybindToggles() { return false; }
 

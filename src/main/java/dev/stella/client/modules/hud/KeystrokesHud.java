@@ -71,11 +71,11 @@ public class KeystrokesHud extends HudElement {
         ctx.getMatrices().scale(sc, sc, 1);
         int tc = col(textColor.argb());
         if (parts.length == 2) {
-            ctx.drawText(mc.textRenderer, parts[0], -mc.textRenderer.getWidth(parts[0]) / 2, -8, tc, true);
+            dev.stella.client.render.StellaFont.draw(ctx, parts[0], -dev.stella.client.render.StellaFont.width(parts[0]) / 2, -8, tc, true);
             ctx.getMatrices().scale(0.65f, 0.65f, 1);
-            ctx.drawText(mc.textRenderer, parts[1], -mc.textRenderer.getWidth(parts[1]) / 2, 2, col(ColorUtil.withAlpha(textColor.argb(), 0xC0)), false);
+            dev.stella.client.render.StellaFont.draw(ctx, parts[1], -dev.stella.client.render.StellaFont.width(parts[1]) / 2, 2, col(ColorUtil.withAlpha(textColor.argb(), 0xC0)), false);
         } else {
-            ctx.drawText(mc.textRenderer, label, -mc.textRenderer.getWidth(label) / 2, -4, tc, true);
+            dev.stella.client.render.StellaFont.draw(ctx, label, -dev.stella.client.render.StellaFont.width(label) / 2, -4, tc, true);
         }
         ctx.getMatrices().pop();
     }

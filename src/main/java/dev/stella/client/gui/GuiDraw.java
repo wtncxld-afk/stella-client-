@@ -63,7 +63,7 @@ public final class GuiDraw {
         ctx.getMatrices().push();
         ctx.getMatrices().translate(x, y, 0);
         ctx.getMatrices().scale(scale, scale, 1);
-        ctx.drawText(MinecraftClient.getInstance().textRenderer, s, 0, 0, color, false);
+        dev.stella.client.render.StellaFont.draw(ctx, s, 0, 0, color, false);
         ctx.getMatrices().pop();
     }
 
@@ -93,15 +93,14 @@ public final class GuiDraw {
     }
 
     public static void text(DrawContext ctx, String s, int x, int y, int color) {
-        ctx.drawText(MinecraftClient.getInstance().textRenderer, s, x, y, color, false);
+        dev.stella.client.render.StellaFont.draw(ctx, s, x, y, color, false);
     }
 
-    public static int width(String s) { return MinecraftClient.getInstance().textRenderer.getWidth(s); }
+    public static int width(String s) { return dev.stella.client.render.StellaFont.width(s); }
 
     public static String trim(String s, int w) {
-        var tr = MinecraftClient.getInstance().textRenderer;
-        if (tr.getWidth(s) <= w) return s;
-        return tr.trimToWidth(s, Math.max(0, w - tr.getWidth(".."))) + "..";
+        if (dev.stella.client.render.StellaFont.width(s) <= w) return s;
+        return dev.stella.client.render.StellaFont.trimToWidth(s, Math.max(0, w - dev.stella.client.render.StellaFont.width(".."))) + "..";
     }
 
     public static boolean in(double mx, double my, int x, int y, int w, int h) {

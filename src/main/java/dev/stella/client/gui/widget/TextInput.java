@@ -38,7 +38,6 @@ public class TextInput {
     public static TextInput focused() { return focused; }
 
     public void render(DrawContext ctx, int x, int y, int w, int h, int bg, int border, int textColor, int dimColor) {
-        var tr = MinecraftClient.getInstance().textRenderer;
         if (bg != 0) {
             dev.stella.client.render.Render2D.roundRect(ctx, x, y, w, h, 3, bg);
             if (isFocused()) dev.stella.client.render.Render2D.roundRect(ctx, x + 2, y + h - 1, w - 4, 1, 0.5f, border);
@@ -47,10 +46,10 @@ public class TextInput {
         int color = text.isEmpty() && !isFocused() ? dimColor : textColor;
         // keep the end of long text visible
         String visible = shown;
-        while (tr.getWidth(visible) > w - 6 && visible.length() > 1) visible = visible.substring(1);
-        ctx.drawText(tr, visible, x + 3, y + (h - 8) / 2, color, false);
+        while (dev.stella.client.render.StellaFont.width(visible) > w - 6 && visible.length() > 1) visible = visible.substring(1);
+        dev.stella.client.render.StellaFont.draw(ctx, visible, x + 3, y + (h - 8) / 2, color, false);
         if (isFocused() && (System.currentTimeMillis() / 500) % 2 == 0) {
-            int cx = x + 3 + tr.getWidth(visible);
+            int cx = x + 3 + dev.stella.client.render.StellaFont.width(visible);
             ctx.fill(cx, y + 2, cx + 1, y + h - 2, textColor);
         }
     }

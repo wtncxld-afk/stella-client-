@@ -22,20 +22,20 @@ public class PlayerDetectorHud extends HudElement {
         PlayerDetector pd = ModuleManager.get(PlayerDetector.class);
         List<PlayerDetector.Seen> list = pd.current();
         String head = "PLAYERS " + list.size() + (pd.isEnabled() ? "" : " (detector off)");
-        int w = mc.textRenderer.getWidth(head);
+        int w = dev.stella.client.render.StellaFont.width(head);
         int n = Math.min(list.size(), maxRows.getInt());
-        for (int i = 0; i < n; i++) w = Math.max(w, mc.textRenderer.getWidth(list.get(i).name() + "  " + (int) list.get(i).distance() + "m"));
+        for (int i = 0; i < n; i++) w = Math.max(w, dev.stella.client.render.StellaFont.width(list.get(i).name() + "  " + (int) list.get(i).distance() + "m"));
         int h = 9 + n * 10;
         card.draw(ctx, this, w, h);
         int px = card.padLeft(), py = card.pad();
         ctx.getMatrices().push();
         ctx.getMatrices().translate(px, py, 0);
-        ctx.drawText(mc.textRenderer, head, 0, 0, col(card.accent(headerColor.argb())), true);
+        dev.stella.client.render.StellaFont.draw(ctx, head, 0, 0, col(card.accent(headerColor.argb())), true);
         for (int i = 0; i < n; i++) {
             PlayerDetector.Seen s = list.get(i);
-            ctx.drawText(mc.textRenderer, s.name(), 0, 11 + i * 10, col(textColor.argb()), true);
+            dev.stella.client.render.StellaFont.draw(ctx, s.name(), 0, 11 + i * 10, col(textColor.argb()), true);
             String d = (int) s.distance() + "m";
-            ctx.drawText(mc.textRenderer, d, w - mc.textRenderer.getWidth(d), 11 + i * 10, col(0xFF8E879A), true);
+            dev.stella.client.render.StellaFont.draw(ctx, d, w - dev.stella.client.render.StellaFont.width(d), 11 + i * 10, col(0xFF8E879A), true);
         }
         ctx.getMatrices().pop();
         setSize(w + px + card.pad(), h + py * 2);

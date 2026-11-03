@@ -146,3 +146,8 @@ src/main/java/dev/stella/client/
   notification/            toast queue
   mixin/                   Minecraft hooks
 ```
+
+## Credits
+
+* UI font: **TNH Xuong** by Truong Nguyen Huy / Moc Studio, licensed under the SIL Open Font License 1.1
+  (`src/main/resources/assets/stella/font/XUONG-OFL.txt`). Toggle it in the THEMES panel → *Custom Font*.

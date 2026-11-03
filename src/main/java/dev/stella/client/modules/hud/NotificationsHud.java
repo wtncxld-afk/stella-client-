@@ -52,9 +52,9 @@ public class NotificationsHud extends HudElement {
             Render2D.roundRect(ctx, ox, y, w, h, 5, col(ColorUtil.mulAlpha(background.argb(), fade)));
             // icon bubble
             Render2D.roundRect(ctx, ox + 5, y + 5, 18, 18, 9, col(ColorUtil.mulAlpha(ColorUtil.withAlpha(accent, 0x40), fade)));
-            ctx.drawText(mc.textRenderer, icon, (int) (ox + 14 - mc.textRenderer.getWidth(icon) / 2f), y + 10, col(ColorUtil.mulAlpha(accent, fade)), false);
-            ctx.drawText(mc.textRenderer, trim(n.title(), w - 34), (int) ox + 28, y + 5, col(ColorUtil.mulAlpha(accent, fade)), true);
-            ctx.drawText(mc.textRenderer, trim(n.message(), w - 34), (int) ox + 28, y + 16, col(ColorUtil.mulAlpha(textColor.argb(), fade)), false);
+            dev.stella.client.render.StellaFont.draw(ctx, icon, (int) (ox + 14 - dev.stella.client.render.StellaFont.width(icon) / 2f), y + 10, col(ColorUtil.mulAlpha(accent, fade)), false);
+            dev.stella.client.render.StellaFont.draw(ctx, trim(n.title(), w - 34), (int) ox + 28, y + 5, col(ColorUtil.mulAlpha(accent, fade)), true);
+            dev.stella.client.render.StellaFont.draw(ctx, trim(n.message(), w - 34), (int) ox + 28, y + 16, col(ColorUtil.mulAlpha(textColor.argb(), fade)), false);
             // progress line
             Render2D.rect(ctx, ox + 5, y + h - 2, (w - 10) * (1 - p), 1, col(ColorUtil.mulAlpha(accent, fade * 0.8)));
             y += h + 4;
@@ -63,7 +63,7 @@ public class NotificationsHud extends HudElement {
     }
 
     private String trim(String s, int w) {
-        if (mc.textRenderer.getWidth(s) <= w) return s;
-        return mc.textRenderer.trimToWidth(s, w - 6) + "..";
+        if (dev.stella.client.render.StellaFont.width(s) <= w) return s;
+        return dev.stella.client.render.StellaFont.trimToWidth(s, w - 6) + "..";
     }
 }

@@ -52,15 +52,15 @@ public class CoordinatesHud extends HudElement {
             out.add(new String[]{nether ? "OVERWORLD " : "NETHER ", MathHelper.floor(x * f) + ", " + MathHelper.floor(z * f)});
         }
         int w = 0;
-        for (String[] r : out) w = Math.max(w, mc.textRenderer.getWidth(r[0] + r[1]));
+        for (String[] r : out) w = Math.max(w, dev.stella.client.render.StellaFont.width(r[0] + r[1]));
         int h = out.size() * 10 - 2;
         card.draw(ctx, this, w, h);
         int px = card.padLeft(), py = card.pad();
         int lc = col(card.accent(labelColor.argb())), vc = col(valueColor.argb());
         for (int i = 0; i < out.size(); i++) {
             String[] r = out.get(i);
-            ctx.drawText(mc.textRenderer, r[0], px, py + i * 10, lc, true);
-            ctx.drawText(mc.textRenderer, r[1], px + mc.textRenderer.getWidth(r[0]), py + i * 10, vc, true);
+            dev.stella.client.render.StellaFont.draw(ctx, r[0], px, py + i * 10, lc, true);
+            dev.stella.client.render.StellaFont.draw(ctx, r[1], px + dev.stella.client.render.StellaFont.width(r[0]), py + i * 10, vc, true);
         }
         setSize(w + px + card.pad(), h + py * 2);
     }
