@@ -26,8 +26,9 @@ import java.util.List;
 public class ClickGuiScreen extends Screen {
     private final List<CategoryPanel> panels = new ArrayList<>();
     private final List<SettingsWindow> windows = new ArrayList<>();
-    private final SidePanel side = new SidePanel();
-    private final TextInput search = new TextInput("", 32, "Search modules...  (Ctrl+F)");
+    private final ThemesPanel side = new ThemesPanel();
+    private final ConfigsPopup configs = new ConfigsPopup();
+    private final TextInput search = new TextInput("", 32, "SEARCH MODULES...");
     private final Animation open = new Animation(0, 12).target(1);
     private Module hovered;
     private boolean closing;
@@ -40,14 +41,21 @@ public class ClickGuiScreen extends Screen {
     @Override
     protected void init() {
         if (panels.isEmpty()) {
-            int x = 6, y = 30;
-            int usable = width - SidePanel.WIDTH - 16;
+            int x = 6, y = 6;
+            int usable = width - ThemesPanel.WIDTH - 14;
+            int searchX = (width - ThemesPanel.WIDTH) / 2 - 70;
             for (Category c : Category.values()) {
-                if (x + CategoryPanel.WIDTH > usable) { x = 6; y += 140; }
-                panels.add(new CategoryPanel(c, x, y));
+                if (x + CategoryPanel.WIDTH > usable) { x = 6; y += 150; }
+                // leave room for the search bar in the top-centre column
+                if (y < 24 && x < searchX + 140 && x + CategoryPanel.WIDTH > searchX) {
+                    panels.add(new CategoryPanel(c, x, 26));
+                } else {
+                    panels.add(new CategoryPanel(c, x, y));
+                }
                 x += CategoryPanel.WIDTH + 5;
             }
             panels.forEach(p -> p.filter(""));
+            dev.stella.client.util.Sounds.open(true);
         }
     }
 
@@ -55,11 +63,11 @@ public class ClickGuiScreen extends Screen {
 
     @Override
     public void renderBackground(DrawContext ctx, int mouseX, int mouseY, float delta) {
-        // Custom dim instead of vanilla blur (keeps the GUI crisp and cheap).
-        if (ModuleManager.get(ClickGuiModule.class).dimBackground.isOn()) {
-            int a = (int) (0x90 * open.get());
-            ctx.fillGradient(0, 0, width, height, (a << 24) | 0x05030A, (a << 24) | 0x140A24);
+        if (client != null && client.world != null && ModuleManager.get(ClickGuiModule.class).blur.isOn()) {
+            this.applyBlur();
         }
+        int a = (int) (0x70 * open.get());
+        ctx.fillGradient(0, 0, width, height, (a << 24) | 0x05030A, (Math.min(255, a + 0x20) << 24) | 0x120822);
     }
 
     public void setHovered(Module m) { this.hovered = m; }
@@ -70,7 +78,7 @@ public class ClickGuiScreen extends Screen {
             if (w.module == m) { windows.remove(w); return; }
         }
         int wx = mx + 12;
-        if (wx + SettingsWindow.WIDTH > width - SidePanel.WIDTH - 8) wx = mx - SettingsWindow.WIDTH - 12;
+        if (wx + SettingsWindow.WIDTH > width - ThemesPanel.WIDTH - 8) wx = mx - SettingsWindow.WIDTH - 12;
         windows.add(new SettingsWindow(m, wx, Math.max(4, my - 20)));
         if (windows.size() > 4) windows.remove(0);
     }
@@ -91,9 +99,13 @@ public class ClickGuiScreen extends Screen {
 
         ctx.getMatrices().push();
         ctx.getMatrices().translate(0, slide, 0);
-        // search bar
-        int sw = 180, sx = (width - SidePanel.WIDTH) / 2 - sw / 2, sy = 8;
-        search.render(ctx, sx, sy, sw, 14, ColorUtil.mulAlpha(t.background(), a), t.accent(), ColorUtil.mulAlpha(t.text(), a), ColorUtil.mulAlpha(t.textDim(), a));
+        // search bar (rounded pill with magnifier)
+        int sw = 140, sx = (width - ThemesPanel.WIDTH) / 2 - sw / 2, sy = 6;
+        dev.stella.client.render.Render2D.shadow(ctx, sx, sy, sw, 15, 7.5f, 3, ColorUtil.mulAlpha(0x80000000, a));
+        dev.stella.client.render.Render2D.roundRect(ctx, sx, sy, sw, 15, 7.5f, ColorUtil.mulAlpha(t.header(), a));
+        if (search.isFocused()) dev.stella.client.render.Render2D.roundRect(ctx, sx, sy + 14, sw, 1, 0.5f, ColorUtil.mulAlpha(t.accent(), a));
+        GuiDraw.magnifier(ctx, sx + 8, sy + 4, ColorUtil.mulAlpha(t.textDim(), a));
+        search.render(ctx, sx + 16, sy + 1, sw - 22, 13, 0, 0, ColorUtil.mulAlpha(t.text(), a), ColorUtil.mulAlpha(t.textDim(), a));
         boolean searching = !search.get().isBlank();
         for (CategoryPanel p : panels) {
             if (searching && !p.hasMatches()) continue;
@@ -102,7 +114,8 @@ public class ClickGuiScreen extends Screen {
         for (CategoryPanel p : panels) if (searching && !p.hasMatches()) p.render(ctx, mx, my - slide, height, a, true, this);
         ctx.getMatrices().pop();
 
-        side.render(ctx, mx, my, width, height, a);
+        side.render(ctx, mx, my, width, height, a, this);
+        configs.render(ctx, mx, my, width, height, a);
         windows.removeIf(SettingsWindow::isClosed);
         for (SettingsWindow w : windows) w.render(ctx, mx, my, width, height);
 
@@ -137,9 +150,10 @@ public class ClickGuiScreen extends Screen {
             }
         }
         TextInput.unfocusAll();
+        if (configs.mouseClicked(mx, my)) return true;
         if (side.mouseClicked(mx, my, width, height)) return true;
-        int sw = 180, sx = (width - SidePanel.WIDTH) / 2 - sw / 2;
-        if (GuiDraw.in(mx, my, sx, 8, sw, 14)) {
+        int sw = 140, sx = (width - ThemesPanel.WIDTH) / 2 - sw / 2;
+        if (GuiDraw.in(mx, my, sx, 6, sw, 15)) {
             if (button == 1) { search.set(""); panels.forEach(p -> p.filter("")); }
             search.focus();
             return true;
@@ -156,6 +170,7 @@ public class ClickGuiScreen extends Screen {
 
     @Override
     public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
+        if (side.mouseDragged(mx)) return true;
         for (SettingsWindow w : windows) if (w.mouseDragged(mx, my)) return true;
         for (CategoryPanel p : panels) if (p.mouseDragged(mx, my)) return true;
         return super.mouseDragged(mx, my, button, dx, dy);
@@ -164,6 +179,7 @@ public class ClickGuiScreen extends Screen {
     @Override
     public boolean mouseReleased(double mx, double my, int button) {
         windows.forEach(SettingsWindow::mouseReleased);
+        side.mouseReleased();
         panels.forEach(CategoryPanel::mouseReleased);
         return super.mouseReleased(mx, my, button);
     }
@@ -180,6 +196,7 @@ public class ClickGuiScreen extends Screen {
     public boolean keyPressed(int key, int scan, int mods) {
         for (SettingsWindow w : windows) if (w.keyPressed(key)) return true;
         if (side.keyPressed(key)) return true;
+        if (configs.keyPressed(key)) return true;
         TextInput f = TextInput.focused();
         if (f != null && f.keyPressed(key, mods)) return true;
         if (key == GLFW.GLFW_KEY_F && (mods & GLFW.GLFW_MOD_CONTROL) != 0) { search.focus(); return true; }
@@ -194,7 +211,7 @@ public class ClickGuiScreen extends Screen {
 
     @Override
     public boolean charTyped(char c, int mods) {
-        if (side.charTyped(c)) return true;
+        if (configs.charTyped(c)) return true;
         TextInput f = TextInput.focused();
         if (f != null) return f.charTyped(c);
         if (Character.isLetterOrDigit(c)) {
@@ -208,6 +225,7 @@ public class ClickGuiScreen extends Screen {
     public void close() {
         if (closing) return;
         closing = true;
+        dev.stella.client.util.Sounds.open(false);
         TextInput.unfocusAll();
         open.target(0);
         SettingsDirty.mark();

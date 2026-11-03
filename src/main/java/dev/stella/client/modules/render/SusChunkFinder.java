@@ -1,4 +1,4 @@
-package dev.stella.client.modules.world;
+package dev.stella.client.modules.render;
 
 import dev.stella.client.module.Category;
 import dev.stella.client.module.Module;
@@ -10,7 +10,10 @@ import dev.stella.client.render.Render3D;
 import dev.stella.client.scan.BlockScanner;
 import dev.stella.client.scan.ScanTarget;
 import dev.stella.client.setting.BoolSetting;
+import dev.stella.client.setting.ColorSetting;
 import dev.stella.client.setting.ModeSetting;
+import dev.stella.client.render.Tracers;
+import dev.stella.client.util.ColorUtil;
 import dev.stella.client.setting.NumberSetting;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -30,11 +33,13 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Heuristic scanner for world features that are <em>consistent with</em> player
- * activity. Findings are hints, never proof: every finding carries the reasons
- * and a confidence level, and natural structures can trigger false positives.
+ * Sus Chunk Finder: flags chunks whose loaded blocks are <em>consistent with</em>
+ * player activity (redstone builds, fully grown amethyst, sideways deepslate)
+ * and draws a red box over each suspected chunk. Findings are hints, never
+ * proof: every chunk carries its reasons and a confidence level, and natural
+ * structures can trigger false positives.
  */
-public class PatternScanner extends Module {
+public class SusChunkFinder extends Module {
     public enum Confidence { LOW, MEDIUM, HIGH }
 
     public record Finding(String type, BlockPos min, BlockPos max, int count, Confidence confidence, List<String> reasons) {
@@ -49,6 +54,15 @@ public class PatternScanner extends Module {
     private final BoolSetting deepslate = add(new BoolSetting("Rotated Deepslate", "Look for deepslate placed sideways", true));
     private final NumberSetting range = add(new NumberSetting("Range", "Analysis radius in blocks", 128, 16, 512, 16));
     private final ModeSetting minConfidence = add(new ModeSetting("Min Confidence", "Hide findings below this level", "Low", "Low", "Medium", "High"));
+    private final ModeSetting boxMode = add(new ModeSetting("Box Mode", "Chunk column around the detections, flat square at a Y-level, or the full chunk height",
+            "Column", "Column", "Flat", "Full Height"));
+    private final NumberSetting flatY = add(new NumberSetting("Flat Y", "Y-level of the flat square (Flat mode)", 64, -64, 320, 1)).visibleWhen(() -> boxMode.is("Flat"));
+    private final BoolSetting flatAtPlayer = add(new BoolSetting("Flat At Player Y", "Put the flat square at your feet", true)).visibleWhen(() -> boxMode.is("Flat"));
+    private final ColorSetting color = add(new ColorSetting("Color", "Chunk box colour", 0xFFFF2B2B));
+    private final BoolSetting confidenceFill = add(new BoolSetting("Confidence Opacity", "Stronger red for higher confidence", true));
+    private final BoolSetting showBlocks = add(new BoolSetting("Show Blocks", "Also outline the exact suspicious blocks", true));
+    private final BoolSetting tracers = add(new BoolSetting("Tracers", "Lines to each sus chunk", false));
+    private final NumberSetting tracerWidth = add(new NumberSetting("Tracer Width", "", 1.5, 0.5, 3, 0.5)).visibleWhen(tracers::isOn);
     private final BoolSetting labels = add(new BoolSetting("Labels", "Show reason and confidence labels", true));
     private final BoolSetting notify = add(new BoolSetting("Notify", "Notify on new Medium/High findings", true));
 
@@ -66,12 +80,12 @@ public class PatternScanner extends Module {
             Blocks.HOPPER, Blocks.DROPPER, Blocks.DISPENSER, Blocks.LEVER, Blocks.DAYLIGHT_DETECTOR, Blocks.TARGET,
             Blocks.SLIME_BLOCK, Blocks.HONEY_BLOCK, Blocks.CRAFTER);
 
-    public PatternScanner() {
-        super("Pattern Scanner", "Flags suspicious redstone, grown amethyst and rotated deepslate (hints, not proof)", Category.WORLD);
-        redstoneTarget = BlockScanner.register(new ScanTarget("Pattern/Redstone", s -> REDSTONE.contains(s.getBlock()), () -> isEnabled() && redstone.isOn()));
-        clusterTarget = BlockScanner.register(new ScanTarget("Pattern/Cluster", s -> s.isOf(Blocks.AMETHYST_CLUSTER), () -> isEnabled() && amethyst.isOn()));
-        budTarget = BlockScanner.register(new ScanTarget("Pattern/Buds", s -> s.isOf(Blocks.SMALL_AMETHYST_BUD) || s.isOf(Blocks.MEDIUM_AMETHYST_BUD) || s.isOf(Blocks.LARGE_AMETHYST_BUD), () -> isEnabled() && amethyst.isOn()));
-        deepslateTarget = BlockScanner.register(new ScanTarget("Pattern/Deepslate",
+    public SusChunkFinder() {
+        super("Sus Chunk Finder", "Red boxes over chunks with suspicious redstone, grown amethyst or sideways deepslate (hints, not proof)", Category.RENDER);
+        redstoneTarget = BlockScanner.register(new ScanTarget("Sus/Redstone", s -> REDSTONE.contains(s.getBlock()), () -> isEnabled() && redstone.isOn()));
+        clusterTarget = BlockScanner.register(new ScanTarget("Sus/Cluster", s -> s.isOf(Blocks.AMETHYST_CLUSTER), () -> isEnabled() && amethyst.isOn()));
+        budTarget = BlockScanner.register(new ScanTarget("Sus/Buds", s -> s.isOf(Blocks.SMALL_AMETHYST_BUD) || s.isOf(Blocks.MEDIUM_AMETHYST_BUD) || s.isOf(Blocks.LARGE_AMETHYST_BUD), () -> isEnabled() && amethyst.isOn()));
+        deepslateTarget = BlockScanner.register(new ScanTarget("Sus/Deepslate",
                 s -> s.isOf(Blocks.DEEPSLATE) && s.contains(Properties.AXIS) && s.get(Properties.AXIS) != Direction.Axis.Y,
                 () -> isEnabled() && deepslate.isOn()));
         redstone.onChange(redstoneTarget::invalidate);
@@ -103,7 +117,7 @@ public class PatternScanner extends Module {
         if (notify.isOn()) {
             for (Finding f : out) {
                 if (f.confidence == Confidence.LOW || !notified.add(f.key())) continue;
-                NotificationManager.post("Pattern Scanner",
+                NotificationManager.post("Sus Chunk Finder",
                         f.type + " (" + f.confidence.name().toLowerCase() + ") at " + (int) f.center().x + " " + (int) f.center().y + " " + (int) f.center().z,
                         f.confidence == Confidence.HIGH ? Notification.Type.WARNING : Notification.Type.INFO);
             }
@@ -179,32 +193,89 @@ public class PatternScanner extends Module {
         }
     }
 
-    private static int color(Confidence c) {
-        return switch (c) {
-            case HIGH -> 0xFFF2777A;
-            case MEDIUM -> 0xFFF5D76E;
-            case LOW -> 0xFF8FB3FF;
-        };
+    /** One suspected chunk with all of its findings. */
+    public record SusChunk(int cx, int cz, int minY, int maxY, Confidence confidence, List<Finding> findings) {}
+
+    private List<SusChunk> chunks() {
+        Map<Long, List<Finding>> byChunk = new HashMap<>();
+        for (Finding f : findings) {
+            Vec3d c = f.center();
+            long key = net.minecraft.util.math.ChunkPos.toLong((int) Math.floor(c.x) >> 4, (int) Math.floor(c.z) >> 4);
+            byChunk.computeIfAbsent(key, k -> new ArrayList<>()).add(f);
+        }
+        List<SusChunk> out = new ArrayList<>();
+        for (Map.Entry<Long, List<Finding>> e : byChunk.entrySet()) {
+            int minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
+            Confidence best = Confidence.LOW;
+            for (Finding f : e.getValue()) {
+                minY = Math.min(minY, f.min.getY());
+                maxY = Math.max(maxY, f.max.getY());
+                if (f.confidence.ordinal() > best.ordinal()) best = f.confidence;
+            }
+            // several independent signals in one chunk raise confidence
+            if (e.getValue().size() >= 2 && best == Confidence.MEDIUM) best = Confidence.HIGH;
+            out.add(new SusChunk(net.minecraft.util.math.ChunkPos.getPackedX(e.getKey()), net.minecraft.util.math.ChunkPos.getPackedZ(e.getKey()),
+                    minY, maxY, best, e.getValue()));
+        }
+        return out;
+    }
+
+    private double alphaFor(Confidence c) {
+        if (!confidenceFill.isOn()) return 1;
+        return switch (c) { case HIGH -> 1.0; case MEDIUM -> 0.7; case LOW -> 0.45; };
+    }
+
+    private Box chunkBox(SusChunk c) {
+        double x1 = c.cx << 4, z1 = c.cz << 4;
+        double y1, y2;
+        switch (boxMode.get()) {
+            case "Flat" -> {
+                double y = flatAtPlayer.isOn() && mc.player != null ? Math.floor(mc.player.getY()) : flatY.get();
+                y1 = y; y2 = y + 0.05;
+            }
+            case "Full Height" -> { y1 = mc.world.getBottomY(); y2 = mc.world.getTopYInclusive() + 1; }
+            default -> { y1 = c.minY - 1; y2 = c.maxY + 3; }
+        }
+        return new Box(x1, y1, z1, x1 + 16, y2, z1 + 16);
     }
 
     @Override
     public void onRender3D(Render3D r) {
-        for (Finding f : findings) {
-            Box box = new Box(f.min.getX(), f.min.getY(), f.min.getZ(), f.max.getX() + 1, f.max.getY() + 1, f.max.getZ() + 1).expand(0.05);
-            int c = color(f.confidence);
-            r.box(box, c, (c & 0xFFFFFF) | 0x20000000, true, true);
+        if (!inGame()) return;
+        r.setLineWidth(2.5f);
+        for (SusChunk c : chunks()) {
+            double a = alphaFor(c.confidence);
+            int outline = ColorUtil.mulAlpha(color.argb(), Math.max(0.6, a));
+            int fill = ColorUtil.withAlpha(color.argb(), (int) (0x46 * a));
+            r.box(chunkBox(c), outline, fill, true, true);
+            if (showBlocks.isOn()) {
+                for (Finding f : c.findings) {
+                    Box b = new Box(f.min.getX(), f.min.getY(), f.min.getZ(), f.max.getX() + 1, f.max.getY() + 1, f.max.getZ() + 1).expand(0.03);
+                    r.box(b, ColorUtil.withAlpha(color.argb(), 0xE0), 0, true, false);
+                }
+            }
         }
     }
 
     @Override
     public void onRenderOverlay(DrawContext ctx, float tickDelta) {
-        if (!labels.isOn() || !inGame()) return;
-        for (Finding f : findings) {
-            Vec3d s = Projection.toScreen(f.center());
+        if (!inGame()) return;
+        double[] origin = Tracers.origin("Crosshair", 50, 50);
+        for (SusChunk c : chunks()) {
+            Box b = chunkBox(c);
+            Vec3d center = new Vec3d((b.minX + b.maxX) / 2, Math.min(b.maxY, Math.max(b.minY, mc.player.getY())) + 1, (b.minZ + b.maxZ) / 2);
+            if (tracers.isOn()) Tracers.draw(ctx, origin, center, tracerWidth.getFloat(), ColorUtil.mulAlpha(color.argb(), 0.85));
+            if (!labels.isOn()) continue;
+            Vec3d s = Projection.toScreen(center.add(0, 1.5, 0));
             if (!Projection.onScreen(s)) continue;
-            int dist = (int) Math.sqrt(mc.player.squaredDistanceTo(f.center()));
-            Render2D.label(ctx, f.type + " - " + f.confidence.name() + " - " + dist + "m", s.x, s.y - 10, 0.8f, color(f.confidence), 0xA0000000);
-            Render2D.label(ctx, f.reasons.get(0), s.x, s.y, 0.65f, 0xFFE6E1EE, 0xA0000000);
+            int dist = (int) Math.sqrt(mc.player.squaredDistanceTo(center));
+            Render2D.label(ctx, "SUS CHUNK  " + c.confidence.name() + "  " + dist + "m", s.x, s.y - 11, 0.85f, 0xFFFF5555, 0xB0000000);
+            int line = 0;
+            for (Finding f : c.findings) {
+                if (line >= 3) break;
+                Render2D.label(ctx, f.type + ": " + f.reasons.get(0), s.x, s.y + line * 8, 0.6f, 0xFFF2E6E6, 0xB0000000);
+                line++;
+            }
         }
     }
 }

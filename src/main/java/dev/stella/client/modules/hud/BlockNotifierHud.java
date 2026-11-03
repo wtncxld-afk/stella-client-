@@ -33,22 +33,23 @@ public class BlockNotifierHud extends HudElement {
         BlockNotifier bn = notifier();
         List<BlockNotifier.Detection> list = bn.detections();
         int w = widthSetting.getInt();
-        ctx.fill(0, 0, w, 12, col(t.header()));
+        dev.stella.client.render.Render2D.shadow(ctx, 0, 0, w, height, 4, 3, col(0x60000000));
+        dev.stella.client.render.Render2D.roundRect(ctx, 0, 0, w, height, 4, col(t.background()));
+        dev.stella.client.render.Render2D.roundRect(ctx, 0, 0, w, 12, 4, col(t.header()));
         ctx.fill(0, 11, w, 12, col(t.accent()));
-        String head = (collapsed ? "▶ " : "▼ ") + "Block Notifier  " + list.size() + (bn.isEnabled() ? "" : "  (off)");
-        ctx.drawText(mc.textRenderer, head, 3, 2, col(t.text()), false);
+        String head = (collapsed ? "▶ " : "▼ ") + "BLOCK NOTIFIER  " + list.size() + (bn.isEnabled() ? "" : "  (off)");
+        ctx.drawText(mc.textRenderer, head, 4, 2, col(t.text()), false);
         int y = 12;
         if (!collapsed) {
             int max = rows.getInt();
             scroll = MathHelper.clamp(scroll, 0, Math.max(0, list.size() - max));
             if (list.isEmpty()) {
-                ctx.fill(0, y, w, y + 11, col(t.background()));
                 ctx.drawText(mc.textRenderer, "No detections yet", 3, y + 2, col(t.textDim()), false);
                 y += 11;
             }
             for (int i = scroll; i < Math.min(list.size(), scroll + max); i++) {
                 BlockNotifier.Detection d = list.get(i);
-                ctx.fill(0, y, w, y + 20, col(i % 2 == 0 ? t.background() : t.row()));
+                if (i % 2 == 1) ctx.fill(1, y, w - 1, y + 20, col(t.row()));
                 ctx.drawText(mc.textRenderer, trim(d.blockName(), w - 60), 3, y + 1, col(t.accentSoft()), false);
                 String dist = d.distanceText();
                 ctx.drawText(mc.textRenderer, dist, w - 3 - mc.textRenderer.getWidth(dist), y + 1, col(t.textDim()), false);
@@ -62,7 +63,6 @@ public class BlockNotifierHud extends HudElement {
             }
             if (list.size() > max) {
                 String more = (scroll + 1) + "-" + Math.min(list.size(), scroll + max) + " of " + list.size() + " (scroll)";
-                ctx.fill(0, y, w, y + 10, col(t.header()));
                 ctx.drawText(mc.textRenderer, more, 3, y + 1, col(t.textDim()), false);
                 y += 10;
             }

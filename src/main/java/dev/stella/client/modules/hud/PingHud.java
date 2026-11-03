@@ -3,7 +3,7 @@ package dev.stella.client.modules.hud;
 import net.minecraft.client.network.PlayerListEntry;
 
 public class PingHud extends TextHud {
-    public PingHud() { super("Ping HUD", "Your latency as reported by the server's player list", -4, 35, true); }
+    public PingHud() { super("Ping HUD", "Your latency as reported by the server's player list", -4, 45, true); }
     @Override protected String label() { return "Ping"; }
 
     @Override

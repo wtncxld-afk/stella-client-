@@ -5,6 +5,9 @@ import dev.stella.client.module.Module;
 import dev.stella.client.render.Projection;
 import dev.stella.client.render.Render2D;
 import dev.stella.client.render.Render3D;
+import dev.stella.client.render.Tracers;
+import dev.stella.client.setting.ModeSetting;
+import dev.stella.client.util.ColorUtil;
 import dev.stella.client.scan.BlockScanner;
 import dev.stella.client.scan.ScanTarget;
 import dev.stella.client.setting.BlockListSetting;
@@ -54,6 +57,17 @@ public class StorageESP extends Module {
     private final BoolSetting labels = add(new BoolSetting("Labels", "Show block name", false));
     private final BoolSetting distance = add(new BoolSetting("Distance", "Show distance in labels", true)).visibleWhen(labels::isOn);
     private final NumberSetting maxRendered = add(new NumberSetting("Max Rendered", "Cap on highlighted containers", 600, 20, 5000, 20));
+    // tracers
+    private final BoolSetting tracers = add(new BoolSetting("Tracers", "Lines from the screen to each highlighted block", false));
+    private final ModeSetting tracerOrigin = add(new ModeSetting("Tracer Origin", "Screen point tracers start from",
+            "Crosshair", Tracers.ORIGINS)).visibleWhen(tracers::isOn);
+    private final NumberSetting originX = add(new NumberSetting("Origin X %", "", 50, 0, 100, 1)).visibleWhen(() -> tracers.isOn() && tracerOrigin.is("Custom"));
+    private final NumberSetting originY = add(new NumberSetting("Origin Y %", "", 50, 0, 100, 1)).visibleWhen(() -> tracers.isOn() && tracerOrigin.is("Custom"));
+    private final BoolSetting tracerBlockColor = add(new BoolSetting("Tracer Uses Block Color", "Colour tracers like their box", true)).visibleWhen(tracers::isOn);
+    private final ColorSetting tracerColor = add(new ColorSetting("Tracer Color", "", 0xC0D8B4FE)).visibleWhen(() -> tracers.isOn() && !tracerBlockColor.isOn());
+    private final NumberSetting tracerWidth = add(new NumberSetting("Tracer Width", "", 1, 0.5, 3, 0.5)).visibleWhen(tracers::isOn);
+    private final NumberSetting maxTracers = add(new NumberSetting("Max Tracers", "Tracers to the nearest N blocks", 40, 1, 300, 1)).visibleWhen(tracers::isOn);
+    private final BoolSetting tracerFade = add(new BoolSetting("Tracer Distance Fade", "Fade tracers to far blocks", true)).visibleWhen(tracers::isOn);
 
     private final ScanTarget extraTarget;
     private List<Entry> cache = new ArrayList<>();
@@ -120,7 +134,14 @@ public class StorageESP extends Module {
 
     @Override
     public void onRenderOverlay(DrawContext ctx, float tickDelta) {
-        if (!labels.isOn() || !inGame()) return;
+        if (!inGame()) return;
+        if (tracers.isOn()) {
+            java.util.Map<BlockPos, Integer> colors = new java.util.HashMap<>();
+            List<BlockPos> targets = new ArrayList<>();
+            for (Entry e : cache) { targets.add(e.pos); colors.put(e.pos, e.color); }
+            drawTracers(ctx, targets, p -> colors.getOrDefault(p, otherColor.argb()));
+        }
+        if (!labels.isOn()) return;
         int n = 0;
         for (Entry e : cache) {
             if (n++ > 80) break;
@@ -129,6 +150,21 @@ public class StorageESP extends Module {
             String text = e.label;
             if (distance.isOn()) text += " " + (int) Math.sqrt(e.pos.getSquaredDistance(mc.player.getPos())) + "m";
             Render2D.label(ctx, text, s.x, s.y, 0.75f, e.color, 0x90000000);
+        }
+    }
+
+    private void drawTracers(DrawContext ctx, java.util.List<BlockPos> targets, java.util.function.Function<BlockPos, Integer> colorOf) {
+        if (!tracers.isOn() || !inGame()) return;
+        double[] origin = Tracers.origin(tracerOrigin.get(), originX.get(), originY.get());
+        int n = 0;
+        for (BlockPos p : targets) {
+            if (n++ >= maxTracers.getInt()) break;
+            int c = tracerBlockColor.isOn() ? (colorOf.apply(p) & 0xFFFFFF) | 0xD0000000 : tracerColor.argb();
+            if (tracerFade.isOn()) {
+                double d = Math.sqrt(p.getSquaredDistance(mc.player.getPos()));
+                c = ColorUtil.mulAlpha(c, 1 - 0.7 * Math.min(1, d / range.get()));
+            }
+            Tracers.draw(ctx, origin, Vec3d.ofCenter(p), tracerWidth.getFloat(), c);
         }
     }
 }

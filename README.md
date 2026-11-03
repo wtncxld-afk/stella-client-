@@ -33,12 +33,13 @@ enabled, takes screenshots, and fails if anything errors.
 
 | Action | Default |
 |---|---|
-| Open / close ClickGUI | **Right Shift** (change it in the right-hand panel → *GUI Key*) |
+| Open / close ClickGUI | **Right Shift** (change it in the THEMES panel → *GUI Key*) |
 | Toggle a module | Left-click its row |
 | Module settings | Click the ⚙ gear or right-click the row |
 | Collapse a panel | Right-click the panel header |
 | Search | Click the search bar, press **Ctrl+F**, or just start typing |
-| HUD editor | Right-hand panel → *HUD Editor*, or the *HUD Editor* module keybind |
+| HUD editor | THEMES panel → *HUD Editor*, or the *HUD Editor* module keybind |
+| Profiles | **CONFIGS** button at the bottom centre |
 | Zoom | Hold **C** |
 | Auto Relog emergency stop | **End** |
 | Interact with the Block Notifier list | Open chat, then click it |
@@ -53,9 +54,11 @@ distance, health, each with its own settings), Player Detector.
 **Misc:** Auto Relog, Staff List, Staff Spectator Alerts.
 
 **Render:** Storage ESP (chests, trapped chests, barrels, shulkers, ender chests, hoppers, dispensers,
-plus your own block list), Block ESP, Waypoints.
+plus your own block list, with optional tracers), Block ESP (with optional tracers), Sus Chunk Finder
+(red box over each suspected chunk, with Column, Flat or Full Height modes, reasons, confidence and
+optional tracers), Waypoints.
 
-**World:** Block Notifier, Amethyst Detector, Pattern Scanner.
+**World:** Block Notifier, Amethyst Detector.
 
 **Visuals:** Custom FOV, Custom Crosshair (with presets and a live preview in its settings), Custom Sky
 (Cosmic Stella, Lavender Sunset, Blood Moon, Arctic Aurora, Midnight, Custom), Fullbright, Ambience,
@@ -83,7 +86,7 @@ Everything lives in `.minecraft/config/stella/`:
 | `regions.json` | Region Map grid (ships as a flagged placeholder) |
 | `waypoints.json` | Waypoints created from Block Notifier |
 
-The right-hand panel of the ClickGUI handles profiles. *New* copies the current profile.
+The **CONFIGS** button at the bottom of the ClickGUI handles profiles. *New* copies the current profile.
 *Delete* deletes the profile whose name you type into the box. *Save* and *Export* write files
 (*Export* also copies the profile to the clipboard). *Import* reads a profile from the clipboard.
 *Reset* needs a second click to confirm. Changes are auto-saved every few seconds and again when you quit.
@@ -92,10 +95,10 @@ The right-hand panel of the ClickGUI handles profiles. *New* copies the current 
 
 Stella only uses information the server actually sends to your client. These are its limits:
 
-* **Block Notifier, Block ESP, Storage ESP, Amethyst and Pattern Scanner** can only see chunks your client
+* **Block Notifier, Block ESP, Storage ESP, Amethyst Detector and Sus Chunk Finder** can only see chunks your client
   has received. Nothing is ever reported for chunks you have never loaded. Block Notifier remembers each
   position once per session, so a chunk that reloads does not create a duplicate.
-* **Pattern Scanner** gives hints, not proof. Each finding shows its reasons and a confidence level.
+* **Sus Chunk Finder** gives hints, not proof. Each red chunk shows its reasons and a confidence level.
   Temples, trial chambers, mineshafts and geodes can all cause false positives. Sideways deepslate is the
   strongest signal, because world generation always places deepslate vertically.
 * **Staff List** has no built-in staff data. Add names you have verified yourself to `staff.json`, then

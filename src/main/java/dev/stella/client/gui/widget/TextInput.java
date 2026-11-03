@@ -39,8 +39,10 @@ public class TextInput {
 
     public void render(DrawContext ctx, int x, int y, int w, int h, int bg, int border, int textColor, int dimColor) {
         var tr = MinecraftClient.getInstance().textRenderer;
-        ctx.fill(x, y, x + w, y + h, bg);
-        ctx.drawBorder(x, y, w, h, isFocused() ? border : (border & 0x00FFFFFF) | 0x50000000);
+        if (bg != 0) {
+            dev.stella.client.render.Render2D.roundRect(ctx, x, y, w, h, 3, bg);
+            if (isFocused()) dev.stella.client.render.Render2D.roundRect(ctx, x + 2, y + h - 1, w - 4, 1, 0.5f, border);
+        }
         String shown = text.isEmpty() && !isFocused() ? placeholder : text;
         int color = text.isEmpty() && !isFocused() ? dimColor : textColor;
         // keep the end of long text visible

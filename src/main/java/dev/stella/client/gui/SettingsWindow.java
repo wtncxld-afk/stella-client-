@@ -12,6 +12,7 @@ import dev.stella.client.setting.ModeSetting;
 import dev.stella.client.setting.NumberSetting;
 import dev.stella.client.setting.Setting;
 import dev.stella.client.setting.TextSetting;
+import dev.stella.client.render.Render2D;
 import dev.stella.client.util.Animation;
 import dev.stella.client.util.ColorUtil;
 import net.minecraft.client.gui.DrawContext;
@@ -90,14 +91,16 @@ public class SettingsWindow {
 
         ctx.getMatrices().push();
         ctx.getMatrices().translate(0, slide, 200);
-        ctx.fill(x - 1, y - 1, x + WIDTH + 1, y + HEADER + h + 1, ColorUtil.mulAlpha(t.outline(), a));
-        ctx.fill(x, y, x + WIDTH, y + HEADER, ColorUtil.mulAlpha(t.header(), a));
-        ctx.fill(x, y + HEADER - 1, x + WIDTH, y + HEADER, ColorUtil.mulAlpha(t.accent(), a));
-        GuiDraw.text(ctx, "⚙ " + GuiDraw.trim(module.getName(), WIDTH - 40), x + 5, y + 4, ColorUtil.mulAlpha(t.text(), a));
+        Render2D.shadow(ctx, x, y, WIDTH, HEADER + h, 5, 5, ColorUtil.mulAlpha(0x90000000, a));
+        Render2D.roundRect(ctx, x - 0.5f, y - 0.5f, WIDTH + 1, HEADER + h + 1, 5.5f, ColorUtil.mulAlpha(t.outline(), a));
+        Render2D.roundRect(ctx, x, y, WIDTH, HEADER + h, 5, ColorUtil.mulAlpha(t.background(), Math.min(1, a + 0.05)));
+        Render2D.roundRect(ctx, x, y, WIDTH, HEADER, 5, ColorUtil.mulAlpha(t.header(), a));
+        ctx.fill(x, y + HEADER - 4, x + WIDTH, y + HEADER, ColorUtil.mulAlpha(t.header(), a));
+        GuiDraw.text(ctx, "⚙", x + 6, y + 4, ColorUtil.mulAlpha(t.accent(), a));
+        GuiDraw.small(ctx, GuiDraw.trimSmall(module.getName().toUpperCase(java.util.Locale.ROOT), WIDTH - 40, 0.85f), x + 16, y + 5.5f, 0.85f, ColorUtil.mulAlpha(t.text(), a));
         boolean closeHover = GuiDraw.in(mx, my - slide, x + WIDTH - 13, y + 2, 11, 12);
         GuiDraw.text(ctx, "✕", x + WIDTH - 11, y + 4, ColorUtil.mulAlpha(closeHover ? 0xFFF2777A : t.textDim(), a));
         int by = y + HEADER;
-        ctx.fill(x, by, x + WIDTH, by + h, ColorUtil.mulAlpha(t.background(), Math.min(1, a + 0.05)));
         ctx.enableScissor(x, by + slide, x + WIDTH, by + h + slide);
 
         int cy = by + 2 - (int) scroll;
@@ -115,7 +118,7 @@ public class SettingsWindow {
             cy += heightOf(s);
         }
         boolean resetHover = GuiDraw.in(mx, my - slide, x + 4, cy + 2, WIDTH - 8, 12);
-        ctx.fill(x + 4, cy + 2, x + WIDTH - 4, cy + 14, ColorUtil.mulAlpha(resetHover ? t.rowHover() : t.row(), a));
+        Render2D.roundRect(ctx, x + 4, cy + 2, WIDTH - 8, 12, 3, ColorUtil.mulAlpha(resetHover ? t.rowHover() : t.row(), a));
         String rs = "Reset module settings";
         GuiDraw.text(ctx, rs, x + WIDTH / 2 - GuiDraw.width(rs) / 2, cy + 4, ColorUtil.mulAlpha(t.textDim(), a));
         ctx.disableScissor();
@@ -138,10 +141,9 @@ public class SettingsWindow {
             GuiDraw.text(ctx, val, rx - GuiDraw.width(val), cy + 2, ColorUtil.mulAlpha(t.accentSoft(), a));
             int bx = lx, bw = WIDTH - 10, byy = cy + 13;
             double frac = (n.get() - n.getMin()) / (n.getMax() - n.getMin());
-            ctx.fill(bx, byy, bx + bw, byy + 3, ColorUtil.mulAlpha(0xFF2A2533, a));
-            ctx.fill(bx, byy, bx + (int) (bw * frac), byy + 3, ColorUtil.mulAlpha(t.accent(), a));
-            int kx = bx + (int) (bw * frac);
-            ctx.fill(kx - 1, byy - 1, kx + 2, byy + 4, ColorUtil.mulAlpha(0xFFFFFFFF, a));
+            Render2D.roundRect(ctx, bx, byy, bw, 3, 1.5f, ColorUtil.mulAlpha(0xFF2A2533, a));
+            Render2D.roundRect(ctx, bx, byy, (float) (bw * frac), 3, 1.5f, ColorUtil.mulAlpha(t.accent(), a));
+            Render2D.roundRect(ctx, (float) (bx + bw * frac - 2.5), byy - 1.5f, 5, 6, 2.5f, ColorUtil.mulAlpha(0xFFFFFFFF, a));
         } else if (s instanceof ModeSetting m) {
             GuiDraw.text(ctx, name, lx, cy + 3, tc);
             String val = "‹ " + m.get() + " ›";

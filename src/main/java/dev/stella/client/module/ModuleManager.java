@@ -10,15 +10,13 @@ import dev.stella.client.modules.misc.StaffList;
 import dev.stella.client.modules.misc.StaffSpectatorAlerts;
 import dev.stella.client.modules.render.BlockESP;
 import dev.stella.client.modules.render.StorageESP;
+import dev.stella.client.modules.render.SusChunkFinder;
 import dev.stella.client.modules.render.WaypointsModule;
 import dev.stella.client.modules.settings.AnimationsModule;
 import dev.stella.client.modules.settings.ConfigModule;
 import dev.stella.client.modules.visuals.*;
 import dev.stella.client.modules.world.AmethystDetector;
 import dev.stella.client.modules.world.BlockNotifier;
-import dev.stella.client.modules.world.PatternScanner;
-import dev.stella.client.gui.theme.Theme;
-import dev.stella.client.gui.theme.ThemeManager;
 import dev.stella.client.render.Render3D;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -48,11 +46,11 @@ public final class ModuleManager {
         // Render
         register(new StorageESP());
         register(new BlockESP());
+        register(new SusChunkFinder());
         register(new WaypointsModule());
         // World
         register(new BlockNotifier());
         register(new AmethystDetector());
-        register(new PatternScanner());
         // Visuals
         register(new CustomFov());
         register(new CustomCrosshair());
@@ -109,7 +107,7 @@ public final class ModuleManager {
 
     public static void afterConfigLoad() {
         ClickGuiModule gui = get(ClickGuiModule.class);
-        if (gui != null) ThemeManager.set(Theme.byName(gui.theme.get()));
+        if (gui != null) gui.applyTheme();
     }
 
     public static void tick() {

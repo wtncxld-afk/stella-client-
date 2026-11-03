@@ -52,8 +52,13 @@ public abstract class HudElement extends Module {
         opacity.reset();
     }
 
+    /** Registers a setting on behalf of helpers such as {@link CardStyle}. */
+    <S extends dev.stella.client.setting.Setting<?>> S addSetting(S s) { return add(s); }
+
+    protected CardStyle card(String defaultStyle) { return new CardStyle(this, defaultStyle); }
+
     /** Applies this element's opacity to a colour. Text needs alpha >= 4 to render. */
-    protected int col(int argb) {
+    public int col(int argb) {
         int c = ColorUtil.mulAlpha(argb, opacity.get());
         if (((c >>> 24) & 0xFF) < 5) c = ColorUtil.withAlpha(c, 5);
         return c;

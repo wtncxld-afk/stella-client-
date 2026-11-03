@@ -36,7 +36,7 @@ public class PlayerESP extends Module {
     // tracers
     private final BoolSetting tracers = add(new BoolSetting("Tracers", "Lines from the screen to each player", false));
     private final ModeSetting tracerOrigin = add(new ModeSetting("Tracer Origin", "Screen position tracers start from",
-            "Center", "Center", "Top", "Bottom", "Custom")).visibleWhen(tracers::isOn);
+            "Crosshair", dev.stella.client.render.Tracers.ORIGINS)).visibleWhen(tracers::isOn);
     private final NumberSetting originX = add(new NumberSetting("Origin X %", "", 50, 0, 100, 1)).visibleWhen(() -> tracers.isOn() && tracerOrigin.is("Custom"));
     private final NumberSetting originY = add(new NumberSetting("Origin Y %", "", 50, 0, 100, 1)).visibleWhen(() -> tracers.isOn() && tracerOrigin.is("Custom"));
     private final ModeSetting tracerTarget = add(new ModeSetting("Tracer Target", "Body part tracers point to", "Body", "Feet", "Body", "Head")).visibleWhen(tracers::isOn);
@@ -78,14 +78,7 @@ public class PlayerESP extends Module {
     @Override
     public void onRenderOverlay(DrawContext ctx, float tickDelta) {
         if (!inGame()) return;
-        int sw = mc.getWindow().getScaledWidth(), sh = mc.getWindow().getScaledHeight();
-        double ox, oy;
-        switch (tracerOrigin.get()) {
-            case "Top" -> { ox = sw / 2.0; oy = 0; }
-            case "Bottom" -> { ox = sw / 2.0; oy = sh; }
-            case "Custom" -> { ox = sw * originX.get() / 100.0; oy = sh * originY.get() / 100.0; }
-            default -> { ox = sw / 2.0; oy = sh / 2.0; }
-        }
+        double[] origin = dev.stella.client.render.Tracers.origin(tracerOrigin.get(), originX.get(), originY.get());
         for (PlayerEntity p : mc.world.getPlayers()) {
             if (!valid(p)) continue;
             Vec3d pos = p.getLerpedPos(tickDelta);
@@ -96,12 +89,9 @@ public class PlayerESP extends Module {
                     case "Head" -> p.getHeight() * 0.9;
                     default -> p.getHeight() / 2;
                 };
-                Vec3d s = Projection.toScreen(pos.add(0, ty, 0));
-                if (s != null) {
-                    int c = staff(p) ? staffCol.argb() : tracerColor.argb();
-                    if (distanceFade.isOn()) c = dev.stella.client.util.ColorUtil.mulAlpha(c, 1 - 0.7 * Math.min(1, dist / range.get()));
-                    Render2D.line(ctx, ox, oy, s.x, s.y, tracerWidth.getFloat(), c);
-                }
+                int c = staff(p) ? staffCol.argb() : tracerColor.argb();
+                if (distanceFade.isOn()) c = dev.stella.client.util.ColorUtil.mulAlpha(c, 1 - 0.7 * Math.min(1, dist / range.get()));
+                dev.stella.client.render.Tracers.draw(ctx, origin, pos.add(0, ty, 0), tracerWidth.getFloat(), c);
             }
             if (names.isOn() || distance.isOn() || health.isOn()) {
                 Vec3d s = Projection.toScreen(pos.add(0, p.getHeight() + 0.35, 0));
