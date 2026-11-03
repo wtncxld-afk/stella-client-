@@ -45,7 +45,11 @@ final class StellaSmokeTest {
                 msg -> StellaClient.LOGGER.info("[smoke] screenshot {}: {}", name, msg.getString()));
     }
 
+    private static int slow;
+
     private static void onTick(MinecraftClient mc) {
+        // In-world showcase runs at half speed so the recorded preview video is watchable.
+        if (stage == 5 && (slow++ & 1) == 1) return;
         tick++;
         try {
             switch (stage) {
