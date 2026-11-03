@@ -47,6 +47,7 @@ public final class ModuleManager {
         register(new StorageESP());
         register(new BlockESP());
         register(new SusChunkFinder());
+        register(new dev.stella.client.modules.combat.SpawnerFinder());
         register(new StaffList());
         register(new AntiVanish());
         register(new dev.stella.client.modules.combat.MediaBaseFinder());

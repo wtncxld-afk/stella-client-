@@ -85,6 +85,41 @@ public final class Render3D {
         f.vertex(m, dx, dy, dz).color(c);
     }
 
+    /**
+     * Vertical light beam (two crossed quads) from {@code y1} up to {@code y2}, fading out toward the top,
+     * with a narrower bright core. Drawn through walls.
+     */
+    public void beam(double x, double z, double y1, double y2, int argb, double halfWidth) {
+        Matrix4f m = matrices.peek().getPositionMatrix();
+        VertexConsumer f = fills();
+        float bx = (float) (x - cam.x), bz = (float) (z - cam.z), ya = (float) (y1 - cam.y), yb = (float) (y2 - cam.y);
+        int top = argb & 0x00FFFFFF;
+        int core = ColorUtil2.whiten(argb, 0.55f);
+        for (int pass = 0; pass < 2; pass++) {
+            float w = (float) (pass == 0 ? halfWidth : halfWidth * 0.35);
+            int bottom = pass == 0 ? argb : core;
+            int topC = pass == 0 ? top : (core & 0x00FFFFFF);
+            // X-aligned and Z-aligned planes, both faces (no culling in the pipeline)
+            vquad(f, m, bx - w, bz, bx + w, bz, ya, yb, bottom, topC);
+            vquad(f, m, bx, bz - w, bx, bz + w, ya, yb, bottom, topC);
+        }
+    }
+
+    private static void vquad(VertexConsumer f, Matrix4f m, float x1, float z1, float x2, float z2, float ya, float yb, int bottom, int top) {
+        f.vertex(m, x1, ya, z1).color(bottom);
+        f.vertex(m, x2, ya, z2).color(bottom);
+        f.vertex(m, x2, yb, z2).color(top);
+        f.vertex(m, x1, yb, z1).color(top);
+    }
+
+    private static final class ColorUtil2 {
+        static int whiten(int argb, float t) {
+            int r = (argb >> 16) & 0xFF, g = (argb >> 8) & 0xFF, b = argb & 0xFF;
+            r += (int) ((255 - r) * t); g += (int) ((255 - g) * t); b += (int) ((255 - b) * t);
+            return (argb & 0xFF000000) | (r << 16) | (g << 8) | b;
+        }
+    }
+
     /** Single horizontal translucent quad — used for flat chunk overlays. */
     public void quadXZ(double x1, double z1, double x2, double z2, double y, int argb) {
         Matrix4f m = matrices.peek().getPositionMatrix();

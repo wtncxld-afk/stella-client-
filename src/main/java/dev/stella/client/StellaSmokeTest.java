@@ -132,7 +132,9 @@ final class StellaSmokeTest {
                         h.sendChatCommand("setblock ~5 ~ ~-2 minecraft:chest");
                         h.sendChatCommand("setblock ~5 ~ ~ minecraft:barrel");
                         h.sendChatCommand("setblock ~5 ~ ~2 minecraft:shulker_box");
-                        h.sendChatCommand("setblock ~8 ~ ~-2 minecraft:spawner");
+                        h.sendChatCommand("setblock ~8 ~ ~-2 minecraft:spawner{SpawnData:{entity:{id:\"minecraft:zombie\"}}}");
+                        h.sendChatCommand("setblock ~10 ~ ~5 minecraft:spawner{SpawnData:{entity:{id:\"minecraft:skeleton\"}}}");
+                        h.sendChatCommand("setblock ~14 ~ ~-6 minecraft:spawner{SpawnData:{entity:{id:\"minecraft:cave_spider\"}}}");
                         h.sendChatCommand("setblock ~8 ~ ~1 minecraft:amethyst_block");
                         h.sendChatCommand("setblock ~8 ~1 ~1 minecraft:amethyst_cluster");
                         h.sendChatCommand("summon minecraft:item ~4 ~ ~1 {Item:{id:\"minecraft:diamond_sword\",count:1}}");
@@ -321,14 +323,28 @@ final class StellaSmokeTest {
                     if (inStage() == 492) { mc.player.setYaw(180f); mc.player.setPitch(55f); }
                     if (inStage() == 560) { mc.inGameHud.getChatHud().clear(false); logSus("trial chamber shot"); }
                     if (inStage() == 564) shot(mc, "sus-trial-chamber");
-                    if (inStage() == 566) { setting("ClickGUI", "Theme", "Sunset"); mc.setScreen(new ClickGuiScreen()); }
-                    if (inStage() == 580) shot(mc, "theme-sunset");
-                    if (inStage() == 582) setting("ClickGUI", "Theme", "Ocean");
-                    if (inStage() == 592) shot(mc, "theme-ocean");
-                    if (inStage() == 594) setting("ClickGUI", "Theme", "Galaxy");
-                    if (inStage() == 604) shot(mc, "theme-galaxy");
-                    if (inStage() == 606) { setting("ClickGUI", "Theme", "Stella"); mc.setScreen(null); }
-                    if (inStage() == 610) {
+                    if (inStage() == 566) {
+                        // Spawner Finder: beams into the sky + dropdown with mob types + chat messages
+                        mc.inGameHud.getChatHud().clear(false);
+                        for (String n : new String[]{"Storage ESP", "Block ESP", "Sus Chunk Finder"})
+                            ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> m.setEnabled(false));
+                        ModuleManager.get(dev.stella.client.modules.combat.SpawnerFinder.class).setEnabled(true);
+                        mc.player.networkHandler.sendChatCommand("tp @s " + (ox - 14) + " " + (oy + 9) + " " + oz);
+                    }
+                    if (inStage() == 570) { mc.player.setYaw(-90f); mc.player.setPitch(-4f); }
+                    if (inStage() == 592) {
+                        var sf = ModuleManager.get(dev.stella.client.modules.combat.SpawnerFinder.class);
+                        StellaClient.LOGGER.info("[smoke] spawners: {}", sf.spawners());
+                    }
+                    if (inStage() == 594) shot(mc, "spawner-finder");
+                    if (inStage() == 596) { setting("ClickGUI", "Theme", "Sunset"); mc.setScreen(new ClickGuiScreen()); }
+                    if (inStage() == 610) shot(mc, "theme-sunset");
+                    if (inStage() == 612) setting("ClickGUI", "Theme", "Ocean");
+                    if (inStage() == 622) shot(mc, "theme-ocean");
+                    if (inStage() == 624) setting("ClickGUI", "Theme", "Galaxy");
+                    if (inStage() == 634) shot(mc, "theme-galaxy");
+                    if (inStage() == 636) { setting("ClickGUI", "Theme", "Stella"); mc.setScreen(null); }
+                    if (inStage() == 640) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {
