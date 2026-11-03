@@ -34,7 +34,17 @@ public class Freecam extends Module {
     }
 
     public boolean active() { return isEnabled() && inGame(); }
-    public boolean showPlayer() { return showPlayer.isOn(); }
+    /** Only draw your own player once the camera has left your head (otherwise it fills the screen). */
+    public boolean showPlayer() {
+        return showPlayer.isOn() && mc.player != null && pos.squaredDistanceTo(mc.player.getEyePos()) > 2.25;
+    }
+
+    /** Moves the camera directly (used by the CI smoke test). */
+    public void nudge(double dx, double dy, double dz) {
+        prevPos = pos = pos.add(dx, dy, dz);
+    }
+
+    public void setLook(float yaw, float pitch) { this.yaw = yaw; this.pitch = pitch; }
 
     @Override
     protected void onEnable() {

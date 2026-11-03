@@ -176,7 +176,12 @@ final class StellaSmokeTest {
                         mc.setScreen(null);
                         ModuleManager.get(dev.stella.client.modules.misc.Freecam.class).setEnabled(true);
                     }
-                    if (inStage() == 338) mc.player.networkHandler.sendChatCommand("say freecam");
+                    if (inStage() == 340) {
+                        var fc = ModuleManager.get(dev.stella.client.modules.misc.Freecam.class);
+                        fc.nudge(-6, 3, 0);
+                        fc.setLook(-90f, 20f);
+                        mc.inGameHud.getChatHud().clear(false);
+                    }
                     if (inStage() == 352) shot(mc, "freecam");
                     if (inStage() == 354) {
                         ModuleManager.get(dev.stella.client.modules.misc.Freecam.class).setEnabled(false);
