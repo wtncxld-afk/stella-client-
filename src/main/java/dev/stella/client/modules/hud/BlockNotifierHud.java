@@ -23,7 +23,7 @@ public class BlockNotifierHud extends HudElement {
     private boolean collapsed;
     private int scroll;
 
-    public BlockNotifierHud() { super("Block Notifier HUD", "Dropdown of Block Notifier detections (interact with chat open)", 4, 120, false); }
+    public BlockNotifierHud() { super("Block Notifier HUD", "Dropdown of Block Notifier detections (interact with chat open)", -4, 120, false); }
 
     private BlockNotifier notifier() { return ModuleManager.get(BlockNotifier.class); }
 

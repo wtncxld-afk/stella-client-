@@ -4,7 +4,7 @@ import dev.stella.client.util.track.TpsTracker;
 
 public class TpsHud extends TextHud {
     public TpsHud() {
-        super("TPS HUD", "Estimated server TPS from world-time packets (shows '...' until enough samples exist)", 4, 64, false);
+        super("TPS HUD", "Estimated server TPS from world-time packets (shows '...' until enough samples exist)", -4, 46, false);
     }
 
     @Override protected String label() { return "TPS"; }

@@ -86,26 +86,42 @@ final class StellaSmokeTest {
                         }
                         var h = mc.player.networkHandler;
                         h.sendChatCommand("time set 18000");
-                        h.sendChatCommand("setblock ~3 ~ ~ minecraft:chest");
-                        h.sendChatCommand("setblock ~3 ~ ~2 minecraft:barrel");
-                        h.sendChatCommand("setblock ~-3 ~ ~ minecraft:spawner");
-                        h.sendChatCommand("setblock ~-3 ~ ~2 minecraft:amethyst_cluster");
-                        h.sendChatCommand("summon minecraft:armor_stand ~5 ~ ~5");
+                        h.sendChatCommand("gamerule doDaylightCycle false");
+                        h.sendChatCommand("fill ~3 ~-1 ~-4 ~12 ~-1 ~4 minecraft:deepslate[axis=x]");
+                        h.sendChatCommand("setblock ~5 ~ ~-2 minecraft:chest");
+                        h.sendChatCommand("setblock ~5 ~ ~ minecraft:barrel");
+                        h.sendChatCommand("setblock ~5 ~ ~2 minecraft:shulker_box");
+                        h.sendChatCommand("setblock ~8 ~ ~-2 minecraft:spawner");
+                        h.sendChatCommand("setblock ~8 ~ ~1 minecraft:amethyst_block");
+                        h.sendChatCommand("setblock ~8 ~1 ~1 minecraft:amethyst_cluster");
+                        h.sendChatCommand("summon minecraft:item ~4 ~ ~1 {Item:{id:\"minecraft:diamond_sword\",count:1}}");
+                        mc.player.setYaw(-90f);
+                        mc.player.setPitch(18f);
                         next();
                     } else if (inStage() > 6000) {
                         fail("world did not load");
                     }
                 }
                 case 5 -> {
-                    if (inStage() == 100) shot(mc, "world");
-                    if (inStage() == 110) mc.setScreen(new ClickGuiScreen());
-                    if (inStage() == 140) shot(mc, "world-gui");
-                    if (inStage() == 150) {
+                    if (inStage() == 5) { mc.player.setYaw(-90f); mc.player.setPitch(18f); }
+                    if (inStage() == 100) shot(mc, "world-cosmic-night");
+                    if (inStage() == 110) { mc.player.setPitch(-35f); }
+                    if (inStage() == 130) shot(mc, "sky-cosmic");
+                    if (inStage() == 135) ModuleManager.all().stream().filter(m -> m.getName().equals("Custom Sky")).findFirst()
+                            .ifPresent(m -> m.getSettings().stream().filter(s -> s.getName().equals("Preset")).findFirst()
+                                    .ifPresent(s -> ((dev.stella.client.setting.ModeSetting) s).set("Arctic Aurora")));
+                    if (inStage() == 160) shot(mc, "sky-arctic-aurora");
+                    if (inStage() == 165) { mc.player.setPitch(18f); mc.setScreen(new ClickGuiScreen()); }
+                    if (inStage() == 185 && mc.currentScreen instanceof ClickGuiScreen gui) { gui.openSettingsFor("Player ESP"); gui.openSettingsFor("Custom Sky"); }
+                    if (inStage() == 210) shot(mc, "world-gui");
+                    if (inStage() == 215) mc.setScreen(new HudEditorScreen(null));
+                    if (inStage() == 235) shot(mc, "world-hudeditor");
+                    if (inStage() == 240) {
                         mc.setScreen(null);
                         for (Module m : ModuleManager.all()) if (m.isEnabled()) m.setEnabled(false);
                         for (Module m : ModuleManager.all()) if (m.isDefaultEnabled()) m.setEnabled(true);
                     }
-                    if (inStage() == 200) {
+                    if (inStage() == 290) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {

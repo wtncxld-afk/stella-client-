@@ -15,7 +15,7 @@ public class NotificationsHud extends HudElement {
     private final ColorSetting textColor = add(new ColorSetting("Text Color", "Message colour", 0xFFE6E1EE));
 
     public NotificationsHud() {
-        super("Notifications HUD", "Toasts for module alerts (falls back to chat when disabled)", 380, 200, true);
+        super("Notifications HUD", "Toasts for module alerts (falls back to chat when disabled)", -4, -40, true);
         NotificationManager.setHudActiveSupplier(this::isEnabled);
     }
 

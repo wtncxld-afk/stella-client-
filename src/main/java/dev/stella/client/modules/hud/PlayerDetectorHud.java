@@ -16,7 +16,7 @@ public class PlayerDetectorHud extends HudElement {
     private final ColorSetting headerColor = add(new ColorSetting("Header Color", "", 0xFFA855F7));
     private final ColorSetting textColor = add(new ColorSetting("Text Color", "", 0xFFF3F0F7));
 
-    public PlayerDetectorHud() { super("Player Detector HUD", "Names and distances from Player Detector", 4, 300, false); }
+    public PlayerDetectorHud() { super("Player Detector HUD", "Names and distances from Player Detector", -160, -4, false); }
 
     @Override
     public void render(DrawContext ctx, float tickDelta, boolean editor) {

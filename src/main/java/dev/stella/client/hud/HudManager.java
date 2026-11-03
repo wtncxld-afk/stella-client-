@@ -46,6 +46,9 @@ public final class HudManager {
     public static void clamp(HudElement h) {
         MinecraftClient mc = MinecraftClient.getInstance();
         int sw = mc.getWindow().getScaledWidth(), sh = mc.getWindow().getScaledHeight();
+        // negative default coordinates anchor to the right / bottom edge on first layout
+        if (h.x() < 0) h.posX.set((double) (sw + h.x() - h.scaledWidth()));
+        if (h.y() < 0) h.posY.set((double) (sh + h.y() - h.scaledHeight()));
         float w = h.scaledWidth(), hh = h.scaledHeight();
         float x = Math.max(0, Math.min(sw - Math.min(w, sw), h.x()));
         float y = Math.max(0, Math.min(sh - Math.min(hh, sh), h.y()));

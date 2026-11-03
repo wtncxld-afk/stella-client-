@@ -77,7 +77,7 @@ public class ClickGuiScreen extends Screen {
 
     /** Used by the CI smoke test. */
     public void openSettingsFor(String moduleName) {
-        for (Module m : ModuleManager.all()) if (m.getName().equals(moduleName) && !isSettingsOpen(m)) toggleSettings(m, width / 3, 60);
+        for (Module m : ModuleManager.all()) if (m.getName().equals(moduleName) && !isSettingsOpen(m)) toggleSettings(m, 110 + windows.size() * (SettingsWindow.WIDTH + 8), 70);
     }
 
     @Override

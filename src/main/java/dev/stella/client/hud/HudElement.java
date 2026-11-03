@@ -40,7 +40,7 @@ public abstract class HudElement extends Module {
     public float x() { return posX.getFloat(); }
     public float y() { return posY.getFloat(); }
 
-    public void setPos(double x, double y) { posX.set(x); posY.set(y); }
+    public void setPos(double x, double y) { posX.set(Math.max(0, x)); posY.set(Math.max(0, y)); }
 
     public void resetLayout() {
         posX.set(defX);

@@ -18,7 +18,7 @@ public class BrandingHud extends HudElement {
     private final BoolSetting animated = add(new BoolSetting("Animated", "Slowly shimmer the gradient", true));
     private final BoolSetting showVersion = add(new BoolSetting("Show Version", "Append the client version", false));
 
-    public BrandingHud() { super("Stella Branding HUD", "Transparent star logo with STELLA text", 4, 4, true); }
+    public BrandingHud() { super("Stella Branding HUD", "Transparent star logo with STELLA text", -4, 4, true); }
 
     @Override
     public void render(DrawContext ctx, float tickDelta, boolean editor) {

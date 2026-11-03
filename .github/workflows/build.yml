@@ -52,6 +52,12 @@ jobs:
           export LIBGL_ALWAYS_SOFTWARE=1
           timeout 1500 xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew runSmoke --no-daemon 2>&1 | tee smoke.log || true
           grep -q "STELLA_SMOKE_OK" smoke.log
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stella-screenshots
+          path: run-smoke/screenshots/
       - name: Upload smoke log
         if: always()
         uses: actions/upload-artifact@v4

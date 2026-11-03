@@ -26,7 +26,7 @@ public class StaffListHud extends HudElement {
     private final ColorSetting nameColor = add(new ColorSetting("Name Color", "Name colour", 0xFFF3F0F7));
     private final ColorSetting rankColor = add(new ColorSetting("Rank Color", "Rank colour", 0xFFC4B5FD));
 
-    public StaffListHud() { super("Staff List HUD", "Verified staff roster with tab-list visibility", 4, 220, false); }
+    public StaffListHud() { super("Staff List HUD", "Verified staff roster with tab-list visibility", -4, 84, false); }
 
     @Override
     public void render(DrawContext ctx, float tickDelta, boolean editor) {
