@@ -257,13 +257,22 @@ final class StellaSmokeTest {
                         ModuleManager.get(dev.stella.client.modules.visuals.ItemScale.class).setEnabled(true);
                         ModuleManager.get(dev.stella.client.modules.visuals.SwingSpeed.class).setEnabled(true);
                         ModuleManager.get(dev.stella.client.modules.combat.AntiVanish.class).setEnabled(false);
+                        // back on the ground, so the dropped items land right in front of the camera
                         var h2 = mc.player.networkHandler;
-                        h2.sendChatCommand("summon item ~3 ~1 ~-1 {Item:{id:\"minecraft:diamond\",count:1},PickupDelay:32767}");
-                        h2.sendChatCommand("summon item ~3 ~1 ~ {Item:{id:\"minecraft:nether_star\",count:1},PickupDelay:32767}");
-                        h2.sendChatCommand("summon item ~3 ~1 ~1 {Item:{id:\"minecraft:golden_apple\",count:1},PickupDelay:32767}");
-                        h2.sendChatCommand("summon item ~4 ~1 ~2 {Item:{id:\"minecraft:enchanted_golden_apple\",count:1},PickupDelay:32767}");
+                        h2.sendChatCommand("gamemode creative");
+                        h2.sendChatCommand("tp @s " + ox + " " + (oy + 1) + " " + oz);
+                        setting("Glow Outline", "Hostile Mobs", true);
+                        setting("Glow Outline", "Passive Mobs", true);
+                    }
+                    if (inStage() == 413) {
+                        var h2 = mc.player.networkHandler;
+                        String[] items = {"diamond", "nether_star", "golden_apple", "enchanted_golden_apple", "netherite_ingot", "totem_of_undying"};
+                        for (int i = 0; i < items.length; i++)
+                            h2.sendChatCommand("summon item " + (ox + 3 + (i % 2)) + " " + (oy + 2) + " " + (oz - 2 + i) + " {Item:{id:\"minecraft:" + items[i] + "\",count:1},PickupDelay:32767}");
+                        h2.sendChatCommand("summon pig " + (ox + 6) + " " + (oy + 1) + " " + (oz + 3) + " {NoAI:1b}");
+                        h2.sendChatCommand("summon zombie " + (ox + 6) + " " + (oy + 1) + " " + (oz - 3) + " {NoAI:1b,PersistenceRequired:1b}");
                         mc.player.setYaw(-90f);
-                        mc.player.setPitch(35f);
+                        mc.player.setPitch(30f);
                     }
                     if (inStage() == 428) mc.inGameHud.getChatHud().clear(false);
                     if (inStage() == 432) shot(mc, "glow-outline");

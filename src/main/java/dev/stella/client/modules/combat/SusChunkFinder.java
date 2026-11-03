@@ -61,8 +61,8 @@ public class SusChunkFinder extends Module {
     private final NumberSetting maxY = add(new NumberSetting("Max Y", "Highest Y-level that is checked", 0, -64, 320, 1)).visibleWhen(belowY::isOn);
     private final NumberSetting minYSetting = add(new NumberSetting("Min Y", "Lowest Y-level that is checked", -64, -64, 320, 1));
     private final NumberSetting sensitivity = add(new NumberSetting("Sensitivity",
-            "Minimum suspicion score (0-100) a chunk needs to be flagged. Higher = fewer flags, each one far more likely a real base. Lower = flags even tiny hints",
-            45, 0, 100, 5));
+            "0-20. Higher = fewer flags, each one far more likely a real base. Lower = flags even the smallest hints",
+            9, 0, 20, 1));
     private final BoolSetting ignoreStructures = add(new BoolSetting("Ignore Natural Structures",
             "Ignore redstone, deepslate and amethyst next to trial chambers, ancient cities and strongholds", true));
     private final ModeSetting boxMode = add(new ModeSetting("Box Mode", "Flat translucent square at a Y-level, a column around the detections, or the full chunk height",
@@ -301,7 +301,7 @@ public class SusChunkFinder extends Module {
     /** Chunks whose score reaches the Sensitivity threshold. */
     public List<SusChunk> suspectChunks() {
         List<SusChunk> all = chunks();
-        int min = sensitivity.getInt();
+        int min = sensitivity.getInt() * 5; // 0-20 slider -> 0-100 score threshold
         all.removeIf(c -> c.score < min);
         return all;
     }
