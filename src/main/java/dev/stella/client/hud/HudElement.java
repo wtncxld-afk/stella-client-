@@ -32,13 +32,20 @@ public abstract class HudElement extends Module {
     protected HudElement(String name, String description, Category category, double defaultX, double defaultY, boolean defaultEnabled,
                          String scaleName, double maxScale) {
         super(name, description, category, defaultEnabled);
-        this.defX = defaultX;
-        this.defY = defaultY;
-        posX = add(new NumberSetting("X", "Horizontal position", defaultX, -10000, 10000, 0.5)).hide();
-        posY = add(new NumberSetting("Y", "Vertical position", defaultY, -10000, 10000, 0.5)).hide();
-        scale = add(new NumberSetting(scaleName, "Size of this element (also resizable in the HUD Editor)", 1.0, 0.3, maxScale, 0.05).suffix("x"));
+        // compact default layout: smaller elements, stacked closer together
+        this.defX = defaultX * LAYOUT;
+        this.defY = defaultY * LAYOUT;
+        posX = add(new NumberSetting("X", "Horizontal position", this.defX, -10000, 10000, 0.5)).hide();
+        posY = add(new NumberSetting("Y", "Vertical position", this.defY, -10000, 10000, 0.5)).hide();
+        scale = add(new NumberSetting(scaleName, "Size of this element (also resizable in the HUD Editor)", defaultScale(), 0.2, maxScale, 0.05).suffix("x"));
         opacity = add(new NumberSetting("Opacity", "Transparency of this element", 1.0, 0.05, 1.0, 0.05));
     }
+
+    /** Default positions are multiplied by this so the smaller elements stack without gaps. */
+    public static final double LAYOUT = 0.75;
+
+    /** Default size of this element (constant per class; called from the constructor). */
+    protected double defaultScale() { return 0.75; }
 
     /** Draw at local origin (0,0); called inside a transform for position/scale. */
     public abstract void render(DrawContext ctx, float tickDelta, boolean editor);
