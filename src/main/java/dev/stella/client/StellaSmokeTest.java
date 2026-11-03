@@ -205,12 +205,27 @@ final class StellaSmokeTest {
                     if (inStage() == 405) shot(mc, "anti-vanish-gui");
                     if (inStage() == 410) {
                         mc.setScreen(null);
+                        ModuleManager.get(dev.stella.client.modules.visuals.GlowOutline.class).setEnabled(true);
+                        ModuleManager.get(dev.stella.client.modules.visuals.ItemScale.class).setEnabled(true);
+                        ModuleManager.get(dev.stella.client.modules.visuals.SwingSpeed.class).setEnabled(true);
+                        ModuleManager.get(dev.stella.client.modules.combat.AntiVanish.class).setEnabled(false);
+                        var h2 = mc.player.networkHandler;
+                        h2.sendChatCommand("summon item ~3 ~1 ~-1 {Item:{id:\"minecraft:diamond\",count:1},PickupDelay:32767}");
+                        h2.sendChatCommand("summon item ~3 ~1 ~ {Item:{id:\"minecraft:nether_star\",count:1},PickupDelay:32767}");
+                        h2.sendChatCommand("summon item ~3 ~1 ~1 {Item:{id:\"minecraft:golden_apple\",count:1},PickupDelay:32767}");
+                        h2.sendChatCommand("summon item ~4 ~1 ~2 {Item:{id:\"minecraft:enchanted_golden_apple\",count:1},PickupDelay:32767}");
+                        mc.player.setYaw(-90f);
+                        mc.player.setPitch(35f);
+                    }
+                    if (inStage() == 428) mc.inGameHud.getChatHud().clear(false);
+                    if (inStage() == 432) shot(mc, "glow-outline");
+                    if (inStage() == 436) {
                         mc.setScreen(null);
                         mc.setScreen(null);
                         for (Module m : ModuleManager.all()) if (m.isEnabled()) m.setEnabled(false);
                         for (Module m : ModuleManager.all()) if (m.isDefaultEnabled()) m.setEnabled(true);
                     }
-                    if (inStage() == 440) {
+                    if (inStage() == 470) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {
