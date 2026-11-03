@@ -188,14 +188,27 @@ final class StellaSmokeTest {
                         mc.inGameHud.getChatHud().clear(false);
                     }
                     if (inStage() == 352) shot(mc, "freecam");
-                    if (inStage() == 354) {
-                        ModuleManager.get(dev.stella.client.modules.misc.Freecam.class).setEnabled(false);
+                    if (inStage() == 354) ModuleManager.get(dev.stella.client.modules.misc.Freecam.class).setEnabled(false);
+                    if (inStage() == 356) {
+                        for (Module m : ModuleManager.all())
+                            if (m.getCategory() == dev.stella.client.module.Category.HUD && !m.getName().equals("Stella Branding HUD")) m.setEnabled(false);
+                        var av = ModuleManager.get(dev.stella.client.modules.combat.AntiVanish.class);
+                        av.setEnabled(true);
+                        av.showPopup("ExampleStaff", "HIGH", "tab list reports spectator mode");
+                        mc.inGameHud.getChatHud().clear(false);
+                    }
+                    if (inStage() == 368) shot(mc, "anti-vanish");
+                    if (inStage() == 372) mc.setScreen(new ClickGuiScreen());
+                    if (inStage() == 385 && mc.currentScreen instanceof ClickGuiScreen gui) gui.openSettingsFor("Anti Vanish");
+                    if (inStage() == 405) shot(mc, "anti-vanish-gui");
+                    if (inStage() == 410) {
+                        mc.setScreen(null);
                         mc.setScreen(null);
                         mc.setScreen(null);
                         for (Module m : ModuleManager.all()) if (m.isEnabled()) m.setEnabled(false);
                         for (Module m : ModuleManager.all()) if (m.isDefaultEnabled()) m.setEnabled(true);
                     }
-                    if (inStage() == 380) {
+                    if (inStage() == 440) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {

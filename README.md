@@ -120,6 +120,10 @@ Stella only uses information the server actually sends to your client. These are
     This sends a command-suggestion request to the server every 30 seconds or more, and it only works if the
     server's vanish plugin leaks hidden names into suggestions.
 
+  On detection, a large popup appears: **[ Name ]**, then *is spectating you* for strong evidence or
+  *may be spectating you* for weaker evidence, then *Goodluck Stella user*. Every line, the colour,
+  position, size and duration are configurable, and *Preview Popup* shows an example.
+
   Most vanish plugins send nothing at all, so a normal client cannot detect fully vanished staff.
   **No alert does not mean nobody is watching.**
 * **Region Map** is a 9×9 grid of 50,000-block cells spanning −225k…+225k on X and Z. The layout comes
