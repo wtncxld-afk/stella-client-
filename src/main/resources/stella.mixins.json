@@ -20,6 +20,7 @@
     "ItemEntityRendererMixin",
     "KeyboardInputMixin",
     "LayerRenderStateMixin",
+    "MenuRedirectMixin",
     "MouseMixin",
     "OverlayTextureMixin",
     "SimpleOptionMixin",

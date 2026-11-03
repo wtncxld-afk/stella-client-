@@ -70,7 +70,9 @@ Item Physics, Enchantment Glint, Damage Tint, Glow Outline (glowing outlines aro
 by rarity, plus optional players and mobs), Swing Speed (slower or faster arm swing, visual only), Item Scale
 (size and position of held items, and size of dropped items).
 
-**Client:** ClickGUI (theme and GUI key), HUD Editor.
+**Client:** ClickGUI (theme, GUI key, sound pack), HUD Editor, Menus (Stella main menu with an animated
+cosmic background, glowing logo and a one-click **Play DonutSMP** button, plus a Stella pause menu; either can
+be switched back to vanilla).
 
 **HUD (one module per element):** Stella Branding, Keystrokes (+CPS), FPS, TPS, Coordinates, Ping,
 Region Map (with its own *Map Scale* slider up to 6×), Music HUD (cover, title, artist, progress and

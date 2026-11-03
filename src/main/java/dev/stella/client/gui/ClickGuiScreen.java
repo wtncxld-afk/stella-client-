@@ -101,6 +101,11 @@ public class ClickGuiScreen extends Screen {
         computeScale();
         ctx.getMatrices().push();
         ctx.getMatrices().scale(ui, ui, 1);
+        double oa = open.get();
+        float zoom = (float) (0.965 + 0.035 * Math.min(1, oa));
+        ctx.getMatrices().translate(vw / 2f, vh / 2f, 0);
+        ctx.getMatrices().scale(zoom, zoom, 1);
+        ctx.getMatrices().translate(-vw / 2f, -vh / 2f, 0);
         int mx = (int) (rawX / ui), my = (int) (rawY / ui);
         try {
             renderScaled(ctx, mx, my);
@@ -109,10 +114,37 @@ public class ClickGuiScreen extends Screen {
         }
     }
 
+    private final long openedAt = System.currentTimeMillis();
+
+    /** Staggered entrance: each panel drops in slightly after the previous one with a soft overshoot. */
+    private void renderPanelAnimated(DrawContext ctx, CategoryPanel p, int mx, int my, double a, boolean searching) {
+        var anims = ModuleManager.get(dev.stella.client.modules.settings.AnimationsModule.class);
+        boolean animate = anims == null || !anims.isEnabled() || anims.guiSlide.isOn();
+        double pa = 1, dy = 0;
+        if (animate && !closing) {
+            double tt = (System.currentTimeMillis() - openedAt - p.category.ordinal() * 35) / 320.0;
+            pa = Math.max(0, Math.min(1, tt));
+            dy = (1 - easeOutBack(pa)) * -18;
+        }
+        ctx.getMatrices().push();
+        ctx.getMatrices().translate(0, dy, 0);
+        p.render(ctx, mx, (int) (my - dy), vh, a * Math.min(1, pa * 1.6), searching, this);
+        ctx.getMatrices().pop();
+    }
+
+    private static double easeOutBack(double x) {
+        double c1 = 1.70158, c3 = c1 + 1;
+        return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+    }
+
     private void renderScaled(DrawContext ctx, int mx, int my) {
         Theme t = ThemeManager.get();
         double a = open.get();
-        if (closing && a < 0.05) { super.close(); return; }
+        if (closing && a < 0.05) {
+            if (client != null && client.world == null) client.setScreen(new net.minecraft.client.gui.screen.TitleScreen());
+            else super.close();
+            return;
+        }
         var anims = ModuleManager.get(dev.stella.client.modules.settings.AnimationsModule.class);
         int slide = anims != null && anims.isEnabled() && !anims.guiSlide.isOn() ? 0 : (int) ((1 - a) * -12);
         hovered = null;
@@ -129,9 +161,9 @@ public class ClickGuiScreen extends Screen {
         boolean searching = !search.get().isBlank();
         for (CategoryPanel p : panels) {
             if (searching && !p.hasMatches()) continue;
-            p.render(ctx, mx, my - slide, vh, a, searching, this);
+            renderPanelAnimated(ctx, p, mx, my - slide, a, searching);
         }
-        for (CategoryPanel p : panels) if (searching && !p.hasMatches()) p.render(ctx, mx, my - slide, vh, a, true, this);
+        for (CategoryPanel p : panels) if (searching && !p.hasMatches()) renderPanelAnimated(ctx, p, mx, my - slide, a, true);
         ctx.getMatrices().pop();
 
         side.render(ctx, mx, my, vw, vh, a, this);

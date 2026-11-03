@@ -82,6 +82,7 @@ public final class ModuleManager {
         // Client
         register(new ClickGuiModule());
         register(new HudEditorModule());
+        register(new dev.stella.client.modules.client.MenusModule());
         // HUD — every element is its own module
         register(new BrandingHud());
         register(new KeystrokesHud());

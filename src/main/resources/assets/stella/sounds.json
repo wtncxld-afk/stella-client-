@@ -1,0 +1,7 @@
+{
+  "gui_open": { "sounds": [ { "name": "stella:gui_open" } ] },
+  "gui_close": { "sounds": [ { "name": "stella:gui_close" } ] },
+  "toggle_on": { "sounds": [ { "name": "stella:toggle_on" } ] },
+  "toggle_off": { "sounds": [ { "name": "stella:toggle_off" } ] },
+  "menu_click": { "sounds": [ { "name": "stella:menu_click" } ] }
+}

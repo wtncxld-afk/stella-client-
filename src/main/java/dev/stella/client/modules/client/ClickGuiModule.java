@@ -26,6 +26,7 @@ public class ClickGuiModule extends Module {
 
     // ---- UI sounds
     public final NumberSetting volume = add(new NumberSetting("Master Volume", "Volume of Stella UI sounds", 0.6, 0, 1, 0.05));
+    public final ModeSetting soundPack = add(new ModeSetting("Sound Pack", "Stella's own chime sounds or vanilla sounds", "Stella", "Stella", "Vanilla"));
     public final BoolSetting soundOpen = add(new BoolSetting("GUI Open/Close", "Sound when opening and closing", true));
     public final BoolSetting soundHover = add(new BoolSetting("Hover", "Soft tick when hovering modules", false));
     public final BoolSetting soundClick = add(new BoolSetting("Clicks & Toggles", "Sound on clicks and toggles", true));

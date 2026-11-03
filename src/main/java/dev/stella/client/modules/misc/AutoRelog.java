@@ -161,7 +161,7 @@ public class AutoRelog extends Module {
         state = State.CONNECTING;
         status = "Connecting to " + address;
         ServerInfo info = new ServerInfo("Stella Auto Relog", address, ServerInfo.ServerType.OTHER);
-        ConnectScreen.connect(new TitleScreen(), mc, ServerAddress.parse(address), info, false, null);
+        ConnectScreen.connect(new TitleScreen(false), mc, ServerAddress.parse(address), info, false, null);
     }
 
     private void tickDigging() {

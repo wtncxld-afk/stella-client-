@@ -26,6 +26,7 @@ import org.spongepowered.asm.mixin.MixinEnvironment;
  */
 final class StellaSmokeTest {
     private static int tick;
+    private static int menuShownAt = -1;
     private static int stage;
     private static int stageStart;
 
@@ -50,9 +51,15 @@ final class StellaSmokeTest {
             switch (stage) {
                 case 0 -> {
                     if (tick < 40 || mc.getOverlay() != null) return;
-                    mc.options.tutorialStep = net.minecraft.client.tutorial.TutorialStep.NONE;
-                    MixinEnvironment.getCurrentEnvironment().audit();
-                    StellaClient.LOGGER.info("[smoke] mixin audit passed");
+                    if (menuShownAt < 0) {
+                        mc.options.tutorialStep = net.minecraft.client.tutorial.TutorialStep.NONE;
+                        MixinEnvironment.getCurrentEnvironment().audit();
+                        StellaClient.LOGGER.info("[smoke] mixin audit passed; title screen = {}",
+                                mc.currentScreen == null ? "none" : mc.currentScreen.getClass().getSimpleName());
+                        menuShownAt = tick;
+                    }
+                    if (tick - menuShownAt == 70) shot(mc, "main-menu");
+                    if (tick - menuShownAt < 76) return;
                     mc.setScreen(new ClickGuiScreen());
                     next();
                 }
@@ -225,7 +232,10 @@ final class StellaSmokeTest {
                         for (Module m : ModuleManager.all()) if (m.isEnabled()) m.setEnabled(false);
                         for (Module m : ModuleManager.all()) if (m.isDefaultEnabled()) m.setEnabled(true);
                     }
-                    if (inStage() == 470) {
+                    if (inStage() == 440) mc.setScreen(new net.minecraft.client.gui.screen.GameMenuScreen(true));
+                    if (inStage() == 462) shot(mc, "pause-menu");
+                    if (inStage() == 466) mc.setScreen(null);
+                    if (inStage() == 490) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {
