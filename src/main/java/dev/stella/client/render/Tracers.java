@@ -34,4 +34,8 @@ public final class Tracers {
     public static void draw(Render3D r, Vec3d start, Vec3d target, float width, int color) {
         r.tracer(start, target, color, width);
     }
+
+    public static void draw(Render3D r, Vec3d start, Vec3d target, float width, int color, TracerStyle style) {
+        r.tracer(start, target, color, width, style == null ? Render3D.TracerLook.SOLID : style.look());
+    }
 }

@@ -29,7 +29,6 @@ public class BlockESP extends Module {
     private final NumberSetting lineWidth = add(new NumberSetting("Line Width", "Outline thickness", 2, 1, 5, 0.5)).visibleWhen(outline::isOn);
     private final BoolSetting fill = add(new BoolSetting("Fill", "Translucent fill", true));
     private final NumberSetting fillAlpha = add(new NumberSetting("Fill Alpha", "Fill opacity", 0.2, 0.02, 0.8, 0.02)).visibleWhen(fill::isOn);
-    private final BoolSetting labels = add(new BoolSetting("Labels", "Block name and distance", false));
     private final NumberSetting maxRendered = add(new NumberSetting("Max Rendered", "Cap on highlighted blocks", 500, 10, 5000, 10));
     // tracers
     private final BoolSetting tracers = add(new BoolSetting("Tracers", "Lines from the screen to each highlighted block", false));
@@ -40,6 +39,7 @@ public class BlockESP extends Module {
     private final BoolSetting tracerBlockColor = add(new BoolSetting("Tracer Uses Block Color", "Colour tracers like their box", true)).visibleWhen(tracers::isOn);
     private final ColorSetting tracerColor = add(new ColorSetting("Tracer Color", "", 0xC0D8B4FE)).visibleWhen(() -> tracers.isOn() && !tracerBlockColor.isOn());
     private final NumberSetting tracerWidth = add(new NumberSetting("Tracer Width", "Line thickness in screen pixels", 1.5, 0.5, 5, 0.5)).visibleWhen(tracers::isOn);
+    private final dev.stella.client.render.TracerStyle tracerStyle = new dev.stella.client.render.TracerStyle(st -> add(st), tracers::isOn);
     private final NumberSetting maxTracers = add(new NumberSetting("Max Tracers", "Tracers to the nearest N blocks", 40, 1, 300, 1)).visibleWhen(tracers::isOn);
     private final BoolSetting tracerFade = add(new BoolSetting("Tracer Distance Fade", "Fade tracers to far blocks", true)).visibleWhen(tracers::isOn);
 
@@ -64,19 +64,6 @@ public class BlockESP extends Module {
         if (tracers.isOn()) drawTracers(r, target.near(mc.player.getBlockPos(), range.get(), maxTracers.getInt()), p -> color.argb());
     }
 
-    @Override
-    public void onRenderOverlay(DrawContext ctx, float tickDelta) {
-        if (!inGame()) return;
-        if (!labels.isOn()) return;
-        List<BlockPos> list = target.near(mc.player.getBlockPos(), range.get(), 60);
-        for (BlockPos p : list) {
-            Vec3d s = Projection.toScreen(Vec3d.ofCenter(p));
-            if (!Projection.onScreen(s)) continue;
-            String name = mc.world.getBlockState(p).getBlock().getName().getString();
-            Render2D.label(ctx, name + " " + (int) Math.sqrt(p.getSquaredDistance(mc.player.getEntityPos())) + "m", s.x, s.y, 0.75f, color.argb(), 0x90000000);
-        }
-    }
-
     private void drawTracers(Render3D r, java.util.List<BlockPos> targets, java.util.function.Function<BlockPos, Integer> colorOf) {
         if (!tracers.isOn() || !inGame()) return;
         Vec3d origin = Tracers.start(tracerOrigin.get(), originX.get(), originY.get());
@@ -88,7 +75,7 @@ public class BlockESP extends Module {
                 double d = Math.sqrt(p.getSquaredDistance(mc.player.getEntityPos()));
                 c = ColorUtil.mulAlpha(c, 1 - 0.7 * Math.min(1, d / range.get()));
             }
-            Tracers.draw(r, origin, Vec3d.ofCenter(p), tracerWidth.getFloat(), c);
+            Tracers.draw(r, origin, Vec3d.ofCenter(p), tracerWidth.getFloat(), c, tracerStyle);
         }
     }
 }

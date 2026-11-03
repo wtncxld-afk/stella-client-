@@ -20,6 +20,16 @@ public final class StellaPipelines {
     /** Lines drawn through walls (ESP outlines, tracers). */
     public static final RenderPipeline LINES_SEE_THROUGH = RenderPipeline.builder(RenderPipelines.RENDERTYPE_LINES_SNIPPET)
             .withLocation(id("lines_see_through"))
+            .withBlend(BlendFunction.TRANSLUCENT)
+            .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+            .withDepthWrite(false)
+            .withCull(false)
+            .build();
+
+    /** Additive soft glow drawn under tracer cores (neon look). */
+    public static final RenderPipeline LINES_GLOW_SEE_THROUGH = RenderPipeline.builder(RenderPipelines.RENDERTYPE_LINES_SNIPPET)
+            .withLocation(id("lines_glow_see_through"))
+            .withBlend(BlendFunction.LIGHTNING)
             .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
             .withDepthWrite(false)
             .withCull(false)
@@ -65,6 +75,7 @@ public final class StellaPipelines {
             .build();
 
     public static final RenderLayer LINES = RenderLayer.of("stella_lines", RenderSetup.builder(LINES_SEE_THROUGH).expectedBufferSize(1 << 16).build());
+    public static final RenderLayer GLOW = RenderLayer.of("stella_glow", RenderSetup.builder(LINES_GLOW_SEE_THROUGH).expectedBufferSize(1 << 16).build());
     public static final RenderLayer FILLS = RenderLayer.of("stella_fills", RenderSetup.builder(QUADS_SEE_THROUGH).translucent().expectedBufferSize(1 << 16).build());
     public static final RenderLayer SKY = RenderLayer.of("stella_sky", RenderSetup.builder(SKY_QUADS).expectedBufferSize(1 << 16).build());
     public static final RenderLayer SKY_GLOW = RenderLayer.of("stella_sky_glow", RenderSetup.builder(SKY_GLOW_TRIANGLES).expectedBufferSize(1 << 15).build());

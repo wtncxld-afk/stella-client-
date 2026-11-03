@@ -70,6 +70,7 @@ public class SusChunkFinder extends Module {
     private final BoolSetting showBlocks = add(new BoolSetting("Show Blocks", "Also outline the exact suspicious blocks", false));
     private final BoolSetting tracers = add(new BoolSetting("Tracers", "Lines to each sus chunk", false));
     private final NumberSetting tracerWidth = add(new NumberSetting("Tracer Width", "Line thickness in screen pixels", 2, 0.5, 5, 0.5)).visibleWhen(tracers::isOn);
+    private final dev.stella.client.render.TracerStyle tracerStyle = new dev.stella.client.render.TracerStyle(st -> add(st), tracers::isOn);
     private final BoolSetting labels = add(new BoolSetting("Labels", "Show reason and confidence labels", false));
     private final BoolSetting notify = add(new BoolSetting("Notify", "Notify on new Medium/High findings", true));
 
@@ -305,7 +306,7 @@ public class SusChunkFinder extends Module {
             if (tracers.isOn()) {
                 Box tb = chunkBox(c);
                 Vec3d center = new Vec3d((tb.minX + tb.maxX) / 2, Math.min(tb.maxY, Math.max(tb.minY, mc.player.getY())) + 1, (tb.minZ + tb.maxZ) / 2);
-                Tracers.draw(r, origin, center, tracerWidth.getFloat(), ColorUtil.mulAlpha(color.argb(), 0.85));
+                Tracers.draw(r, origin, center, tracerWidth.getFloat(), ColorUtil.mulAlpha(color.argb(), 0.85), tracerStyle);
             }
             double a = alphaFor(c.confidence);
             int outline = ColorUtil.mulAlpha(color.argb(), Math.max(0.6, a));

@@ -42,6 +42,7 @@ public class PlayerESP extends Module {
     private final ModeSetting tracerTarget = add(new ModeSetting("Tracer Target", "Body part tracers point to", "Body", "Feet", "Body", "Head")).visibleWhen(tracers::isOn);
     private final ColorSetting tracerColor = add(new ColorSetting("Tracer Color", "", 0xC0D8B4FE)).visibleWhen(tracers::isOn);
     private final NumberSetting tracerWidth = add(new NumberSetting("Tracer Width", "Line thickness in screen pixels", 1.5, 0.5, 5, 0.5)).visibleWhen(tracers::isOn);
+    private final dev.stella.client.render.TracerStyle tracerStyle = new dev.stella.client.render.TracerStyle(st -> add(st), tracers::isOn);
     private final BoolSetting distanceFade = add(new BoolSetting("Distance Fade", "Fade tracers for far players", true)).visibleWhen(tracers::isOn);
 
     // labels
@@ -78,7 +79,7 @@ public class PlayerESP extends Module {
                 double dist = Math.sqrt(mc.player.squaredDistanceTo(p));
                 int c = staff(p) ? staffCol.argb() : tracerColor.argb();
                 if (distanceFade.isOn()) c = dev.stella.client.util.ColorUtil.mulAlpha(c, 1 - 0.7 * Math.min(1, dist / range.get()));
-                dev.stella.client.render.Tracers.draw(r, origin, p.getLerpedPos(td).add(0, ty, 0), tracerWidth.getFloat(), c);
+                dev.stella.client.render.Tracers.draw(r, origin, p.getLerpedPos(td).add(0, ty, 0), tracerWidth.getFloat(), c, tracerStyle);
             }
             if (!box.isOn() && !fill.isOn()) continue;
             Vec3d lerp = p.getLerpedPos(td);

@@ -54,8 +54,6 @@ public class StorageESP extends Module {
     private final NumberSetting fillAlpha = add(new NumberSetting("Fill Alpha", "Fill opacity", 0.18, 0.02, 0.8, 0.02)).visibleWhen(fill::isOn);
     private final BoolSetting outline = add(new BoolSetting("Outline", "Box outline", true));
     private final NumberSetting lineWidth = add(new NumberSetting("Line Width", "Outline thickness", 2, 1, 5, 0.5)).visibleWhen(outline::isOn);
-    private final BoolSetting labels = add(new BoolSetting("Labels", "Show block name", false));
-    private final BoolSetting distance = add(new BoolSetting("Distance", "Show distance in labels", true)).visibleWhen(labels::isOn);
     private final NumberSetting maxRendered = add(new NumberSetting("Max Rendered", "Cap on highlighted containers", 600, 20, 5000, 20));
     // tracers
     private final BoolSetting tracers = add(new BoolSetting("Tracers", "Lines from the screen to each highlighted block", false));
@@ -66,6 +64,7 @@ public class StorageESP extends Module {
     private final BoolSetting tracerBlockColor = add(new BoolSetting("Tracer Uses Block Color", "Colour tracers like their box", true)).visibleWhen(tracers::isOn);
     private final ColorSetting tracerColor = add(new ColorSetting("Tracer Color", "", 0xC0D8B4FE)).visibleWhen(() -> tracers.isOn() && !tracerBlockColor.isOn());
     private final NumberSetting tracerWidth = add(new NumberSetting("Tracer Width", "Line thickness in screen pixels", 1.5, 0.5, 5, 0.5)).visibleWhen(tracers::isOn);
+    private final dev.stella.client.render.TracerStyle tracerStyle = new dev.stella.client.render.TracerStyle(st -> add(st), tracers::isOn);
     private final NumberSetting maxTracers = add(new NumberSetting("Max Tracers", "Tracers to the nearest N blocks", 40, 1, 300, 1)).visibleWhen(tracers::isOn);
     private final BoolSetting tracerFade = add(new BoolSetting("Tracer Distance Fade", "Fade tracers to far blocks", true)).visibleWhen(tracers::isOn);
 
@@ -138,21 +137,6 @@ public class StorageESP extends Module {
         }
     }
 
-    @Override
-    public void onRenderOverlay(DrawContext ctx, float tickDelta) {
-        if (!inGame()) return;
-        if (!labels.isOn()) return;
-        int n = 0;
-        for (Entry e : cache) {
-            if (n++ > 80) break;
-            Vec3d s = Projection.toScreen(Vec3d.ofCenter(e.pos).add(0, 0.6, 0));
-            if (!Projection.onScreen(s)) continue;
-            String text = e.label;
-            if (distance.isOn()) text += " " + (int) Math.sqrt(e.pos.getSquaredDistance(mc.player.getEntityPos())) + "m";
-            Render2D.label(ctx, text, s.x, s.y, 0.75f, e.color, 0x90000000);
-        }
-    }
-
     private void drawTracers(Render3D r, java.util.List<BlockPos> targets, java.util.function.Function<BlockPos, Integer> colorOf) {
         if (!tracers.isOn() || !inGame()) return;
         Vec3d origin = Tracers.start(tracerOrigin.get(), originX.get(), originY.get());
@@ -164,7 +148,7 @@ public class StorageESP extends Module {
                 double d = Math.sqrt(p.getSquaredDistance(mc.player.getEntityPos()));
                 c = ColorUtil.mulAlpha(c, 1 - 0.7 * Math.min(1, d / range.get()));
             }
-            Tracers.draw(r, origin, Vec3d.ofCenter(p), tracerWidth.getFloat(), c);
+            Tracers.draw(r, origin, Vec3d.ofCenter(p), tracerWidth.getFloat(), c, tracerStyle);
         }
     }
 }

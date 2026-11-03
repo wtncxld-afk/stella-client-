@@ -108,7 +108,6 @@ final class StellaSmokeTest {
                             ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> m.setEnabled(false));
                         setting("Block ESP", "Tracers", true);
                         setting("Storage ESP", "Tracers", true);
-                        setting("Storage ESP", "Labels", true);
                         setting("Sus Chunk Finder", "Tracers", true);
                         var h = mc.player.networkHandler;
                         h.sendChatCommand("time set 18000");
