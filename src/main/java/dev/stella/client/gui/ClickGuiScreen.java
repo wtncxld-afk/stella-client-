@@ -141,7 +141,7 @@ public class ClickGuiScreen extends Screen {
         Theme t = ThemeManager.get();
         double a = open.get();
         if (closing && a < 0.05) {
-            if (client != null && client.world == null) client.setScreen(new net.minecraft.client.gui.screen.TitleScreen());
+            if (client != null && client.world == null) client.setScreen(new net.minecraft.client.gui.screen.TitleScreen(false));
             else super.close();
             return;
         }
