@@ -177,8 +177,7 @@ public class AutoRelog extends Module {
             mc.interactionManager.cancelBlockBreaking();
             state = State.WAITING_DISCONNECT;
             status("Reached Y " + MathHelper.floor(mc.player.getY()) + " - disconnecting", Notification.Type.SUCCESS);
-            if (mc.world != null) mc.world.disconnect();
-            mc.disconnect();
+            mc.disconnectWithProgressScreen();
             return;
         }
         if (!mc.player.isOnGround()) return; // falling into the hole we just dug
@@ -239,13 +238,13 @@ public class AutoRelog extends Module {
     }
 
     private void selectBestTool(BlockState s) {
-        int best = mc.player.getInventory().selectedSlot;
+        int best = mc.player.getInventory().getSelectedSlot();
         float bestSpeed = mc.player.getInventory().getStack(best).getMiningSpeedMultiplier(s);
         for (int i = 0; i < 9; i++) {
             ItemStack st = mc.player.getInventory().getStack(i);
             float sp = st.getMiningSpeedMultiplier(s);
             if (sp > bestSpeed) { bestSpeed = sp; best = i; }
         }
-        mc.player.getInventory().selectedSlot = best;
+        mc.player.getInventory().setSelectedSlot(best);
     }
 }

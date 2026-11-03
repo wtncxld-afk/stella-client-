@@ -52,10 +52,10 @@ public class PlayerDetector extends Module {
             double d2 = mc.player.squaredDistanceTo(p);
             if (d2 > r2) continue;
             now.add(p.getUuid());
-            list.add(new Seen(p.getGameProfile().getName(), Math.sqrt(d2)));
+            list.add(new Seen(p.getGameProfile().name(), Math.sqrt(d2)));
             if (!inRange.contains(p.getUuid()) && notifyEnter.isOn() && shouldAlert(p)) {
                 lastAlert.put(p.getUuid(), System.currentTimeMillis());
-                NotificationManager.post("Player Detected", p.getGameProfile().getName() + " (" + (int) Math.sqrt(d2) + "m)", Notification.Type.WARNING);
+                NotificationManager.post("Player Detected", p.getGameProfile().name() + " (" + (int) Math.sqrt(d2) + "m)", Notification.Type.WARNING);
                 if (sound.isOn()) Sounds.ping(0.8f);
             }
         }
@@ -63,7 +63,7 @@ public class PlayerDetector extends Module {
             for (UUID id : inRange) {
                 if (!now.contains(id)) {
                     var e = mc.getNetworkHandler() == null ? null : mc.getNetworkHandler().getPlayerListEntry(id);
-                    NotificationManager.post("Player Left Range", e != null ? e.getProfile().getName() : "A player", Notification.Type.INFO);
+                    NotificationManager.post("Player Left Range", e != null ? e.getProfile().name() : "A player", Notification.Type.INFO);
                 }
             }
         }
@@ -73,7 +73,7 @@ public class PlayerDetector extends Module {
     }
 
     private boolean shouldAlert(PlayerEntity p) {
-        String name = p.getGameProfile().getName();
+        String name = p.getGameProfile().name();
         for (String n : ignoreList.get().split(",")) if (!n.isBlank() && n.trim().equalsIgnoreCase(name)) return false;
         if (staffOnly.isOn() && !dev.stella.client.data.StaffDatabase.isStaff(name)) return false;
         Long last = lastAlert.get(p.getUuid());

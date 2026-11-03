@@ -18,7 +18,7 @@ import net.minecraft.util.Identifier;
  */
 public final class StellaFont {
     public static final Identifier ID = Identifier.of(StellaClient.MOD_ID, "xuong");
-    private static final Style STYLE = Style.EMPTY.withFont(ID);
+    private static final Style STYLE = Style.EMPTY.withFont(new net.minecraft.text.StyleSpriteSource.Font(ID));
     private static boolean enabled = true;
 
     private StellaFont() {}
@@ -34,7 +34,9 @@ public final class StellaFont {
     }
 
     public static int draw(DrawContext ctx, String s, int x, int y, int color, boolean shadow) {
-        return ctx.drawText(tr(), text(s), x, y, color, shadow);
+        Text t = text(s);
+        ctx.drawText(tr(), t, x, y, color, shadow);
+        return x + tr().getWidth(t);
     }
 
     public static int width(String s) { return enabled ? tr().getWidth(text(s)) : tr().getWidth(s); }

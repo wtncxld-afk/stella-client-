@@ -108,7 +108,7 @@ public final class StaffDatabase {
             } catch (IllegalArgumentException ignored) { }
         }
         for (PlayerListEntry e : mc.getNetworkHandler().getPlayerList()) {
-            if (e.getProfile().getName().toLowerCase(Locale.ROOT).equals(m.name.toLowerCase(Locale.ROOT))) return e;
+            if (e.getProfile().name().toLowerCase(Locale.ROOT).equals(m.name.toLowerCase(Locale.ROOT))) return e;
         }
         return null;
     }

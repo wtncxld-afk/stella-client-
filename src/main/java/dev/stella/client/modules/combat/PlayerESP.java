@@ -59,7 +59,7 @@ public class PlayerESP extends Module {
         return mc.player.squaredDistanceTo(p) <= range.get() * range.get();
     }
 
-    private boolean staff(PlayerEntity p) { return staffColor.isOn() && StaffDatabase.isStaff(p.getGameProfile().getName()); }
+    private boolean staff(PlayerEntity p) { return staffColor.isOn() && StaffDatabase.isStaff(p.getGameProfile().name()); }
 
     @Override
     public void onRender3D(Render3D r) {
@@ -99,7 +99,7 @@ public class PlayerESP extends Module {
                 Vec3d s = Projection.toScreen(pos.add(0, p.getHeight() + 0.35, 0));
                 if (!Projection.onScreen(s)) continue;
                 StringBuilder sb = new StringBuilder();
-                if (names.isOn()) sb.append(p.getGameProfile().getName());
+                if (names.isOn()) sb.append(p.getGameProfile().name());
                 if (distance.isOn()) sb.append(sb.isEmpty() ? "" : " ").append((int) dist).append("m");
                 if (health.isOn()) {
                     float hp = p.getHealth() + p.getAbsorptionAmount();

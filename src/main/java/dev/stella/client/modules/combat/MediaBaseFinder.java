@@ -69,7 +69,7 @@ public class MediaBaseFinder extends HudElement {
     @Override protected void onEnable() { primed = false; known.clear(); }
 
     private boolean isMedia(PlayerListEntry e) {
-        String name = e.getProfile().getName();
+        String name = e.getProfile().name();
         if (useList.isOn() && MediaDatabase.contains(name)) return true;
         StringBuilder rank = new StringBuilder();
         if (e.getDisplayName() != null) rank.append(e.getDisplayName().getString()).append(' ');
@@ -92,9 +92,9 @@ public class MediaBaseFinder extends HudElement {
         List<PlayerListEntry> list = new ArrayList<>();
         Set<String> now = new HashSet<>();
         for (PlayerListEntry e : mc.getNetworkHandler().getPlayerList()) {
-            if (isMedia(e)) { list.add(e); now.add(e.getProfile().getName()); }
+            if (isMedia(e)) { list.add(e); now.add(e.getProfile().name()); }
         }
-        list.sort((a, b) -> a.getProfile().getName().compareToIgnoreCase(b.getProfile().getName()));
+        list.sort((a, b) -> a.getProfile().name().compareToIgnoreCase(b.getProfile().name()));
         if (primed) {
             for (String n : now) if (!known.contains(n) && notifyJoin.isOn()) {
                 NotificationManager.post("Media Base Finder", n + " is in your region", Notification.Type.WARNING, 5000);
@@ -114,7 +114,7 @@ public class MediaBaseFinder extends HudElement {
         List<String> names = new ArrayList<>();
         List<PlayerListEntry> entries = new ArrayList<>(current);
         if (editor && entries.isEmpty()) names.addAll(List.of("ExampleMedia", "AnotherCreator"));
-        for (PlayerListEntry e : entries) names.add(e.getProfile().getName());
+        for (PlayerListEntry e : entries) names.add(e.getProfile().name());
 
         String title = "MEDIA BASE";
         String region = "";

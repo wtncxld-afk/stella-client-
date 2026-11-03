@@ -75,7 +75,7 @@ public class MusicHud extends HudElement {
         if (png == null) return;
         try {
             NativeImage img = NativeImage.read(new ByteArrayInputStream(png));
-            coverTex = new NativeImageBackedTexture(img);
+            coverTex = new NativeImageBackedTexture(() -> "stella_music_cover", img);
             mc.getTextureManager().registerTexture(COVER, coverTex);
             hasCover = true;
         } catch (Exception e) {

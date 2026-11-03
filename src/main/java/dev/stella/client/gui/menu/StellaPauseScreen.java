@@ -55,9 +55,8 @@ public class StellaPauseScreen extends dev.stella.client.gui.StellaScreen {
     private void disconnect() {
         boolean singleplayer = client.isInSingleplayer();
         ServerInfo serverInfo = client.getCurrentServerEntry();
-        if (client.world != null) client.world.disconnect();
-        if (singleplayer) client.disconnect(new MessageScreen(Text.translatable("menu.savingLevel")));
-        else client.disconnect();
+        if (singleplayer) client.disconnectWithSavingScreen();
+        else client.disconnectWithProgressScreen();
         TitleScreen title = new TitleScreen(false);
         if (singleplayer || serverInfo == null) client.setScreen(title);
         else client.setScreen(new MultiplayerScreen(title));

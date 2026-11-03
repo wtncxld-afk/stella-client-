@@ -41,7 +41,7 @@ final class StellaSmokeTest {
     private static int inStage() { return tick - stageStart; }
 
     private static void shot(MinecraftClient mc, String name) {
-        ScreenshotRecorder.saveScreenshot(mc.runDirectory, "stella-" + name + ".png", mc.getFramebuffer(),
+        ScreenshotRecorder.saveScreenshot(mc.runDirectory, "stella-" + name + ".png", mc.getFramebuffer(), 1,
                 msg -> StellaClient.LOGGER.info("[smoke] screenshot {}: {}", name, msg.getString()));
     }
 
@@ -271,7 +271,7 @@ final class StellaSmokeTest {
     private static void press(Screen screen, String translationKey) {
         Text wanted = Text.translatable(translationKey);
         for (Element e : screen.children()) {
-            if (e instanceof ButtonWidget b && b.getMessage().getString().equals(wanted.getString())) { b.onPress(); return; }
+            if (e instanceof ButtonWidget b && b.getMessage().getString().equals(wanted.getString())) { b.onPress(new net.minecraft.client.input.KeyInput(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0)); return; }
         }
         throw new IllegalStateException("button not found: " + translationKey);
     }

@@ -18,7 +18,7 @@ public final class Sounds {
         ClickGuiModule c = cfg();
         float v = (float) (vol * (c == null ? 0.6 : c.volume.get()));
         if (v <= 0.001f) return;
-        MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(e, pitch, v));
+        MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.ui(e, pitch, v));
     }
 
     /** Module alerts (Block Notifier, detectors...). */

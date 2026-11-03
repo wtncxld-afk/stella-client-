@@ -83,7 +83,7 @@ public class CustomSky extends Module {
 
     private float daylight(float tickDelta) {
         if (!dayCycle.isOn() || mc.world == null) return 0f;
-        return MathHelper.clamp(MathHelper.cos(mc.world.getSkyAngleRadians(tickDelta)) * 2f + 0.5f, 0f, 1f);
+        return MathHelper.clamp(MathHelper.cos((float) (((mc.world.getTimeOfDay() - 6000L) % 24000L + 24000L) % 24000L / 24000.0 * Math.PI * 2)) * 2f + 0.5f, 0f, 1f);
     }
 
     private int shade(int c, float mul) {

@@ -160,7 +160,7 @@ public class AntiVanish extends Module {
     public void onSuggestions(int id, java.util.List<String> names) {
         if (id != COMPLETION_ID || !isEnabled() || mc.getNetworkHandler() == null) return;
         java.util.Set<String> tab = new java.util.HashSet<>();
-        for (PlayerListEntry e : mc.getNetworkHandler().getPlayerList()) tab.add(e.getProfile().getName().toLowerCase(java.util.Locale.ROOT));
+        for (PlayerListEntry e : mc.getNetworkHandler().getPlayerList()) tab.add(e.getProfile().name().toLowerCase(java.util.Locale.ROOT));
         for (String n : names) {
             if (n.isBlank() || n.startsWith("@") || !n.matches("[A-Za-z0-9_]{3,16}")) continue;
             if (tab.contains(n.toLowerCase(java.util.Locale.ROOT))) continue;
@@ -197,7 +197,7 @@ public class AntiVanish extends Module {
         double r2 = range.get() * range.get();
         for (PlayerEntity p : mc.world.getPlayers()) {
             if (p == mc.player || mc.player.squaredDistanceTo(p) > r2) continue;
-            String name = p.getGameProfile().getName();
+            String name = p.getGameProfile().name();
             boolean staff = StaffDatabase.isStaff(name);
             if (onlyStaff.isOn() && !staff) continue;
             int dist = (int) Math.sqrt(mc.player.squaredDistanceTo(p));
