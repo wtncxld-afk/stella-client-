@@ -461,8 +461,26 @@ final class StellaSmokeTest {
                     if (inStage() == 656) StellaClient.LOGGER.info("[smoke] totem pops counted for self: {}",
                             ModuleManager.get(dev.stella.client.modules.pvp.TotemPopCounter.class).pops(mc.player.getUuid()));
                     if (inStage() == 658) shot(mc, "new-huds");
-                    if (inStage() == 660) mc.player.networkHandler.sendChatCommand("gamemode creative");
-                    if (inStage() == 664) {
+                    if (inStage() == 660) {
+                        // Death Coordinates + Toggle Sprint
+                        ModuleManager.get(dev.stella.client.modules.misc.ToggleSprint.class).setEnabled(true);
+                        ModuleManager.get(dev.stella.client.modules.misc.DeathCoordinates.class).setEnabled(true);
+                        mc.player.networkHandler.sendChatCommand("kill @s");
+                    }
+                    if (inStage() == 668) {
+                        boolean dead = mc.player.isDead();
+                        boolean waypoint = dev.stella.client.data.Waypoints.all().stream().anyMatch(w -> w.name().equals("Death"));
+                        StellaClient.LOGGER.info("[smoke] death coordinates: dead={} death waypoint={}", dead, waypoint);
+                        if (!waypoint) fail("Death Coordinates did not record the death");
+                        mc.player.requestRespawn();
+                    }
+                    if (inStage() == 674) {
+                        mc.setScreen(null);
+                        StellaClient.LOGGER.info("[smoke] toggle sprint: sprint key held={}", mc.options.sprintKey.isPressed());
+                        ModuleManager.get(dev.stella.client.modules.misc.ToggleSprint.class).setEnabled(false);
+                        mc.player.networkHandler.sendChatCommand("gamemode creative");
+                    }
+                    if (inStage() == 678) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {
