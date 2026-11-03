@@ -121,6 +121,7 @@ final class StellaSmokeTest {
                     if (inStage() == 160) shot(mc, "sky-arctic-aurora");
                     if (inStage() == 162) setting("Custom Sky", "Preset", "Cosmic Stella");
                     if (inStage() == 165) { mc.player.setPitch(18f); mc.setScreen(new ClickGuiScreen()); }
+                    if (inStage() == 182) shot(mc, "gui-clean");
                     if (inStage() == 185 && mc.currentScreen instanceof ClickGuiScreen gui) { gui.openSettingsFor("Player ESP"); gui.openSettingsFor("Custom Sky"); }
                     if (inStage() == 210) shot(mc, "world-gui");
                     if (inStage() == 212) setting("ClickGUI", "Theme", "Pink");
@@ -145,11 +146,27 @@ final class StellaSmokeTest {
                     if (inStage() == 288) ModuleManager.all().stream().filter(m -> m.getName().equals("Region Map HUD")).forEach(m -> m.setEnabled(true));
                     if (inStage() == 300) shot(mc, "region-map");
                     if (inStage() == 302) {
+                        // every HUD element on, world modules off: a clean look at the HUD
+                        for (Module m : ModuleManager.all()) {
+                            if (m.getCategory() == dev.stella.client.module.Category.HUD) m.setEnabled(true);
+                            else if (m.getCategory() != dev.stella.client.module.Category.CLIENT
+                                    && m.getCategory() != dev.stella.client.module.Category.SETTINGS && !m.getName().equals("Custom Sky")) m.setEnabled(false);
+                        }
+                        dev.stella.client.notification.NotificationManager.post("Block Notifier", "Spawner at 16 113 8",
+                                dev.stella.client.notification.Notification.Type.INFO, 20000);
+                        dev.stella.client.notification.NotificationManager.post("Staff", "Example alert toast",
+                                dev.stella.client.notification.Notification.Type.WARNING, 20000);
+                    }
+                    if (inStage() == 320) shot(mc, "hud-all");
+                    if (inStage() == 322) mc.setScreen(new HudEditorScreen(null));
+                    if (inStage() == 335) shot(mc, "hud-editor-all");
+                    if (inStage() == 337) {
+                        mc.setScreen(null);
                         mc.setScreen(null);
                         for (Module m : ModuleManager.all()) if (m.isEnabled()) m.setEnabled(false);
                         for (Module m : ModuleManager.all()) if (m.isDefaultEnabled()) m.setEnabled(true);
                     }
-                    if (inStage() == 330) {
+                    if (inStage() == 360) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {
