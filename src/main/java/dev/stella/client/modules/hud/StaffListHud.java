@@ -57,8 +57,8 @@ public class StaffListHud extends HudElement {
         int h = 12 + Math.max(1, shown.size()) * 10 - 2;
         card.draw(ctx, this, w, h);
         int px = card.padLeft(), py = card.pad();
-        ctx.getMatrices().push();
-        ctx.getMatrices().translate(px, py, 0);
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate((float) (px), (float) (py));
         dev.stella.client.render.StellaFont.draw(ctx, header, 0, 0, col(card.accent(headerColor.argb())), true);
         int y = 12;
         if (shown.isEmpty()) {
@@ -82,7 +82,7 @@ public class StaffListHud extends HudElement {
             }
             y += 10;
         }
-        ctx.getMatrices().pop();
+        ctx.getMatrices().popMatrix();
         setSize(w + px + card.pad(), h + py * 2);
     }
 }

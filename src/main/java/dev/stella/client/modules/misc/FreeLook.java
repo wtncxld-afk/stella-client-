@@ -38,7 +38,7 @@ public class FreeLook extends Module {
     @Override
     public void onTick() {
         boolean held = inGame() && mc.currentScreen == null && lookKey.isBound()
-                && InputUtil.isKeyPressed(mc.getWindow().getHandle(), lookKey.key());
+                && dev.stella.client.util.Keys.down(lookKey.key());
         if (toggleMode.isOn()) {
             if (held && !keyWasDown) { if (looking) stop(); else start(); }
             if (!inGame() && looking) stop();

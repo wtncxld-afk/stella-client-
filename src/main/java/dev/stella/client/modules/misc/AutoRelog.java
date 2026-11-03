@@ -119,7 +119,7 @@ public class AutoRelog extends Module {
 
     @Override
     public void onTick() {
-        boolean down = emergencyStop.isBound() && InputUtil.isKeyPressed(mc.getWindow().getHandle(), emergencyStop.key());
+        boolean down = emergencyStop.isBound() && dev.stella.client.util.Keys.down(emergencyStop.key());
         if (down && !stopKeyDown) stop("Emergency stop", true);
         stopKeyDown = down;
 

@@ -132,19 +132,19 @@ public class MediaBaseFinder extends HudElement {
         int h = 12 + Math.max(1, shown) * 12 + (more.isEmpty() ? 0 : 10) - 2;
         card.draw(ctx, this, w, h);
         int px = card.padLeft(), py = card.pad();
-        ctx.getMatrices().push();
-        ctx.getMatrices().translate(px, py, 0);
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate((float) (px), (float) (py));
         // [media logo] MEDIA BASE  <region>  <count>
-        ctx.drawTexture(RenderLayer::getGuiTextured, LOGO, 0, -1, 0f, 0f, 11, 11, 11, 11, col(0xFFFFFFFF));
+        ctx.drawTexture(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, LOGO, 0, -1, 0f, 0f, 11, 11, 11, 11, col(0xFFFFFFFF));
         int tc = col(card.accent(titleColor.argb()));
         StellaFont.draw(ctx, title, 14, 1, tc, true);
         int x = 14 + StellaFont.width(title) + 6;
         if (!region.isEmpty()) {
-            ctx.getMatrices().push();
-            ctx.getMatrices().translate(x, 2.5f, 0);
-            ctx.getMatrices().scale(0.7f, 0.7f, 1);
+            ctx.getMatrices().pushMatrix();
+            ctx.getMatrices().translate((float) (x), 2.5f);
+            ctx.getMatrices().scale(0.7f, 0.7f);
             StellaFont.draw(ctx, region, 0, 0, col(0xFF9A93A6), false);
-            ctx.getMatrices().pop();
+            ctx.getMatrices().popMatrix();
             x += (int) (StellaFont.width(region) * 0.7f) + 6;
         }
         StellaFont.draw(ctx, String.valueOf(names.size()), x, 1, col(nameColor.argb()), true);
@@ -161,7 +161,7 @@ public class MediaBaseFinder extends HudElement {
             y += 12;
         }
         if (!more.isEmpty()) StellaFont.draw(ctx, more, 0, y, col(0xFF8E879A), false);
-        ctx.getMatrices().pop();
+        ctx.getMatrices().popMatrix();
         setSize(w + px + card.pad(), h + py * 2);
     }
 }

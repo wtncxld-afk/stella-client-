@@ -16,7 +16,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.math.MatrixStack;
@@ -62,27 +62,47 @@ public final class StellaClient implements ClientModInitializer {
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> TpsTracker.reset());
 
+        WorldRenderEvents.END_EXTRACTION.register(ctx -> {
+            if (!ready) return;
+            frameDelta = ctx.tickCounter().getTickProgress(true);
+            Projection.capture(new org.joml.Matrix4f(ctx.viewMatrix()), new org.joml.Matrix4f(ctx.cullProjectionMatrix()),
+                    dev.stella.client.mixin.CameraAccessor.pos(ctx.camera()));
+        });
+
         WorldRenderEvents.BEFORE_ENTITIES.register(ctx -> {
             if (!ready) return;
             CustomSky sky = ModuleManager.get(CustomSky.class);
-            if (sky.active()) sky.render(ctx.tickCounter().getTickDelta(true));
+            if (sky.active()) {
+                try { sky.render(ctx.matrices(), immediate(ctx.consumers()), frameDelta); }
+                catch (Throwable t) { reportError("Custom Sky", t); }
+            }
         });
 
-        WorldRenderEvents.LAST.register(ctx -> {
+        WorldRenderEvents.END_MAIN.register(ctx -> {
             if (!ready) return;
-            Projection.capture(ctx.positionMatrix(), ctx.projectionMatrix(), ctx.camera().getPos());
-            MatrixStack matrices = ctx.matrixStack() != null ? ctx.matrixStack() : new MatrixStack();
-            Render3D r = new Render3D(matrices, ctx.camera().getPos(), ctx.tickCounter().getTickDelta(true));
+            MatrixStack matrices = ctx.matrices() != null ? ctx.matrices() : new MatrixStack();
+            Render3D r = new Render3D(matrices, immediate(ctx.consumers()), ctx.worldState().cameraRenderState.pos, frameDelta);
             ModuleManager.render3D(r);
+            var mb = ModuleManager.get(dev.stella.client.modules.visuals.MotionBlur.class);
+            if (mb.isEnabled()) {
+                try { mb.apply(immediate(ctx.consumers())); } catch (Throwable t) { reportError("Motion Blur", t); }
+            }
         });
 
         HudRenderCallback.EVENT.register((drawContext, tickCounter) -> {
             if (!ready) return;
             MinecraftClient mc = MinecraftClient.getInstance();
-            float td = tickCounter.getTickDelta(true);
+            float td = tickCounter.getTickProgress(true);
             if (mc.world != null && !mc.options.hudHidden) ModuleManager.renderOverlay(drawContext, td);
             HudManager.render(drawContext, td);
         });
+    }
+
+    private static float frameDelta = 1f;
+
+    private static net.minecraft.client.render.VertexConsumerProvider.Immediate immediate(net.minecraft.client.render.VertexConsumerProvider p) {
+        if (p instanceof net.minecraft.client.render.VertexConsumerProvider.Immediate im) return im;
+        return MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
     }
 
     public static boolean isReady() { return ready; }

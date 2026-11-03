@@ -66,17 +66,17 @@ public class KeystrokesHud extends HudElement {
         // scale the key down slightly while pressed for a tactile feel
         float sc = (float) (1 - 0.06 * p);
         String[] parts = label.split("\\|");
-        ctx.getMatrices().push();
-        ctx.getMatrices().translate(x + w / 2f, y + h / 2f, 0);
-        ctx.getMatrices().scale(sc, sc, 1);
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate((float) (x + w / 2f), (float) (y + h / 2f));
+        ctx.getMatrices().scale((float) (sc), (float) (sc));
         int tc = col(textColor.argb());
         if (parts.length == 2) {
             dev.stella.client.render.StellaFont.draw(ctx, parts[0], -dev.stella.client.render.StellaFont.width(parts[0]) / 2, -8, tc, true);
-            ctx.getMatrices().scale(0.65f, 0.65f, 1);
+            ctx.getMatrices().scale(0.65f, 0.65f);
             dev.stella.client.render.StellaFont.draw(ctx, parts[1], -dev.stella.client.render.StellaFont.width(parts[1]) / 2, 2, col(ColorUtil.withAlpha(textColor.argb(), 0xC0)), false);
         } else {
             dev.stella.client.render.StellaFont.draw(ctx, label, -dev.stella.client.render.StellaFont.width(label) / 2, -4, tc, true);
         }
-        ctx.getMatrices().pop();
+        ctx.getMatrices().popMatrix();
     }
 }

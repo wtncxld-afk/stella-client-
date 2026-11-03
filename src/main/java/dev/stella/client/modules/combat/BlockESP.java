@@ -73,7 +73,7 @@ public class BlockESP extends Module {
             Vec3d s = Projection.toScreen(Vec3d.ofCenter(p));
             if (!Projection.onScreen(s)) continue;
             String name = mc.world.getBlockState(p).getBlock().getName().getString();
-            Render2D.label(ctx, name + " " + (int) Math.sqrt(p.getSquaredDistance(mc.player.getPos())) + "m", s.x, s.y, 0.75f, color.argb(), 0x90000000);
+            Render2D.label(ctx, name + " " + (int) Math.sqrt(p.getSquaredDistance(mc.player.getEntityPos())) + "m", s.x, s.y, 0.75f, color.argb(), 0x90000000);
         }
     }
 
@@ -85,7 +85,7 @@ public class BlockESP extends Module {
             if (n++ >= maxTracers.getInt()) break;
             int c = tracerBlockColor.isOn() ? (colorOf.apply(p) & 0xFFFFFF) | 0xD0000000 : tracerColor.argb();
             if (tracerFade.isOn()) {
-                double d = Math.sqrt(p.getSquaredDistance(mc.player.getPos()));
+                double d = Math.sqrt(p.getSquaredDistance(mc.player.getEntityPos()));
                 c = ColorUtil.mulAlpha(c, 1 - 0.7 * Math.min(1, d / range.get()));
             }
             Tracers.draw(r, origin, Vec3d.ofCenter(p), tracerWidth.getFloat(), c);

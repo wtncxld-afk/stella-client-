@@ -127,9 +127,10 @@ public class AntiVanish extends Module {
             case "Bottom" -> sh - 50 - h * sc / 2f;
             default -> sh / 2f - 30;
         };
-        ctx.getMatrices().push();
-        ctx.getMatrices().translate(sw / 2f, cy, 300);
-        ctx.getMatrices().scale(sc, sc, 1);
+        ctx.createNewRootLayer();
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate((float) (sw / 2f), (float) (cy));
+        ctx.getMatrices().scale((float) (sc), (float) (sc));
         float x = -w / 2f, y = -h / 2f;
         double pulse = 0.6 + 0.4 * Math.sin(age / 180.0);
         dev.stella.client.render.Render2D.shadow(ctx, x, y, w, h, 7, 6, dev.stella.client.util.ColorUtil.mulAlpha(
@@ -143,16 +144,16 @@ public class AntiVanish extends Module {
         dev.stella.client.render.StellaFont.draw(ctx, l2, -w2 / 2, (int) y + 20, c2, true);
         dev.stella.client.render.StellaFont.draw(ctx, l3, -w3 / 2, (int) y + 33, c3, true);
         if (popupReason.isOn()) {
-            ctx.getMatrices().push();
-            ctx.getMatrices().translate(-wr / 2f, y + 45, 0);
-            ctx.getMatrices().scale(0.6f, 0.6f, 1);
+            ctx.getMatrices().pushMatrix();
+            ctx.getMatrices().translate((float) (-wr / 2f), (float) (y + 45));
+            ctx.getMatrices().scale(0.6f, 0.6f);
             dev.stella.client.render.StellaFont.draw(ctx, popupReasonText, 0, 0, dev.stella.client.util.ColorUtil.mulAlpha(t.textDim(), a), false);
-            ctx.getMatrices().pop();
+            ctx.getMatrices().popMatrix();
         }
         // remaining-time bar
         float left = 1f - age / (float) dur;
         dev.stella.client.render.Render2D.roundRect(ctx, x + 6, y + h - 3, (w - 12) * left, 1.5f, 0.75f, dev.stella.client.util.ColorUtil.mulAlpha(nameColor.argb(), a * 0.8));
-        ctx.getMatrices().pop();
+        ctx.getMatrices().popMatrix();
     }
 
     /** Called from the network mixin for every command-suggestion response. */

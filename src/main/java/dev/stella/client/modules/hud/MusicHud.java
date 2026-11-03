@@ -63,7 +63,7 @@ public class MusicHud extends HudElement {
         KeySetting[] keys = {playPauseKey, nextKey, prevKey};
         String[] cmds = {"toggle", "next", "prev"};
         for (int i = 0; i < 3; i++) {
-            boolean down = keys[i].isBound() && InputUtil.isKeyPressed(h, keys[i].key());
+            boolean down = keys[i].isBound() && dev.stella.client.util.Keys.down(keys[i].key());
             if (down && !keyDown[i]) MusicService.command(cmds[i]);
             keyDown[i] = down;
         }
@@ -101,13 +101,13 @@ public class MusicHud extends HudElement {
         int h = 40;
         card.draw(ctx, this, w, h);
         int px = card.padLeft(), py = card.pad();
-        ctx.getMatrices().push();
-        ctx.getMatrices().translate(px, py, 0);
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate((float) (px), (float) (py));
         var t = ThemeManager.get();
 
         if (showCover.isOn()) {
             if (hasCover && !example && m.active()) {
-                ctx.drawTexture(RenderLayer::getGuiTextured, COVER, 0, 0, 0f, 0f, 40, 40, 40, 40, col(0xFFFFFFFF));
+                ctx.drawTexture(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, COVER, 0, 0, 0f, 0f, 40, 40, 40, 40, col(0xFFFFFFFF));
             } else {
                 Render2D.roundRect(ctx, 0, 0, 40, 40, 3, col(ColorUtil.withAlpha(t.accent(), 0x60)));
                 StellaFont.draw(ctx, "♪", 16, 15, col(0xFFFFFFFF), true);
@@ -118,21 +118,21 @@ public class MusicHud extends HudElement {
         if (!m.active()) {
             StellaFont.draw(ctx, "NOTHING PLAYING", tx, 4, col(t.accentSoft()), true);
             String st = MusicService.status();
-            ctx.getMatrices().push();
-            ctx.getMatrices().translate(tx, 18, 0);
-            ctx.getMatrices().scale(0.7f, 0.7f, 1);
+            ctx.getMatrices().pushMatrix();
+            ctx.getMatrices().translate((float) (tx), 18);
+            ctx.getMatrices().scale(0.7f, 0.7f);
             StellaFont.draw(ctx, trim(st.isEmpty() ? "Waiting for the media player..." : st, (int) (tw / 0.7f)), 0, 0, col(t.textDim()), false);
-            ctx.getMatrices().pop();
-            ctx.getMatrices().pop();
+            ctx.getMatrices().popMatrix();
+            ctx.getMatrices().popMatrix();
             setSize(w + px + card.pad(), h + py * 2);
             return;
         }
         StellaFont.draw(ctx, trim(m.title(), tw - (showButtons.isOn() ? 0 : 0)), tx, 1, col(0xFFFFFFFF), true);
-        ctx.getMatrices().push();
-        ctx.getMatrices().translate(tx, 12, 0);
-        ctx.getMatrices().scale(0.75f, 0.75f, 1);
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate((float) (tx), 12);
+        ctx.getMatrices().scale(0.75f, 0.75f);
         StellaFont.draw(ctx, trim(m.artist(), (int) (tw / 0.75f)), 0, 0, col(t.textDim()), false);
-        ctx.getMatrices().pop();
+        ctx.getMatrices().popMatrix();
 
         if (showProgress.isOn()) {
             long pos = m.livePosition(), dur = m.durationMs();
@@ -143,12 +143,12 @@ public class MusicHud extends HudElement {
             Render2D.roundRect(ctx, tx, by, (float) (tw * shown), 2.5f, 1.25f, col(ThemeManager.accentAt(0)));
             Render2D.roundRect(ctx, (float) (tx + tw * shown - 2.5f), by - 1.25f, 5, 5, 2.5f, col(0xFFFFFFFF));
             String a = time(pos), b = dur > 0 ? time(dur) : "--:--";
-            ctx.getMatrices().push();
-            ctx.getMatrices().translate(tx, by + 5, 0);
-            ctx.getMatrices().scale(0.65f, 0.65f, 1);
+            ctx.getMatrices().pushMatrix();
+            ctx.getMatrices().translate((float) (tx), (float) (by + 5));
+            ctx.getMatrices().scale(0.65f, 0.65f);
             StellaFont.draw(ctx, a, 0, 0, col(t.textDim()), false);
             StellaFont.draw(ctx, b, (int) (tw / 0.65f) - StellaFont.width(b), 0, col(t.textDim()), false);
-            ctx.getMatrices().pop();
+            ctx.getMatrices().popMatrix();
         }
         if (showButtons.isOn()) {
             int cx = tx + tw / 2;
@@ -159,7 +159,7 @@ public class MusicHud extends HudElement {
             else drawPlay(ctx, cx - 3, btnY, col(0xFFFFFFFF));
             drawNext(ctx, cx + 12, btnY + 1, col(0xFFE6E1EE));
         }
-        ctx.getMatrices().pop();
+        ctx.getMatrices().popMatrix();
         setSize(w + px + card.pad(), h + py * 2);
     }
 

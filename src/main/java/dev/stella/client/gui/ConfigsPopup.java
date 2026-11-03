@@ -46,6 +46,7 @@ public class ConfigsPopup {
 
         double a = open.target(shown ? 1 : 0).get() * alpha;
         if (a < 0.02) return;
+        ctx.createNewRootLayer();
         List<String> profiles = ConfigManager.listProfiles();
         ph = 20 + profiles.size() * 12 + 18 + 15 * 3 + 4;
         px = sw / 2 - W / 2;

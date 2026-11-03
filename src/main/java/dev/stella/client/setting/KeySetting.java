@@ -15,7 +15,7 @@ public class KeySetting extends Setting<Integer> {
     public String keyName() {
         if (!isBound()) return "None";
         try {
-            String s = InputUtil.fromKeyCode(value, 0).getLocalizedText().getString();
+            String s = InputUtil.Type.KEYSYM.createFromCode(value).getLocalizedText().getString();
             return s.length() > 12 ? s.substring(0, 12) : s;
         } catch (Exception e) {
             return "Key " + value;

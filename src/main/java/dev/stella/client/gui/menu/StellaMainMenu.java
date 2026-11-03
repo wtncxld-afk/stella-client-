@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Locale;
 
 /** Stella title screen: animated cosmic background, glowing logo and animated buttons. */
-public class StellaMainMenu extends Screen {
+public class StellaMainMenu extends dev.stella.client.gui.StellaScreen {
     /** Set while opening the vanilla title screen on purpose so the redirect mixin lets it through. */
     public static boolean bypass;
 
@@ -88,8 +88,8 @@ public class StellaMainMenu extends Screen {
     public void render(DrawContext ctx, int rawX, int rawY, float delta) {
         double a = fade.get();
         bg.render(ctx, width, height, 1, true);
-        ctx.getMatrices().push();
-        ctx.getMatrices().scale(ui, ui, 1);
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().scale((float) (ui), (float) (ui));
         int mx = (int) (rawX / ui), my = (int) (rawY / ui);
         int width = vw, height = vh;
         long age = System.currentTimeMillis() - openedAt;
@@ -101,18 +101,18 @@ public class StellaMainMenu extends Screen {
         float bob = (float) Math.sin(t * 1.4) * 2;
         int glowA = (int) (150 + 80 * Math.sin(t * 2));
         int gs = 72;
-        ctx.drawTexture(RenderLayer::getGuiTextured, BrandingHud.GLOW, width / 2 - gs / 2, (int) (logoY - 8 + bob), 0f, 0f, gs, gs, gs, gs,
+        ctx.drawTexture(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, BrandingHud.GLOW, width / 2 - gs / 2, (int) (logoY - 8 + bob), 0f, 0f, gs, gs, gs, gs,
                 ColorUtil.mulAlpha((glowA << 24) | (theme.accent() & 0xFFFFFF), a));
-        ctx.drawTexture(RenderLayer::getGuiTextured, BrandingHud.LOGO, width / 2 - 20, (int) (logoY + 8 + bob), 0f, 0f, 40, 40, 40, 40,
+        ctx.drawTexture(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, BrandingHud.LOGO, width / 2 - 20, (int) (logoY + 8 + bob), 0f, 0f, 40, 40, 40, 40,
                 ColorUtil.mulAlpha(0xFFFFFFFF, a));
         // big STELLA with shimmering gradient
         String title = "STELLA";
         float sc = 3.2f;
         int tw = 0;
         for (char c : title.toCharArray()) tw += StellaFont.width(String.valueOf(c)) + 2;
-        ctx.getMatrices().push();
-        ctx.getMatrices().translate(width / 2f - tw * sc / 2f, logoY + 54, 0);
-        ctx.getMatrices().scale(sc, sc, 1);
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate((float) (width / 2f - tw * sc / 2f), (float) (logoY + 54));
+        ctx.getMatrices().scale((float) (sc), (float) (sc));
         int cx = 0;
         for (int i = 0; i < title.length(); i++) {
             double p = (i / (double) (title.length() - 1) + t * 0.25) % 1.0;
@@ -122,7 +122,7 @@ public class StellaMainMenu extends Screen {
             StellaFont.draw(ctx, ch, cx, 0, ColorUtil.mulAlpha(c, a), true);
             cx += StellaFont.width(ch) + 2;
         }
-        ctx.getMatrices().pop();
+        ctx.getMatrices().popMatrix();
         String sub = "C L I E N T";
         StellaFont.draw(ctx, sub, width / 2 - StellaFont.width(sub) / 2, logoY + 86, ColorUtil.mulAlpha(theme.accentSoft(), a), false);
 
@@ -141,12 +141,12 @@ public class StellaMainMenu extends Screen {
         int vx = width - 6 - StellaFont.width(vanilla);
         boolean vHover = mx >= vx && my >= height - 24 && my < height - 14;
         StellaFont.draw(ctx, vanilla, vx, height - 24, ColorUtil.mulAlpha(vHover ? theme.accent() : 0xFF6E6878, a), false);
-        ctx.getMatrices().pop();
+        ctx.getMatrices().popMatrix();
         super.render(ctx, rawX, rawY, delta);
     }
 
     @Override
-    public boolean mouseClicked(double rawX, double rawY, int button) {
+    protected boolean onMouseClicked(double rawX, double rawY, int button) {
         double mx = rawX / ui, my = rawY / ui;
         int width = vw, height = vh;
         for (MenuButton b : buttons) {
@@ -164,6 +164,6 @@ public class StellaMainMenu extends Screen {
             bypass = false;
             return true;
         }
-        return super.mouseClicked(rawX, rawY, button);
+        return super.onMouseClicked(rawX, rawY, button);
     }
 }

@@ -60,7 +60,7 @@ public class TextInput {
         switch (key) {
             case GLFW.GLFW_KEY_BACKSPACE -> {
                 if (!text.isEmpty()) {
-                    text = Screen.hasControlDown() ? "" : text.substring(0, text.length() - 1);
+                    text = dev.stella.client.util.Keys.ctrl() ? "" : text.substring(0, text.length() - 1);
                     onChange.accept(text);
                 }
                 return true;
@@ -68,7 +68,7 @@ public class TextInput {
             case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> { onSubmit.accept(text); return true; }
             case GLFW.GLFW_KEY_ESCAPE -> { unfocusAll(); return true; }
             case GLFW.GLFW_KEY_V -> {
-                if (Screen.hasControlDown()) {
+                if (dev.stella.client.util.Keys.ctrl()) {
                     String clip = MinecraftClient.getInstance().keyboard.getClipboard();
                     if (clip != null) insert(clip.replaceAll("[\\r\\n]", ""));
                     return true;

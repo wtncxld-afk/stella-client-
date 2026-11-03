@@ -54,11 +54,11 @@ public class BlockNotifierHud extends HudElement {
                 String dist = d.distanceText();
                 dev.stella.client.render.StellaFont.draw(ctx, dist, w - 3 - dev.stella.client.render.StellaFont.width(dist), y + 1, col(t.textDim()), false);
                 String line2 = d.x() + " " + d.y() + " " + d.z() + "  " + d.dimensionShort() + "  " + d.blockId();
-                ctx.getMatrices().push();
-                ctx.getMatrices().translate(3, y + 11, 0);
-                ctx.getMatrices().scale(0.75f, 0.75f, 1);
+                ctx.getMatrices().pushMatrix();
+                ctx.getMatrices().translate(3, (float) (y + 11));
+                ctx.getMatrices().scale(0.75f, 0.75f);
                 dev.stella.client.render.StellaFont.draw(ctx, trim(line2, (int) ((w - 6) / 0.75f)), 0, 0, col(t.text()), false);
-                ctx.getMatrices().pop();
+                ctx.getMatrices().popMatrix();
                 y += 20;
             }
             if (list.size() > max) {

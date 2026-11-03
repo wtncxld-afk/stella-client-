@@ -1,102 +1,92 @@
 package dev.stella.client.render;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.gl.ShaderProgramKeys;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.BufferRenderer;
-import net.minecraft.client.render.BuiltBuffer;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.render.VertexFormats;
-import net.minecraft.client.render.VertexRendering;
-import net.minecraft.client.util.BufferAllocator;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 
 /**
- * Batched world-space renderer. All modules push boxes/lines into one batch per
- * frame, which is drawn with a handful of draw calls (outlines, fills).
+ * World-space renderer for ESP boxes, fills and tracers. Geometry is written into
+ * Stella's see-through render layers and flushed once per frame by {@link #flush()}.
  * Coordinates are absolute world coordinates; the camera offset is applied here.
  */
 public final class Render3D {
-    private static final BufferAllocator LINE_ALLOC = new BufferAllocator(1 << 20);
-    private static final BufferAllocator FILL_ALLOC = new BufferAllocator(1 << 20);
-    private static final BufferAllocator TRACER_ALLOC = new BufferAllocator(1 << 18);
-    private BufferBuilder tracers;
-    private float tracerWidth = 1f;
-
     private final MatrixStack matrices;
+    private final VertexConsumerProvider.Immediate consumers;
     private final Vec3d cam;
-    private BufferBuilder lines;
-    private BufferBuilder fills;
-    private float lineWidth = 2f;
     private final float tickDelta;
+    private float lineWidth = 2f;
+    private float tracerWidth = 1.5f;
 
-    public Render3D(MatrixStack matrices, Vec3d cameraPos, float tickDelta) {
+    public Render3D(MatrixStack matrices, VertexConsumerProvider.Immediate consumers, Vec3d cameraPos, float tickDelta) {
         this.matrices = matrices;
+        this.consumers = consumers;
         this.cam = cameraPos;
         this.tickDelta = tickDelta;
     }
 
     public float tickDelta() { return tickDelta; }
     public Vec3d cameraPos() { return cam; }
+    public void setLineWidth(float w) { this.lineWidth = Math.max(1f, w); }
 
-    public void setLineWidth(float w) { this.lineWidth = Math.max(lineWidth, w); }
+    private VertexConsumer lines() { return consumers.getBuffer(StellaPipelines.LINES); }
+    private VertexConsumer fills() { return consumers.getBuffer(StellaPipelines.FILLS); }
 
-    private BufferBuilder lines() {
-        if (lines == null) lines = new BufferBuilder(LINE_ALLOC, VertexFormat.DrawMode.LINES, VertexFormats.LINES);
-        return lines;
-    }
-
-    private BufferBuilder fills() {
-        if (fills == null) fills = new BufferBuilder(FILL_ALLOC, VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
-        return fills;
+    private void seg(VertexConsumer buf, float ax, float ay, float az, float bx, float by, float bz, int argb, float width) {
+        float nx = bx - ax, ny = by - ay, nz = bz - az;
+        float len = (float) Math.sqrt(nx * nx + ny * ny + nz * nz);
+        if (len < 1e-5f) return;
+        nx /= len; ny /= len; nz /= len;
+        MatrixStack.Entry e = matrices.peek();
+        Matrix4f m = e.getPositionMatrix();
+        buf.vertex(m, ax, ay, az).color(argb).normal(e, nx, ny, nz).lineWidth(width);
+        buf.vertex(m, bx, by, bz).color(argb).normal(e, nx, ny, nz).lineWidth(width);
     }
 
     public void boxOutline(Box box, int argb) {
-        Box b = box.offset(-cam.x, -cam.y, -cam.z);
-        VertexRendering.drawBox(matrices, lines(), b,
-                ((argb >> 16) & 0xFF) / 255f, ((argb >> 8) & 0xFF) / 255f, (argb & 0xFF) / 255f, ((argb >>> 24) & 0xFF) / 255f);
+        VertexConsumer b = lines();
+        float x1 = (float) (box.minX - cam.x), y1 = (float) (box.minY - cam.y), z1 = (float) (box.minZ - cam.z);
+        float x2 = (float) (box.maxX - cam.x), y2 = (float) (box.maxY - cam.y), z2 = (float) (box.maxZ - cam.z);
+        float w = lineWidth;
+        // bottom
+        seg(b, x1, y1, z1, x2, y1, z1, argb, w); seg(b, x2, y1, z1, x2, y1, z2, argb, w);
+        seg(b, x2, y1, z2, x1, y1, z2, argb, w); seg(b, x1, y1, z2, x1, y1, z1, argb, w);
+        // top
+        seg(b, x1, y2, z1, x2, y2, z1, argb, w); seg(b, x2, y2, z1, x2, y2, z2, argb, w);
+        seg(b, x2, y2, z2, x1, y2, z2, argb, w); seg(b, x1, y2, z2, x1, y2, z1, argb, w);
+        // verticals
+        seg(b, x1, y1, z1, x1, y2, z1, argb, w); seg(b, x2, y1, z1, x2, y2, z1, argb, w);
+        seg(b, x2, y1, z2, x2, y2, z2, argb, w); seg(b, x1, y1, z2, x1, y2, z2, argb, w);
     }
 
     public void boxFill(Box box, int argb) {
-        Box b = box.offset(-cam.x, -cam.y, -cam.z);
+        VertexConsumer f = fills();
         Matrix4f m = matrices.peek().getPositionMatrix();
-        BufferBuilder f = fills();
-        float x1 = (float) b.minX, y1 = (float) b.minY, z1 = (float) b.minZ;
-        float x2 = (float) b.maxX, y2 = (float) b.maxY, z2 = (float) b.maxZ;
-        int r = (argb >> 16) & 0xFF, g = (argb >> 8) & 0xFF, bl = argb & 0xFF, a = (argb >>> 24) & 0xFF;
-        // bottom
-        f.vertex(m, x1, y1, z1).color(r, g, bl, a); f.vertex(m, x2, y1, z1).color(r, g, bl, a);
-        f.vertex(m, x2, y1, z2).color(r, g, bl, a); f.vertex(m, x1, y1, z2).color(r, g, bl, a);
-        // top
-        f.vertex(m, x1, y2, z1).color(r, g, bl, a); f.vertex(m, x1, y2, z2).color(r, g, bl, a);
-        f.vertex(m, x2, y2, z2).color(r, g, bl, a); f.vertex(m, x2, y2, z1).color(r, g, bl, a);
-        // north
-        f.vertex(m, x1, y1, z1).color(r, g, bl, a); f.vertex(m, x1, y2, z1).color(r, g, bl, a);
-        f.vertex(m, x2, y2, z1).color(r, g, bl, a); f.vertex(m, x2, y1, z1).color(r, g, bl, a);
-        // south
-        f.vertex(m, x1, y1, z2).color(r, g, bl, a); f.vertex(m, x2, y1, z2).color(r, g, bl, a);
-        f.vertex(m, x2, y2, z2).color(r, g, bl, a); f.vertex(m, x1, y2, z2).color(r, g, bl, a);
-        // west
-        f.vertex(m, x1, y1, z1).color(r, g, bl, a); f.vertex(m, x1, y1, z2).color(r, g, bl, a);
-        f.vertex(m, x1, y2, z2).color(r, g, bl, a); f.vertex(m, x1, y2, z1).color(r, g, bl, a);
-        // east
-        f.vertex(m, x2, y1, z1).color(r, g, bl, a); f.vertex(m, x2, y2, z1).color(r, g, bl, a);
-        f.vertex(m, x2, y2, z2).color(r, g, bl, a); f.vertex(m, x2, y1, z2).color(r, g, bl, a);
+        float x1 = (float) (box.minX - cam.x), y1 = (float) (box.minY - cam.y), z1 = (float) (box.minZ - cam.z);
+        float x2 = (float) (box.maxX - cam.x), y2 = (float) (box.maxY - cam.y), z2 = (float) (box.maxZ - cam.z);
+        quad(f, m, x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2, argb);
+        quad(f, m, x1, y2, z1, x1, y2, z2, x2, y2, z2, x2, y2, z1, argb);
+        quad(f, m, x1, y1, z1, x1, y2, z1, x2, y2, z1, x2, y1, z1, argb);
+        quad(f, m, x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2, argb);
+        quad(f, m, x1, y1, z1, x1, y1, z2, x1, y2, z2, x1, y2, z1, argb);
+        quad(f, m, x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2, argb);
     }
 
-    /** Single horizontal translucent quad (both sides visible) — used for flat chunk overlays. */
+    private static void quad(VertexConsumer f, Matrix4f m, float ax, float ay, float az, float bx, float by, float bz,
+                             float cx, float cy, float cz, float dx, float dy, float dz, int c) {
+        f.vertex(m, ax, ay, az).color(c);
+        f.vertex(m, bx, by, bz).color(c);
+        f.vertex(m, cx, cy, cz).color(c);
+        f.vertex(m, dx, dy, dz).color(c);
+    }
+
+    /** Single horizontal translucent quad — used for flat chunk overlays. */
     public void quadXZ(double x1, double z1, double x2, double z2, double y, int argb) {
         Matrix4f m = matrices.peek().getPositionMatrix();
-        BufferBuilder f = fills();
         float ax = (float) (x1 - cam.x), az = (float) (z1 - cam.z), bx = (float) (x2 - cam.x), bz = (float) (z2 - cam.z), yy = (float) (y - cam.y);
-        int r = (argb >> 16) & 0xFF, g = (argb >> 8) & 0xFF, bl = argb & 0xFF, al = (argb >>> 24) & 0xFF;
-        f.vertex(m, ax, yy, az).color(r, g, bl, al);
-        f.vertex(m, ax, yy, bz).color(r, g, bl, al);
-        f.vertex(m, bx, yy, bz).color(r, g, bl, al);
-        f.vertex(m, bx, yy, az).color(r, g, bl, al);
+        quad(fills(), m, ax, yy, az, ax, yy, bz, bx, yy, bz, bx, yy, az, argb);
     }
 
     public void box(Box box, int outline, int fill, boolean drawOutline, boolean drawFill) {
@@ -104,71 +94,20 @@ public final class Render3D {
         if (drawOutline) boxOutline(box, outline);
     }
 
-    /** Thin anti-blocky tracer line (drawn in real screen pixels, not GUI pixels). */
+    public void line(Vec3d a, Vec3d b, int argb) {
+        seg(lines(), (float) (a.x - cam.x), (float) (a.y - cam.y), (float) (a.z - cam.z),
+                (float) (b.x - cam.x), (float) (b.y - cam.y), (float) (b.z - cam.z), argb, lineWidth);
+    }
+
+    /** Thin smooth tracer line (screen-pixel width). */
     public void tracer(Vec3d from, Vec3d to, int argb, float width) {
-        if (tracers == null) tracers = new BufferBuilder(TRACER_ALLOC, VertexFormat.DrawMode.LINES, VertexFormats.LINES);
-        tracerWidth = Math.max(tracerWidth, width);
-        emitLine(tracers, from, to, argb);
+        seg(lines(), (float) (from.x - cam.x), (float) (from.y - cam.y), (float) (from.z - cam.z),
+                (float) (to.x - cam.x), (float) (to.y - cam.y), (float) (to.z - cam.z), argb, Math.max(0.5f, width));
     }
 
-    public void line(Vec3d a, Vec3d b, int argb) { emitLine(lines(), a, b, argb); }
-
-    private void emitLine(BufferBuilder buf, Vec3d a, Vec3d b, int argb) {
-        Matrix4f m = matrices.peek().getPositionMatrix();
-        float ax = (float) (a.x - cam.x), ay = (float) (a.y - cam.y), az = (float) (a.z - cam.z);
-        float bx = (float) (b.x - cam.x), by = (float) (b.y - cam.y), bz = (float) (b.z - cam.z);
-        float nx = bx - ax, ny = by - ay, nz = bz - az;
-        float len = (float) Math.sqrt(nx * nx + ny * ny + nz * nz);
-        if (len < 1e-5f) return;
-        nx /= len; ny /= len; nz /= len;
-        int r = (argb >> 16) & 0xFF, g = (argb >> 8) & 0xFF, bl = argb & 0xFF, al = (argb >>> 24) & 0xFF;
-        MatrixStack.Entry e = matrices.peek();
-        buf.vertex(m, ax, ay, az).color(r, g, bl, al).normal(e, nx, ny, nz);
-        buf.vertex(m, bx, by, bz).color(r, g, bl, al).normal(e, nx, ny, nz);
-    }
-
-    /** Flushes all batched geometry. Rendered through walls (no depth test). */
+    /** Draws everything written this frame. */
     public void flush() {
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.disableDepthTest();
-        RenderSystem.disableCull();
-        RenderSystem.depthMask(false);
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-
-        if (fills != null) {
-            BuiltBuffer built = fills.endNullable();
-            fills = null;
-            if (built != null) {
-                RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);
-                BufferRenderer.drawWithGlobalProgram(built);
-            }
-        }
-        if (lines != null) {
-            BuiltBuffer built = lines.endNullable();
-            lines = null;
-            if (built != null) {
-                RenderSystem.setShader(ShaderProgramKeys.RENDERTYPE_LINES);
-                RenderSystem.lineWidth(lineWidth);
-                BufferRenderer.drawWithGlobalProgram(built);
-                RenderSystem.lineWidth(1f);
-            }
-        }
-
-        if (tracers != null) {
-            BuiltBuffer built = tracers.endNullable();
-            tracers = null;
-            if (built != null) {
-                RenderSystem.setShader(ShaderProgramKeys.RENDERTYPE_LINES);
-                RenderSystem.lineWidth(tracerWidth);
-                BufferRenderer.drawWithGlobalProgram(built);
-                RenderSystem.lineWidth(1f);
-            }
-        }
-
-        RenderSystem.depthMask(true);
-        RenderSystem.enableCull();
-        RenderSystem.enableDepthTest();
-        RenderSystem.disableBlend();
+        consumers.draw(StellaPipelines.FILLS);
+        consumers.draw(StellaPipelines.LINES);
     }
 }

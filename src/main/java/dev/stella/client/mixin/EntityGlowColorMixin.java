@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class EntityGlowColorMixin {
     @Inject(method = "getTeamColorValue", at = @At("HEAD"), cancellable = true)
     private void stella$glowColor(CallbackInfoReturnable<Integer> cir) {
-        if (!StellaClient.isReady() || !((Entity) (Object) this).getWorld().isClient) return;
+        if (!StellaClient.isReady() || !((Entity) (Object) this).getEntityWorld().isClient()) return;
         int c = ModuleManager.get(GlowOutline.class).color((Entity) (Object) this);
         if (c != -1) cir.setReturnValue(c);
     }

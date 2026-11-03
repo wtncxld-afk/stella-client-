@@ -6,7 +6,6 @@ import dev.stella.client.setting.BoolSetting;
 import dev.stella.client.setting.ColorSetting;
 import dev.stella.client.setting.NumberSetting;
 import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.Fog;
 import net.minecraft.block.enums.CameraSubmersionType;
 
 public class FogCustomizer extends Module {
@@ -19,14 +18,11 @@ public class FogCustomizer extends Module {
 
     public FogCustomizer() { super("Fog Customizer", "Change fog distance and colour", Category.VISUALS); }
 
-    public Fog apply(Fog fog, Camera camera) {
-        if (!liquids.isOn() && camera.getSubmersionType() != CameraSubmersionType.NONE) return fog;
-        float s = fog.start(), e = fog.end();
-        if (disable.isOn()) { s = 1e6f; e = 1e6f + 1; }
-        else { s *= start.getFloat() / 100f; e *= end.getFloat() / 100f; if (e <= s) e = s + 1; }
-        float r = fog.red(), g = fog.green(), b = fog.blue();
-        if (customColor.isOn()) { r = color.rf(); g = color.gf(); b = color.bf(); }
-        return new Fog(s, e, fog.shape(), r, g, b, fog.alpha());
+    /** Scales a fog distance (start or end) written to the 1.21.11 fog uniform buffer. */
+    public float scale(float vanilla, boolean isEnd, Camera camera) {
+        if (!liquids.isOn() && camera != null && camera.getSubmersionType() != CameraSubmersionType.NONE) return vanilla;
+        if (disable.isOn()) return isEnd ? 1e6f + 1 : 1e6f;
+        return vanilla * (isEnd ? end.getFloat() : start.getFloat()) / 100f;
     }
 
     public boolean customColor() { return customColor.isOn(); }

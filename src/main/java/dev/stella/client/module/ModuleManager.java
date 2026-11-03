@@ -138,7 +138,7 @@ public final class ModuleManager {
         boolean allowed = mc.currentScreen == null;
         for (Module m : MODULES) {
             if (!m.keybind.isBound()) continue;
-            boolean down = InputUtil.isKeyPressed(handle, m.keybind.key());
+            boolean down = dev.stella.client.util.Keys.down(m.keybind.key());
             boolean was = KEY_STATE.getOrDefault(m, false);
             KEY_STATE.put(m, down);
             if (down && !was && allowed) {

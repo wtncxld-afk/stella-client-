@@ -148,7 +148,7 @@ public class StorageESP extends Module {
             Vec3d s = Projection.toScreen(Vec3d.ofCenter(e.pos).add(0, 0.6, 0));
             if (!Projection.onScreen(s)) continue;
             String text = e.label;
-            if (distance.isOn()) text += " " + (int) Math.sqrt(e.pos.getSquaredDistance(mc.player.getPos())) + "m";
+            if (distance.isOn()) text += " " + (int) Math.sqrt(e.pos.getSquaredDistance(mc.player.getEntityPos())) + "m";
             Render2D.label(ctx, text, s.x, s.y, 0.75f, e.color, 0x90000000);
         }
     }
@@ -161,7 +161,7 @@ public class StorageESP extends Module {
             if (n++ >= maxTracers.getInt()) break;
             int c = tracerBlockColor.isOn() ? (colorOf.apply(p) & 0xFFFFFF) | 0xD0000000 : tracerColor.argb();
             if (tracerFade.isOn()) {
-                double d = Math.sqrt(p.getSquaredDistance(mc.player.getPos()));
+                double d = Math.sqrt(p.getSquaredDistance(mc.player.getEntityPos()));
                 c = ColorUtil.mulAlpha(c, 1 - 0.7 * Math.min(1, d / range.get()));
             }
             Tracers.draw(r, origin, Vec3d.ofCenter(p), tracerWidth.getFloat(), c);

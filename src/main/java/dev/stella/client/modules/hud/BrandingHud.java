@@ -34,9 +34,9 @@ public class BrandingHud extends HudElement {
             double pulse = animated.isOn() ? 0.65 + 0.35 * Math.sin(time * Math.PI * 2) : 0.8;
             int ga = (int) (a * pulse);
             int tint = c1 & 0xFFFFFF;
-            ctx.drawTexture(RenderLayer::getGuiTextured, GLOW, -6, -6, 0f, 0f, 28, 28, 28, 28, (ga << 24) | tint);
+            ctx.drawTexture(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, GLOW, -6, -6, 0f, 0f, 28, 28, 28, 28, (ga << 24) | tint);
         }
-        ctx.drawTexture(RenderLayer::getGuiTextured, LOGO, 0, 0, 0f, 0f, 16, 16, 16, 16, (a << 24) | 0xFFFFFF);
+        ctx.drawTexture(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, LOGO, 0, 0, 0f, 0f, 16, 16, 16, 16, (a << 24) | 0xFFFFFF);
         String text = "STELLA";
         int x = 20;
         for (int i = 0; i < text.length(); i++) {

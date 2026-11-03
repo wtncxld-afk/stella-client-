@@ -5,29 +5,38 @@ import dev.stella.client.module.ModuleManager;
 import dev.stella.client.modules.visuals.Ambience;
 import dev.stella.client.modules.visuals.CustomSky;
 import dev.stella.client.modules.visuals.FogCustomizer;
-import net.minecraft.client.render.BackgroundRenderer;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.Fog;
+import net.minecraft.client.render.fog.FogRenderer;
 import net.minecraft.client.world.ClientWorld;
 import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
-@Mixin(BackgroundRenderer.class)
+/** 1.21.11 fog: FogRenderer writes start/end distances into a uniform buffer. */
+@Mixin(FogRenderer.class)
 public abstract class BackgroundRendererMixin {
-    @Inject(method = "applyFog", at = @At("RETURN"), cancellable = true)
-    private static void stella$fog(Camera camera, BackgroundRenderer.FogType fogType, Vector4f color, float viewDistance, boolean thickenFog, float tickDelta,
-                                   CallbackInfoReturnable<Fog> cir) {
+    @ModifyArgs(method = "applyFog(Lnet/minecraft/client/render/Camera;ILnet/minecraft/client/render/RenderTickCounter;FLnet/minecraft/client/world/ClientWorld;)Lorg/joml/Vector4f;",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/fog/FogRenderer;applyFog(Ljava/nio/ByteBuffer;ILorg/joml/Vector4f;FFFFFF)V"))
+    private void stella$fog(Args args) {
         if (!StellaClient.isReady()) return;
         FogCustomizer fc = ModuleManager.get(FogCustomizer.class);
-        if (fc.isEnabled() && cir.getReturnValue() != null) cir.setReturnValue(fc.apply(cir.getReturnValue(), camera));
+        if (!fc.isEnabled()) return;
+        Camera camera = MinecraftClient.getInstance().gameRenderer.getCamera();
+        // 3 env start, 4 env end, 5 render-distance start, 6 render-distance end
+        args.set(3, fc.scale(args.<Float>get(3), false, camera));
+        args.set(4, fc.scale(args.<Float>get(4), true, camera));
+        args.set(5, fc.scale(args.<Float>get(5), false, camera));
+        args.set(6, fc.scale(args.<Float>get(6), true, camera));
     }
 
     @Inject(method = "getFogColor", at = @At("RETURN"))
-    private static void stella$fogColor(Camera camera, float tickDelta, ClientWorld world, int viewDistance, float skyDarkness,
-                                        CallbackInfoReturnable<Vector4f> cir) {
+    private void stella$fogColor(Camera camera, float tickDelta, ClientWorld world, int viewDistance, float skyDarkness,
+                                 CallbackInfoReturnable<Vector4f> cir) {
         if (!StellaClient.isReady()) return;
         Vector4f v = cir.getReturnValue();
         if (v == null) return;

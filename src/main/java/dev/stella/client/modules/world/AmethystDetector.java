@@ -94,7 +94,7 @@ public class AmethystDetector extends Module {
             if (!Projection.onScreen(s)) continue;
             Block b = mc.world.getBlockState(p).getBlock();
             String kind = b == Blocks.AMETHYST_CLUSTER ? "Cluster" : b == Blocks.LARGE_AMETHYST_BUD ? "Large bud" : b == Blocks.MEDIUM_AMETHYST_BUD ? "Medium bud" : "Small bud";
-            int dist = (int) Math.sqrt(p.getSquaredDistance(mc.player.getPos()));
+            int dist = (int) Math.sqrt(p.getSquaredDistance(mc.player.getEntityPos()));
             Render2D.label(ctx, kind + " " + dist + "m", s.x, s.y - 4, 0.8f, colorFor(b), 0x90000000);
         }
     }

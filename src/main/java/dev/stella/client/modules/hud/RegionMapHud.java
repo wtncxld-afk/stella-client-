@@ -70,13 +70,13 @@ public class RegionMapHud extends HudElement {
                     String n = String.valueOf(number(r, c));
                     int tw = dev.stella.client.render.StellaFont.width(n);
                     float s = Math.min(0.62f, (cs - 2f) / Math.max(1, tw));
-                    ctx.getMatrices().push();
-                    ctx.getMatrices().translate(x + cs / 2f - tw * s / 2f, y + cs / 2f - 3.5f * s, 0);
-                    ctx.getMatrices().scale(s, s, 1);
+                    ctx.getMatrices().pushMatrix();
+                    ctx.getMatrices().translate((float) (x + cs / 2f - tw * s / 2f), (float) (y + cs / 2f - 3.5f * s));
+                    ctx.getMatrices().scale((float) (s), (float) (s));
                     dev.stella.client.render.StellaFont.draw(ctx, n, 0, 0, col(numberColor.argb()), false);
-                    ctx.getMatrices().pop();
+                    ctx.getMatrices().popMatrix();
                 }
-                if (outlineCell.isOn() && c == pc && r == pr) ctx.drawBorder(x - 1, y - 1, cs + 2, cs + 2, col(highlight.argb()));
+                if (outlineCell.isOn() && c == pc && r == pr) ctx.drawStrokedRectangle(x - 1, y - 1, cs + 2, cs + 2, col(highlight.argb()));
             }
         }
         if (playerArrow.isOn() && RegionConfig.inGrid(pc, pr)) {
@@ -116,11 +116,11 @@ public class RegionMapHud extends HudElement {
 
         if (staff.isOn()) {
             List<StaffDatabase.StaffMember> online = StaffDatabase.visibleInTab();
-            ctx.getMatrices().push();
-            ctx.getMatrices().translate(0, y, 0);
-            ctx.getMatrices().scale(0.75f, 0.75f, 1);
+            ctx.getMatrices().pushMatrix();
+            ctx.getMatrices().translate(0, (float) (y));
+            ctx.getMatrices().scale(0.75f, 0.75f);
             dev.stella.client.render.StellaFont.draw(ctx, "STAFF", 0, 1, col(0xFF9A9A9A), true);
-            ctx.getMatrices().pop();
+            ctx.getMatrices().popMatrix();
             dev.stella.client.render.StellaFont.draw(ctx, String.valueOf(online.size()), 26, y, tc, true);
             y += 12;
             for (StaffDatabase.StaffMember m : online) {
@@ -146,9 +146,9 @@ public class RegionMapHud extends HudElement {
 
     /** Small filled arrow pointing along the player's yaw (0 = south / +Z, 90 = west). */
     private static void drawArrow(DrawContext ctx, double x, double y, float yaw, float size, int color) {
-        ctx.getMatrices().push();
-        ctx.getMatrices().translate(x, y, 50);
-        ctx.getMatrices().multiply(net.minecraft.util.math.RotationAxis.POSITIVE_Z.rotationDegrees(yaw + 180f));
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate((float) (x), (float) (y));
+        ctx.getMatrices().rotate((float) Math.toRadians(yaw + 180f));
         // filled triangle from horizontal spans: tip at (0,-size), base at y=+size*0.6
         float half = size * 0.55f;
         int steps = Math.max(4, (int) (size * 2));
@@ -158,6 +158,6 @@ public class RegionMapHud extends HudElement {
             float hw = half * t;
             Render2D.rect(ctx, -hw, yy, hw * 2, size * 1.6f / steps + 0.2f, color);
         }
-        ctx.getMatrices().pop();
+        ctx.getMatrices().popMatrix();
     }
 }

@@ -60,11 +60,11 @@ public final class GuiDraw {
 
     /** Text drawn at a scale (for compact uppercase rows). */
     public static void small(DrawContext ctx, String s, float x, float y, float scale, int color) {
-        ctx.getMatrices().push();
-        ctx.getMatrices().translate(x, y, 0);
-        ctx.getMatrices().scale(scale, scale, 1);
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate((float) (x), (float) (y));
+        ctx.getMatrices().scale((float) (scale), (float) (scale));
         dev.stella.client.render.StellaFont.draw(ctx, s, 0, 0, color, false);
-        ctx.getMatrices().pop();
+        ctx.getMatrices().popMatrix();
     }
 
     public static int smallWidth(String s, float scale) { return (int) Math.ceil(width(s) * scale); }
@@ -73,7 +73,7 @@ public final class GuiDraw {
 
     /** Magnifier icon for the search bar. */
     public static void magnifier(DrawContext ctx, int x, int y, int c) {
-        ctx.drawBorder(x, y, 5, 5, c);
+        ctx.drawStrokedRectangle(x, y, 5, 5, c);
         ctx.fill(x + 4, y + 4, x + 5, y + 5, c);
         ctx.fill(x + 5, y + 5, x + 6, y + 6, c);
         ctx.fill(x + 6, y + 6, x + 7, y + 7, c);

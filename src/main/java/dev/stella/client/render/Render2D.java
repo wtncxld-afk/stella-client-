@@ -12,15 +12,15 @@ public final class Render2D {
     public static TextRenderer font() { return MinecraftClient.getInstance().textRenderer; }
 
     public static void rect(DrawContext ctx, float x, float y, float w, float h, int color) {
-        ctx.getMatrices().push();
-        ctx.getMatrices().translate(x, y, 0);
-        ctx.getMatrices().scale(w, h, 1);
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate((float) (x), (float) (y));
+        ctx.getMatrices().scale((float) (w), (float) (h));
         ctx.fill(0, 0, 1, 1, color);
-        ctx.getMatrices().pop();
+        ctx.getMatrices().popMatrix();
     }
 
     public static void outline(DrawContext ctx, int x, int y, int w, int h, int color) {
-        ctx.drawBorder(x, y, w, h, color);
+        ctx.drawStrokedRectangle(x, y, w, h, color);
     }
 
     /** Pseudo-rounded rectangle (corner pixels trimmed) — cheap and crisp at GUI scale. */
@@ -72,28 +72,28 @@ public final class Render2D {
         double len = Math.sqrt(dx * dx + dy * dy);
         if (len < 0.5) return;
         float angle = (float) Math.atan2(dy, dx);
-        ctx.getMatrices().push();
-        ctx.getMatrices().translate(x1, y1, 0);
-        ctx.getMatrices().multiply(RotationAxis.POSITIVE_Z.rotation(angle));
-        ctx.getMatrices().scale((float) len, width, 1);
-        ctx.getMatrices().translate(0, -0.5f, 0);
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate((float) (x1), (float) (y1));
+        ctx.getMatrices().rotate(angle);
+        ctx.getMatrices().scale((float) ((float) len), (float) (width));
+        ctx.getMatrices().translate(0, -0.5f);
         ctx.fill(0, 0, 1, 1, color);
-        ctx.getMatrices().pop();
+        ctx.getMatrices().popMatrix();
     }
 
     public static void text(DrawContext ctx, String s, float x, float y, int color, boolean shadow) {
-        ctx.getMatrices().push();
-        ctx.getMatrices().translate(x, y, 0);
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate((float) (x), (float) (y));
         dev.stella.client.render.StellaFont.draw(ctx, s, 0, 0, color, shadow);
-        ctx.getMatrices().pop();
+        ctx.getMatrices().popMatrix();
     }
 
     public static void textScaled(DrawContext ctx, String s, float x, float y, float scale, int color, boolean shadow) {
-        ctx.getMatrices().push();
-        ctx.getMatrices().translate(x, y, 0);
-        ctx.getMatrices().scale(scale, scale, 1);
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate((float) (x), (float) (y));
+        ctx.getMatrices().scale((float) (scale), (float) (scale));
         dev.stella.client.render.StellaFont.draw(ctx, s, 0, 0, color, shadow);
-        ctx.getMatrices().pop();
+        ctx.getMatrices().popMatrix();
     }
 
     public static void centeredText(DrawContext ctx, String s, float cx, float y, int color, boolean shadow) {
@@ -104,11 +104,11 @@ public final class Render2D {
     public static void label(DrawContext ctx, String s, double cx, double y, float scale, int textColor, int bgColor) {
         TextRenderer f = font();
         int w = StellaFont.width(s);
-        ctx.getMatrices().push();
-        ctx.getMatrices().translate(cx, y, 0);
-        ctx.getMatrices().scale(scale, scale, 1);
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate((float) (cx), (float) (y));
+        ctx.getMatrices().scale((float) (scale), (float) (scale));
         if ((bgColor >>> 24) != 0) ctx.fill(-w / 2 - 2, -1, w / 2 + 2, 9, bgColor);
         dev.stella.client.render.StellaFont.draw(ctx, s, -w / 2, 0, textColor, true);
-        ctx.getMatrices().pop();
+        ctx.getMatrices().popMatrix();
     }
 }

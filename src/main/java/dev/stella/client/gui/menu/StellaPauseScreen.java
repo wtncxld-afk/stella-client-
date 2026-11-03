@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** Stella pause menu: blurred game, star overlay, info card and animated buttons. */
-public class StellaPauseScreen extends Screen {
+public class StellaPauseScreen extends dev.stella.client.gui.StellaScreen {
     private final List<MenuButton> buttons = new ArrayList<>();
     private CosmicBackground stars;
     private final long openedAt = System.currentTimeMillis();
@@ -65,7 +65,7 @@ public class StellaPauseScreen extends Screen {
 
     @Override
     public void renderBackground(DrawContext ctx, int mouseX, int mouseY, float delta) {
-        if (client.world != null) applyBlur();
+        if (client.world != null) applyBlur(ctx);
         double a = fade.get();
         ctx.fillGradient(0, 0, width, height, ColorUtil.mulAlpha(0xB0070410, a), ColorUtil.mulAlpha(0xD0120A22, a));
         if (ModuleManager.get(MenusModule.class).pauseStars.isOn()) stars.render(ctx, width, height, a * 0.8, false);
@@ -79,13 +79,13 @@ public class StellaPauseScreen extends Screen {
         var theme = ThemeManager.get();
         // header
         int top = buttons.isEmpty() ? height / 2 : buttons.get(0).y - 42;
-        ctx.drawTexture(RenderLayer::getGuiTextured, BrandingHud.LOGO, width / 2 - 9, top, 0f, 0f, 18, 18, 18, 18, ColorUtil.mulAlpha(0xFFFFFFFF, a));
+        ctx.drawTexture(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, BrandingHud.LOGO, width / 2 - 9, top, 0f, 0f, 18, 18, 18, 18, ColorUtil.mulAlpha(0xFFFFFFFF, a));
         String title = "PAUSED";
-        ctx.getMatrices().push();
-        ctx.getMatrices().translate(width / 2f - StellaFont.width(title) * 1.6f / 2f, top + 21, 0);
-        ctx.getMatrices().scale(1.6f, 1.6f, 1);
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate((float) (width / 2f - StellaFont.width(title) * 1.6f / 2f), (float) (top + 21));
+        ctx.getMatrices().scale(1.6f, 1.6f);
         StellaFont.draw(ctx, title, 0, 0, ColorUtil.mulAlpha(ThemeManager.accentAt(0), a), true);
-        ctx.getMatrices().pop();
+        ctx.getMatrices().popMatrix();
         // info card on the left of the buttons
         List<String> info = new ArrayList<>();
         if (client.isInSingleplayer()) info.add("SINGLEPLAYER");
@@ -114,10 +114,10 @@ public class StellaPauseScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mx, double my, int button) {
+    protected boolean onMouseClicked(double mx, double my, int button) {
         for (MenuButton b : buttons) {
             if (b.over(mx, my) && button == 0) { Sounds.menuClick(); b.action.run(); return true; }
         }
-        return super.mouseClicked(mx, my, button);
+        return super.onMouseClicked(mx, my, button);
     }
 }

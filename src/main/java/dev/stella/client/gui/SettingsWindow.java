@@ -75,6 +75,7 @@ public class SettingsWindow {
     }
 
     void render(DrawContext ctx, int mx, int my, int sw, int sh) {
+        ctx.createNewRootLayer(); // windows draw above panels (text included)
         Theme t = ThemeManager.get();
         double a = openAnim.get();
         x = Math.max(0, Math.min(sw - WIDTH, x));
@@ -89,8 +90,8 @@ public class SettingsWindow {
         scroll = Math.max(0, Math.min(scroll, Math.max(0, body - h)));
         int slide = (int) ((1 - a) * 8);
 
-        ctx.getMatrices().push();
-        ctx.getMatrices().translate(0, slide, 200);
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate(0, (float) (slide));
         Render2D.shadow(ctx, x, y, WIDTH, HEADER + h, 5, 5, ColorUtil.mulAlpha(0x90000000, a));
         Render2D.roundRect(ctx, x - 0.5f, y - 0.5f, WIDTH + 1, HEADER + h + 1, 5.5f, ColorUtil.mulAlpha(t.outline(), a));
         Render2D.roundRect(ctx, x, y, WIDTH, HEADER + h, 5, ColorUtil.mulAlpha(t.background(), Math.min(1, a + 0.05)));
@@ -122,7 +123,7 @@ public class SettingsWindow {
         String rs = "Reset module settings";
         GuiDraw.text(ctx, rs, x + WIDTH / 2 - GuiDraw.width(rs) / 2, cy + 4, ColorUtil.mulAlpha(t.textDim(), a));
         ctx.disableScissor();
-        ctx.getMatrices().pop();
+        ctx.getMatrices().popMatrix();
     }
 
     private void renderSetting(DrawContext ctx, Setting<?> s, int cy, int mx, int my, Theme t, double a) {
@@ -222,7 +223,7 @@ public class SettingsWindow {
             }
         }
         int sx = px + (int) (hsb[1] * svW), sy = py + (int) ((1 - hsb[2]) * svH);
-        ctx.drawBorder(sx - 2, sy - 2, 4, 4, 0xFFFFFFFF);
+        ctx.drawStrokedRectangle(sx - 2, sy - 2, 4, 4, 0xFFFFFFFF);
         // hue bar
         int hx = px + svW + 4;
         for (int j = 0; j < svH; j++) ctx.fill(hx, py + j, hx + 7, py + j + 1, ColorUtil.mulAlpha(ColorUtil.fromHsb(j / (float) svH, 1, 1, 255), a));

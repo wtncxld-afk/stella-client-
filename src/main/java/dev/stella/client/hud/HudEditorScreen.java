@@ -15,7 +15,7 @@ import java.util.List;
  * reset one element, middle-click to toggle it. The side list toggles elements.
  * Every change affects only the element under the cursor.
  */
-public class HudEditorScreen extends Screen {
+public class HudEditorScreen extends dev.stella.client.gui.StellaScreen {
     private final Screen parent;
     private HudElement dragging;
     private HudElement resizing;
@@ -55,7 +55,7 @@ public class HudEditorScreen extends Screen {
             int w = Math.round(h.scaledWidth()), hh = Math.round(h.scaledHeight());
             boolean hover = isOver(h, mouseX, mouseY);
             int border = h == selected ? t.accent() : hover ? t.accentSoft() : 0x60FFFFFF;
-            ctx.drawBorder(x - 1, y - 1, w + 2, hh + 2, border);
+            ctx.drawStrokedRectangle(x - 1, y - 1, w + 2, hh + 2, border);
             ctx.fill(x + w - 3, y + hh - 3, x + w + 1, y + hh + 1, t.accent()); // resize handle
             if (hover || h == selected) {
                 String label = h.getName() + "  " + String.format("%.2fx", h.scale.get());
@@ -97,7 +97,7 @@ public class HudEditorScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mx, double my, int button) {
+    protected boolean onMouseClicked(double mx, double my, int button) {
         // side list
         int lx = 6, ly = 26;
         for (HudElement h : HudManager.elements()) {
@@ -108,7 +108,7 @@ public class HudEditorScreen extends Screen {
             ly += 12;
         }
         HudElement h = topAt(mx, my);
-        if (h == null) { selected = null; return super.mouseClicked(mx, my, button); }
+        if (h == null) { selected = null; return super.onMouseClicked(mx, my, button); }
         selected = h;
         if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) { h.resetLayout(); return true; }
         if (button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) { h.setEnabled(false); return true; }
@@ -126,7 +126,7 @@ public class HudEditorScreen extends Screen {
     }
 
     @Override
-    public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
+    protected boolean onMouseDragged(double mx, double my, int button, double dx, double dy) {
         if (dragging != null) {
             double nx = mx - dragOffX, ny = my - dragOffY;
             if (snap) {
@@ -148,15 +148,15 @@ public class HudEditorScreen extends Screen {
             resizing.scale.set(ns);
             return true;
         }
-        return super.mouseDragged(mx, my, button, dx, dy);
+        return super.onMouseDragged(mx, my, button, dx, dy);
     }
 
     @Override
-    public boolean mouseReleased(double mx, double my, int button) {
+    protected boolean onMouseReleased(double mx, double my, int button) {
         if (dragging != null || resizing != null) SettingsDirty.mark();
         dragging = null;
         resizing = null;
-        return super.mouseReleased(mx, my, button);
+        return super.onMouseReleased(mx, my, button);
     }
 
     @Override
@@ -170,7 +170,7 @@ public class HudEditorScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int key, int scan, int mods) {
+    protected boolean onKeyPressed(int key, int scan, int mods) {
         if (key == GLFW.GLFW_KEY_S) { snap = !snap; if (cfg != null) cfg.snap.set(snap); return true; }
         if (selected != null) {
             double step = (mods & GLFW.GLFW_MOD_SHIFT) != 0 ? 5 : 1;
@@ -182,7 +182,7 @@ public class HudEditorScreen extends Screen {
                 default -> { }
             }
         }
-        return super.keyPressed(key, scan, mods);
+        return super.onKeyPressed(key, scan, mods);
     }
 
     @Override

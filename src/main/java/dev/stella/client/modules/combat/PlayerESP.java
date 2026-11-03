@@ -82,7 +82,7 @@ public class PlayerESP extends Module {
             }
             if (!box.isOn() && !fill.isOn()) continue;
             Vec3d lerp = p.getLerpedPos(td);
-            Box b = p.getBoundingBox().offset(lerp.subtract(p.getPos()));
+            Box b = p.getBoundingBox().offset(lerp.subtract(p.getEntityPos()));
             int oc = staff(p) ? staffCol.argb() : boxColor.argb();
             r.box(b, oc, fillColor.argb(), box.isOn(), fill.isOn());
         }

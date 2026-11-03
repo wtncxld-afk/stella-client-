@@ -1,6 +1,5 @@
 package dev.stella.client.modules.visuals;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import dev.stella.client.module.Category;
 import dev.stella.client.module.Module;
 import dev.stella.client.setting.BoolSetting;
@@ -8,13 +7,10 @@ import dev.stella.client.setting.ColorSetting;
 import dev.stella.client.setting.ModeSetting;
 import dev.stella.client.setting.NumberSetting;
 import dev.stella.client.util.ColorUtil;
-import net.minecraft.client.gl.ShaderProgramKeys;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.BufferRenderer;
-import net.minecraft.client.render.BuiltBuffer;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.render.VertexFormats;
-import net.minecraft.client.util.BufferAllocator;
+import dev.stella.client.render.StellaPipelines;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import org.joml.Matrix4f;
@@ -48,7 +44,6 @@ public class CustomSky extends Module {
     private final BoolSetting hideClouds = add(new BoolSetting("Hide Clouds", "Remove vanilla clouds", false));
     private final BoolSetting overworldOnly = add(new BoolSetting("Overworld Only", "Keep the vanilla Nether/End skies", true));
 
-    private static final BufferAllocator ALLOC = new BufferAllocator(1 << 21);
     private float[][] starData;
     private float[][] nebulaData;
     private int builtStars = -1;
@@ -137,25 +132,17 @@ public class CustomSky extends Module {
     }
 
     /** Called from WorldRenderEvents.BEFORE_ENTITIES. Model-view already holds the camera rotation. */
-    public void render(float tickDelta) {
+    public void render(MatrixStack matrices, VertexConsumerProvider.Immediate consumers, float tickDelta) {
         if (!active()) return;
         buildStatic();
         float radius = Math.max(256f, mc.options.getClampedViewDistance() * 16f * 2.5f);
-        Matrix4f m = new Matrix4f();
+        Matrix4f m = new Matrix4f(matrices.peek().getPositionMatrix());
         long time = System.currentTimeMillis();
         float day = daylight(tickDelta);
         float nightAlpha = dayCycle.isOn() ? 1f - day : 1f;
 
-        RenderSystem.enableDepthTest();
-        RenderSystem.depthMask(false);
-        RenderSystem.disableCull();
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-
         // ---- dome
-        BufferBuilder buf = new BufferBuilder(ALLOC, VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+        VertexConsumer buf = consumers.getBuffer(StellaPipelines.SKY);
         int lat = 24, lon = 48;
         for (int i = 0; i < lat; i++) {
             float a1 = (float) (-Math.PI / 2 + Math.PI * i / lat), a2 = (float) (-Math.PI / 2 + Math.PI * (i + 1) / lat);
@@ -169,12 +156,11 @@ public class CustomSky extends Module {
                 v(buf, m, r2 * MathHelper.cos(b1) * radius, y2 * radius, r2 * MathHelper.sin(b1) * radius, c2);
             }
         }
-        draw(buf);
+        consumers.draw(StellaPipelines.SKY);
 
         // ---- nebula (additive glow)
         if (nebula.isOn() && nightAlpha > 0.02f) {
-            RenderSystem.blendFunc(com.mojang.blaze3d.platform.GlStateManager.SrcFactor.SRC_ALPHA, com.mojang.blaze3d.platform.GlStateManager.DstFactor.ONE);
-            BufferBuilder nb = new BufferBuilder(ALLOC, VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
+            VertexConsumer nb = consumers.getBuffer(StellaPipelines.SKY_GLOW);
             for (float[] n : nebulaData) {
                 int c = n[4] == 0 ? nebulaColor1.argb() : nebulaColor2.argb();
                 int center = ColorUtil.mulAlpha(c, Math.min(1, intensity.get()) * nightAlpha);
@@ -196,14 +182,12 @@ public class CustomSky extends Module {
                             czp + (basis[0].z * (float) Math.cos(t2) + basis[1].z * (float) Math.sin(t2)) * size * w2, edge);
                 }
             }
-            draw(nb);
-            RenderSystem.defaultBlendFunc();
+            consumers.draw(StellaPipelines.SKY_GLOW);
         }
 
         // ---- aurora curtains
         if (aurora.isOn() && nightAlpha > 0.02f) {
-            RenderSystem.blendFunc(com.mojang.blaze3d.platform.GlStateManager.SrcFactor.SRC_ALPHA, com.mojang.blaze3d.platform.GlStateManager.DstFactor.ONE);
-            BufferBuilder ab = new BufferBuilder(ALLOC, VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+            VertexConsumer ab = consumers.getBuffer(StellaPipelines.SKY_GLOW_Q);
             double t = (time % 600000L) / 1000.0;
             for (int band = 0; band < 3; band++) {
                 int segs = 90;
@@ -225,13 +209,12 @@ public class CustomSky extends Module {
                     v(ab, m, q1[0] * rr, q1[1] * rr, q1[2] * rr, cTop);
                 }
             }
-            draw(ab);
-            RenderSystem.defaultBlendFunc();
+            consumers.draw(StellaPipelines.SKY_GLOW_Q);
         }
 
         // ---- stars
         if (stars.isOn() && nightAlpha > 0.02f) {
-            BufferBuilder sb = new BufferBuilder(ALLOC, VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+            VertexConsumer sb = consumers.getBuffer(StellaPipelines.SKY);
             double tw = (time % 100000L) / 1000.0;
             float rr = radius * 0.9f;
             for (float[] s : starData) {
@@ -246,12 +229,9 @@ public class CustomSky extends Module {
                 v(sb, m, cx + (b[0].x + b[1].x) * size, cy + (b[0].y + b[1].y) * size, cz + (b[0].z + b[1].z) * size, c);
                 v(sb, m, cx + (-b[0].x + b[1].x) * size, cy + (-b[0].y + b[1].y) * size, cz + (-b[0].z + b[1].z) * size, c);
             }
-            draw(sb);
+            consumers.draw(StellaPipelines.SKY);
         }
 
-        RenderSystem.disableBlend();
-        RenderSystem.enableCull();
-        RenderSystem.depthMask(true);
     }
 
     private static float[] dir(double azimuth, double elevation) {
@@ -266,12 +246,8 @@ public class CustomSky extends Module {
         return new Vector3f[]{a, b};
     }
 
-    private static void v(BufferBuilder b, Matrix4f m, float x, float y, float z, int argb) {
+    private static void v(VertexConsumer b, Matrix4f m, float x, float y, float z, int argb) {
         b.vertex(m, x, y, z).color((argb >> 16) & 0xFF, (argb >> 8) & 0xFF, argb & 0xFF, (argb >>> 24) & 0xFF);
     }
 
-    private static void draw(BufferBuilder b) {
-        BuiltBuffer built = b.endNullable();
-        if (built != null) BufferRenderer.drawWithGlobalProgram(built);
-    }
 }

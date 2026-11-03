@@ -23,7 +23,7 @@ import java.util.List;
  * search bar, floating per-module settings windows and a theme/profile panel
  * on the right. Right Shift (configurable) opens and closes it.
  */
-public class ClickGuiScreen extends Screen {
+public class ClickGuiScreen extends dev.stella.client.gui.StellaScreen {
     private final List<CategoryPanel> panels = new ArrayList<>();
     private final List<SettingsWindow> windows = new ArrayList<>();
     private final ThemesPanel side = new ThemesPanel();
@@ -70,7 +70,7 @@ public class ClickGuiScreen extends Screen {
     @Override
     public void renderBackground(DrawContext ctx, int mouseX, int mouseY, float delta) {
         if (client != null && client.world != null && ModuleManager.get(ClickGuiModule.class).blur.isOn()) {
-            this.applyBlur();
+            this.applyBlur(ctx);
         }
         int a = (int) (0x70 * open.get());
         ctx.fillGradient(0, 0, width, height, (a << 24) | 0x05030A, (Math.min(255, a + 0x20) << 24) | 0x120822);
@@ -99,18 +99,18 @@ public class ClickGuiScreen extends Screen {
     public void render(DrawContext ctx, int rawX, int rawY, float delta) {
         super.render(ctx, rawX, rawY, delta);
         computeScale();
-        ctx.getMatrices().push();
-        ctx.getMatrices().scale(ui, ui, 1);
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().scale((float) (ui), (float) (ui));
         double oa = open.get();
         float zoom = (float) (0.965 + 0.035 * Math.min(1, oa));
-        ctx.getMatrices().translate(vw / 2f, vh / 2f, 0);
-        ctx.getMatrices().scale(zoom, zoom, 1);
-        ctx.getMatrices().translate(-vw / 2f, -vh / 2f, 0);
+        ctx.getMatrices().translate((float) (vw / 2f), (float) (vh / 2f));
+        ctx.getMatrices().scale((float) (zoom), (float) (zoom));
+        ctx.getMatrices().translate((float) (-vw / 2f), (float) (-vh / 2f));
         int mx = (int) (rawX / ui), my = (int) (rawY / ui);
         try {
             renderScaled(ctx, mx, my);
         } finally {
-            ctx.getMatrices().pop();
+            ctx.getMatrices().popMatrix();
         }
     }
 
@@ -126,10 +126,11 @@ public class ClickGuiScreen extends Screen {
             pa = Math.max(0, Math.min(1, tt));
             dy = (1 - easeOutBack(pa)) * -18;
         }
-        ctx.getMatrices().push();
-        ctx.getMatrices().translate(0, dy, 0);
+        ctx.createNewRootLayer();
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate(0, (float) (dy));
         p.render(ctx, mx, (int) (my - dy), vh, a * Math.min(1, pa * 1.6), searching, this);
-        ctx.getMatrices().pop();
+        ctx.getMatrices().popMatrix();
     }
 
     private static double easeOutBack(double x) {
@@ -149,8 +150,8 @@ public class ClickGuiScreen extends Screen {
         int slide = anims != null && anims.isEnabled() && !anims.guiSlide.isOn() ? 0 : (int) ((1 - a) * -12);
         hovered = null;
 
-        ctx.getMatrices().push();
-        ctx.getMatrices().translate(0, slide, 0);
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate(0, (float) (slide));
         // search bar (rounded pill with magnifier)
         int sw = 140, sx = (vw - ThemesPanel.WIDTH) / 2 - sw / 2, sy = 6;
         dev.stella.client.render.Render2D.shadow(ctx, sx, sy, sw, 15, 7.5f, 3, ColorUtil.mulAlpha(0x80000000, a));
@@ -164,8 +165,9 @@ public class ClickGuiScreen extends Screen {
             renderPanelAnimated(ctx, p, mx, my - slide, a, searching);
         }
         for (CategoryPanel p : panels) if (searching && !p.hasMatches()) renderPanelAnimated(ctx, p, mx, my - slide, a, true);
-        ctx.getMatrices().pop();
+        ctx.getMatrices().popMatrix();
 
+        ctx.createNewRootLayer();
         side.render(ctx, mx, my, vw, vh, a, this);
         configs.render(ctx, mx, my, vw, vh, a);
         windows.removeIf(SettingsWindow::isClosed);
@@ -180,19 +182,19 @@ public class ClickGuiScreen extends Screen {
             for (String l : lines) w = Math.max(w, GuiDraw.width(l));
             int tx = mx + 10, ty = my + 10;
             if (tx + w + 8 > vw) tx = mx - w - 14;
-            ctx.getMatrices().push();
-            ctx.getMatrices().translate(0, 0, 400);
+            ctx.getMatrices().pushMatrix();
+            ctx.createNewRootLayer();
             ctx.fill(tx - 3, ty - 3, tx + w + 3, ty + lines.size() * 9 + 1, 0xF0100D16);
-            ctx.drawBorder(tx - 4, ty - 4, w + 8, lines.size() * 9 + 6, t.outline());
+            ctx.drawStrokedRectangle(tx - 4, ty - 4, w + 8, lines.size() * 9 + 6, t.outline());
             for (int i = 0; i < lines.size(); i++) GuiDraw.text(ctx, lines.get(i), tx, ty + i * 9, t.text());
-            ctx.getMatrices().pop();
+            ctx.getMatrices().popMatrix();
         }
     }
 
     // ---------------------------------------------------------------- input
 
     @Override
-    public boolean mouseClicked(double mx, double my, int button) {
+    protected boolean onMouseClicked(double mx, double my, int button) {
         mx /= ui;
         my /= ui;
         for (int i = windows.size() - 1; i >= 0; i--) {
@@ -219,27 +221,27 @@ public class ClickGuiScreen extends Screen {
                 return true;
             }
         }
-        return super.mouseClicked(mx, my, button);
+        return super.onMouseClicked(mx, my, button);
     }
 
     @Override
-    public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
+    protected boolean onMouseDragged(double mx, double my, int button, double dx, double dy) {
         mx /= ui;
         my /= ui;
         if (side.mouseDragged(mx)) return true;
         for (SettingsWindow w : windows) if (w.mouseDragged(mx, my)) return true;
         for (CategoryPanel p : panels) if (p.mouseDragged(mx, my)) return true;
-        return super.mouseDragged(mx, my, button, dx, dy);
+        return super.onMouseDragged(mx, my, button, dx, dy);
     }
 
     @Override
-    public boolean mouseReleased(double mx, double my, int button) {
+    protected boolean onMouseReleased(double mx, double my, int button) {
         mx /= ui;
         my /= ui;
         windows.forEach(SettingsWindow::mouseReleased);
         side.mouseReleased();
         panels.forEach(CategoryPanel::mouseReleased);
-        return super.mouseReleased(mx, my, button);
+        return super.onMouseReleased(mx, my, button);
     }
 
     @Override
@@ -253,7 +255,7 @@ public class ClickGuiScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int key, int scan, int mods) {
+    protected boolean onKeyPressed(int key, int scan, int mods) {
         for (SettingsWindow w : windows) if (w.keyPressed(key)) return true;
         if (side.keyPressed(key)) return true;
         if (configs.keyPressed(key)) return true;
@@ -266,11 +268,11 @@ public class ClickGuiScreen extends Screen {
             return true;
         }
         // typing anywhere starts a search
-        return super.keyPressed(key, scan, mods);
+        return super.onKeyPressed(key, scan, mods);
     }
 
     @Override
-    public boolean charTyped(char c, int mods) {
+    protected boolean onCharTyped(char c, int mods) {
         if (configs.charTyped(c)) return true;
         TextInput f = TextInput.focused();
         if (f != null) return f.charTyped(c);
@@ -278,7 +280,7 @@ public class ClickGuiScreen extends Screen {
             search.focus();
             return search.charTyped(c);
         }
-        return super.charTyped(c, mods);
+        return super.onCharTyped(c, mods);
     }
 
     @Override

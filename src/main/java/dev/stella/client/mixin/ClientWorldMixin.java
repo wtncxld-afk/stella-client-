@@ -20,18 +20,4 @@ public abstract class ClientWorldMixin {
     private void stella$blockUpdate(BlockPos pos, BlockState state, int flags, CallbackInfo ci) {
         if (StellaClient.isReady()) BlockScanner.onBlockUpdate(pos.toImmutable(), state);
     }
-
-    @Inject(method = "getSkyColor", at = @At("RETURN"), cancellable = true)
-    private void stella$skyColor(Vec3d cameraPos, float tickDelta, CallbackInfoReturnable<Integer> cir) {
-        if (!StellaClient.isReady()) return;
-        Ambience a = ModuleManager.get(Ambience.class);
-        if (a.isEnabled()) cir.setReturnValue(a.skyColor(cir.getReturnValueI()));
-    }
-
-    @Inject(method = "getCloudsColor", at = @At("RETURN"), cancellable = true)
-    private void stella$cloudColor(float tickDelta, CallbackInfoReturnable<Integer> cir) {
-        if (!StellaClient.isReady()) return;
-        Ambience a = ModuleManager.get(Ambience.class);
-        if (a.isEnabled()) cir.setReturnValue(a.cloudColor(cir.getReturnValueI()));
-    }
 }

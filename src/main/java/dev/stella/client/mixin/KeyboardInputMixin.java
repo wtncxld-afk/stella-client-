@@ -17,8 +17,7 @@ public abstract class KeyboardInputMixin extends Input {
     @Inject(method = "tick", at = @At("TAIL"))
     private void stella$freeze(CallbackInfo ci) {
         if (StellaClient.isReady() && ModuleManager.get(Freecam.class).active()) {
-            this.movementForward = 0f;
-            this.movementSideways = 0f;
+            this.movementVector = net.minecraft.util.math.Vec2f.ZERO;
             this.playerInput = PlayerInput.DEFAULT;
         }
     }

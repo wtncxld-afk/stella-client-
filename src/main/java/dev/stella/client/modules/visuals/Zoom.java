@@ -29,7 +29,7 @@ public class Zoom extends Module {
 
     @Override
     public void onTick() {
-        boolean held = zoomKey.isBound() && mc.currentScreen == null && InputUtil.isKeyPressed(mc.getWindow().getHandle(), zoomKey.key());
+        boolean held = zoomKey.isBound() && mc.currentScreen == null && dev.stella.client.util.Keys.down(zoomKey.key());
         if (held && !zooming) start();
         else if (!held && zooming) end();
     }

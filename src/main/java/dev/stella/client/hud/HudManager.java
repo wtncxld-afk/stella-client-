@@ -30,17 +30,18 @@ public final class HudManager {
 
     public static void renderElement(DrawContext ctx, HudElement h, float tickDelta, boolean editor) {
         clamp(h);
-        ctx.getMatrices().push();
-        if (!h.isSized()) ctx.getMatrices().translate(-10000, -10000, 0); // measure off-screen first
-        ctx.getMatrices().translate(h.x(), h.y(), 0);
+        ctx.createNewRootLayer();
+        ctx.getMatrices().pushMatrix();
+        if (!h.isSized()) ctx.getMatrices().translate(-10000, -10000); // measure off-screen first
+        ctx.getMatrices().translate((float) (h.x()), (float) (h.y()));
         float s = h.scale.getFloat();
-        ctx.getMatrices().scale(s, s, 1);
+        ctx.getMatrices().scale((float) (s), (float) (s));
         try {
             h.render(ctx, tickDelta, editor);
         } catch (Throwable t) {
             StellaClient.reportError("hud " + h.getName(), t);
         }
-        ctx.getMatrices().pop();
+        ctx.getMatrices().popMatrix();
     }
 
     /** Keeps elements on-screen after a resize or GUI-scale change. */

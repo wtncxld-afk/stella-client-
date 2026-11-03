@@ -57,7 +57,7 @@ public class Freecam extends Module {
         if (!inGame()) { setEnabled(false); return; }
         lastHealth = mc.player.getHealth();
         if (resetOnEnable.isOn() || !started) {
-            pos = mc.gameRenderer.getCamera().getPos();
+            pos = dev.stella.client.mixin.CameraAccessor.pos(mc.gameRenderer.getCamera());
             prevPos = pos;
             yaw = mc.player.getYaw();
             pitch = mc.player.getPitch();

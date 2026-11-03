@@ -28,8 +28,8 @@ public class PlayerDetectorHud extends HudElement {
         int h = 9 + n * 10;
         card.draw(ctx, this, w, h);
         int px = card.padLeft(), py = card.pad();
-        ctx.getMatrices().push();
-        ctx.getMatrices().translate(px, py, 0);
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate((float) (px), (float) (py));
         dev.stella.client.render.StellaFont.draw(ctx, head, 0, 0, col(card.accent(headerColor.argb())), true);
         for (int i = 0; i < n; i++) {
             PlayerDetector.Seen s = list.get(i);
@@ -37,7 +37,7 @@ public class PlayerDetectorHud extends HudElement {
             String d = (int) s.distance() + "m";
             dev.stella.client.render.StellaFont.draw(ctx, d, w - dev.stella.client.render.StellaFont.width(d), 11 + i * 10, col(0xFF8E879A), true);
         }
-        ctx.getMatrices().pop();
+        ctx.getMatrices().popMatrix();
         setSize(w + px + card.pad(), h + py * 2);
     }
 }
