@@ -42,7 +42,7 @@ public class SpawnerFinder extends HudElement {
     private final BoolSetting beam = add(new BoolSetting("Beam", "Light beam from each spawner up into the sky", true));
     private final ColorSetting beamColor = add(new ColorSetting("Beam Color", "Beam colour", 0xFFFF2A2A)).visibleWhen(beam::isOn);
     private final BoolSetting colorByType = add(new BoolSetting("Color By Mob Type", "Each mob type gets its own beam colour", false)).visibleWhen(beam::isOn);
-    private final NumberSetting beamWidth = add(new NumberSetting("Beam Width", "Beam thickness in blocks", 0.5, 0.1, 2, 0.05)).visibleWhen(beam::isOn);
+    private final NumberSetting beamWidth = add(new NumberSetting("Beam Width", "Beam thickness in blocks", 0.6, 0.1, 2, 0.05)).visibleWhen(beam::isOn);
     private final NumberSetting beamAlpha = add(new NumberSetting("Beam Opacity", "How see-through the beam is", 0.75, 0.05, 1, 0.05)).visibleWhen(beam::isOn);
     private final BoolSetting outline = add(new BoolSetting("Outline Spawner", "Box around the spawner block", true));
     private final BoolSetting chat = add(new BoolSetting("Chat Message", "Chat message (only you see it) when a spawner is found", true));
@@ -98,6 +98,8 @@ public class SpawnerFinder extends HudElement {
                         .append(Text.literal(" found at " + p.getX() + ", " + p.getY() + ", " + p.getZ()).formatted(Formatting.GRAY)));
             }
         }
+        BlockPos me = mc.player.getBlockPos();
+        out.sort(java.util.Comparator.comparingDouble(sp -> sp.pos.getSquaredDistance(me)));
         list = out;
     }
 
@@ -125,11 +127,10 @@ public class SpawnerFinder extends HudElement {
     public void onRender3D(Render3D r) {
         if (!inGame()) return;
         int top = mc.world.getTopYInclusive() + 1;
-        double pulse = 0.85 + 0.15 * Math.sin(System.currentTimeMillis() / 400.0);
         for (Spawner s : list) {
             int c = colorFor(s);
             if (beam.isOn()) {
-                int a = (int) (255 * beamAlpha.get() * pulse);
+                int a = (int) (255 * beamAlpha.get());
                 r.beam(s.pos.getX() + 0.5, s.pos.getZ() + 0.5, s.pos.getY() + 1, top, ColorUtil.withAlpha(c, a), beamWidth.get() / 2);
             }
             if (outline.isOn()) {

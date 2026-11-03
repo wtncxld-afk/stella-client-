@@ -45,6 +45,16 @@ public final class StellaPipelines {
             .withCull(false)
             .build();
 
+    /** Additive (light-emitting) quads drawn through walls: beam halos and glow. */
+    public static final RenderPipeline QUADS_GLOW_SEE_THROUGH = RenderPipeline.builder(RenderPipelines.POSITION_COLOR_SNIPPET)
+            .withLocation(id("quads_glow_see_through"))
+            .withVertexFormat(VertexFormats.POSITION_COLOR, VertexFormat.DrawMode.QUADS)
+            .withBlend(BlendFunction.LIGHTNING)
+            .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+            .withDepthWrite(false)
+            .withCull(false)
+            .build();
+
     /** Sky dome: depth-tested against terrain but never writes depth. */
     public static final RenderPipeline SKY_QUADS = RenderPipeline.builder(RenderPipelines.POSITION_COLOR_SNIPPET)
             .withLocation(id("sky_quads"))
@@ -76,6 +86,7 @@ public final class StellaPipelines {
 
     public static final RenderLayer LINES = RenderLayer.of("stella_lines", RenderSetup.builder(LINES_SEE_THROUGH).expectedBufferSize(1 << 16).build());
     public static final RenderLayer GLOW = RenderLayer.of("stella_glow", RenderSetup.builder(LINES_GLOW_SEE_THROUGH).expectedBufferSize(1 << 16).build());
+    public static final RenderLayer FILLS_GLOW = RenderLayer.of("stella_fills_glow", RenderSetup.builder(QUADS_GLOW_SEE_THROUGH).translucent().expectedBufferSize(1 << 17).build());
     public static final RenderLayer FILLS = RenderLayer.of("stella_fills", RenderSetup.builder(QUADS_SEE_THROUGH).translucent().expectedBufferSize(1 << 16).build());
     public static final RenderLayer SKY = RenderLayer.of("stella_sky", RenderSetup.builder(SKY_QUADS).expectedBufferSize(1 << 16).build());
     public static final RenderLayer SKY_GLOW = RenderLayer.of("stella_sky_glow", RenderSetup.builder(SKY_GLOW_TRIANGLES).expectedBufferSize(1 << 15).build());

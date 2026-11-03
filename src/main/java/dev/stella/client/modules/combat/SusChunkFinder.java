@@ -275,9 +275,8 @@ public class SusChunkFinder extends Module {
     }
 
     /**
-     * Natural structures generate redstone, dispensers, sideways blocks and amethyst. Findings next to
-     * trial chamber / ancient city / stronghold blocks keep only evidence those structures can never
-     * produce (concrete, observers...); everything else is dropped.
+     * Natural structures generate redstone, dispensers, sideways blocks, amethyst and decoration blocks.
+     * Everything next to trial chamber / ancient city / stronghold blocks is dropped, so they are never flagged.
      */
     private volatile List<String> lastExplained = List.of();
     private volatile int lastMarkers;
@@ -299,11 +298,6 @@ public class SusChunkFinder extends Module {
                     || weak.stream().filter(p -> area.expand(20).contains(Vec3d.ofCenter(p))).limit(12).count() >= 12;
             if (!natural) { keep.add(f); continue; }
             explained.add(f.type + " " + f.score + " at chunk " + (f.min.getX() >> 4) + " " + (f.min.getZ() >> 4) + " (" + f.reasons.get(0) + ")");
-            if (f.type.equals("Unnatural Blocks")) {
-                List<String> reasons = new ArrayList<>(f.reasons);
-                reasons.add("next to a natural structure, but these blocks never generate in one");
-                keep.add(new Finding(f.type, f.min, f.max, f.count, f.score, f.confidence, reasons));
-            }
         }
         out.clear();
         out.addAll(keep);

@@ -61,7 +61,17 @@ public final class BlockScanner {
         if (idx < 0) return;
         target.clearAll();
         if (!target.isActive()) return;
-        for (long key : LOADED) QUEUE.put(key, QUEUE.get(key) | (1 << idx));
+        // nearest chunks first, so things around the player show up immediately
+        MinecraftClient mc = MinecraftClient.getInstance();
+        int pcx = mc.player != null ? mc.player.getBlockX() >> 4 : 0, pcz = mc.player != null ? mc.player.getBlockZ() >> 4 : 0;
+        long[] keys = LOADED.toLongArray();
+        Long[] boxed = new Long[keys.length];
+        for (int i = 0; i < keys.length; i++) boxed[i] = keys[i];
+        java.util.Arrays.sort(boxed, java.util.Comparator.comparingLong((Long k) -> {
+            long dx = ChunkPos.getPackedX(k) - pcx, dz = ChunkPos.getPackedZ(k) - pcz;
+            return -(dx * dx + dz * dz); // farthest first; each one is moved to the front, so the nearest ends up first
+        }));
+        for (long key : boxed) QUEUE.putAndMoveToFirst(key, QUEUE.get(key) | (1 << idx));
     }
 
     public static int queued() { return QUEUE.size(); }

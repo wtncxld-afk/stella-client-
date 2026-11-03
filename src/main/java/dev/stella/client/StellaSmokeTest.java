@@ -114,7 +114,8 @@ final class StellaSmokeTest {
                     if (mc.world != null && mc.player != null && mc.currentScreen == null) {
                         for (Module m : ModuleManager.all()) {
                             if (m instanceof AutoRelog || m instanceof HudEditorModule || m instanceof Zoom
-                                    || m instanceof dev.stella.client.modules.misc.Freecam) continue;
+                                    || m instanceof dev.stella.client.modules.misc.Freecam
+                                    || m instanceof dev.stella.client.modules.pvp.DoubleAnchor) continue;
                             m.setEnabled(true);
                         }
                         // disable modules that would clutter the preview shots

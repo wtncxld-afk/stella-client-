@@ -48,6 +48,13 @@ public final class ModuleManager {
         register(new BlockESP());
         register(new SusChunkFinder());
         register(new dev.stella.client.modules.combat.SpawnerFinder());
+        // Combat
+        register(new dev.stella.client.modules.pvp.AutoTotem());
+        register(new dev.stella.client.modules.pvp.AutoInvTotem());
+        register(new dev.stella.client.modules.pvp.HoverTotem());
+        register(new dev.stella.client.modules.pvp.AutoCrystal());
+        register(new dev.stella.client.modules.pvp.AutoAnchor());
+        register(new dev.stella.client.modules.pvp.DoubleAnchor());
         register(new StaffList());
         register(new AntiVanish());
         register(new dev.stella.client.modules.combat.MediaBaseFinder());

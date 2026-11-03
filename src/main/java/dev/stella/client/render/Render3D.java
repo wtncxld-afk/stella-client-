@@ -86,22 +86,69 @@ public final class Render3D {
     }
 
     /**
-     * Vertical light beam (two crossed quads) from {@code y1} up to {@code y2}, fading out toward the top,
-     * with a narrower bright core. Drawn through walls.
+     * Beacon-style light beam from {@code y1} up toward {@code y2}: a soft additive halo, a translucent
+     * coloured body and a white-hot core, all slowly spinning, with bright energy bands travelling up,
+     * plus a pulsing ground ring and an expanding shockwave at the base. Drawn through walls.
      */
-    public void beam(double x, double z, double y1, double y2, int argb, double halfWidth) {
+    public void beam(double x, double z, double y1, double y2, int argb, double radius) {
         Matrix4f m = matrices.peek().getPositionMatrix();
-        VertexConsumer f = fills();
-        float bx = (float) (x - cam.x), bz = (float) (z - cam.z), ya = (float) (y1 - cam.y), yb = (float) (y2 - cam.y);
-        int top = argb & 0x00FFFFFF;
-        int core = ColorUtil2.whiten(argb, 0.55f);
-        for (int pass = 0; pass < 2; pass++) {
-            float w = (float) (pass == 0 ? halfWidth : halfWidth * 0.35);
-            int bottom = pass == 0 ? argb : core;
-            int topC = pass == 0 ? top : (core & 0x00FFFFFF);
-            // X-aligned and Z-aligned planes, both faces (no culling in the pipeline)
-            vquad(f, m, bx - w, bz, bx + w, bz, ya, yb, bottom, topC);
-            vquad(f, m, bx, bz - w, bx, bz + w, ya, yb, bottom, topC);
+        VertexConsumer glow = consumers.getBuffer(StellaPipelines.FILLS_GLOW);
+        float cx = (float) (x - cam.x), cz = (float) (z - cam.z), base = (float) (y1 - cam.y);
+        double t = (System.currentTimeMillis() % 3_600_000L) / 1000.0;
+        float a0 = ((argb >>> 24) & 0xFF) / 255f;
+        int rgb = argb & 0xFFFFFF;
+        int hot = ColorUtil2.whiten(argb, 0.7f) & 0xFFFFFF;
+        float height = (float) Math.min(y2 - y1, 220);
+        int segs = 28, sides = 14;
+        float spin = (float) (t * 0.8);
+        // pulsing ground ring + expanding shockwave
+        float pulse = (float) (0.5 + 0.5 * Math.sin(t * 3));
+        ring(glow, m, cx, base + 0.02f, cz, (float) radius * 1.2f, (float) radius * (2.6f + pulse * 0.6f), sides * 2, rgb, a0 * 0.55f, 0f);
+        float wave = (float) ((t % 1.6) / 1.6);
+        ring(glow, m, cx, base + 0.03f, cz, (float) radius * (1.5f + wave * 6f), (float) radius * (1.9f + wave * 6f), sides * 2, rgb, a0 * 0.6f * (1 - wave), a0 * 0.6f * (1 - wave));
+        for (int i = 0; i < segs; i++) {
+            float h0 = height * i / segs, h1 = height * (i + 1) / segs;
+            float f0 = fade(h0, height), f1 = fade(h1, height);
+            // energy bands moving upward
+            float e0 = (float) (0.7 + 0.3 * Math.sin(h0 * 0.45 - t * 7)), e1 = (float) (0.7 + 0.3 * Math.sin(h1 * 0.45 - t * 7));
+            float ya = base + h0, yb = base + h1;
+            cylinder(glow, m, cx, cz, ya, yb, (float) radius * 2.6f, sides, spin, rgb, a0 * 0.16f * f0, a0 * 0.16f * f1);
+            cylinder(glow, m, cx, cz, ya, yb, (float) radius, sides, -spin, rgb, a0 * 0.55f * f0 * e0, a0 * 0.55f * f1 * e1);
+            cylinder(glow, m, cx, cz, ya, yb, (float) radius * 0.32f, 8, spin * 2, hot, Math.min(1f, a0 * 1.1f * f0 * e0), Math.min(1f, a0 * 1.1f * f1 * e1));
+        }
+    }
+
+    private static float fade(float h, float height) {
+        float k = Math.max(0f, 1f - h / height);
+        return (float) Math.pow(k, 1.4);
+    }
+
+    private static int argbOf(int rgb, float alpha) {
+        return ((int) (Math.max(0f, Math.min(1f, alpha)) * 255) << 24) | rgb;
+    }
+
+    private static void cylinder(VertexConsumer f, Matrix4f m, float cx, float cz, float ya, float yb, float r, int sides, float rot,
+                                 int rgb, float alphaBottom, float alphaTop) {
+        int cb = argbOf(rgb, alphaBottom), ct = argbOf(rgb, alphaTop);
+        for (int s = 0; s < sides; s++) {
+            double t0 = rot + Math.PI * 2 * s / sides, t1 = rot + Math.PI * 2 * (s + 1) / sides;
+            float x0 = cx + (float) Math.cos(t0) * r, z0 = cz + (float) Math.sin(t0) * r;
+            float x1 = cx + (float) Math.cos(t1) * r, z1 = cz + (float) Math.sin(t1) * r;
+            vquad(f, m, x0, z0, x1, z1, ya, yb, cb, ct);
+        }
+    }
+
+    /** Flat annulus; colour fades from the inner edge (alphaIn) to the outer edge (alphaOut). */
+    private static void ring(VertexConsumer f, Matrix4f m, float cx, float y, float cz, float rIn, float rOut, int sides,
+                             int rgb, float alphaIn, float alphaOut) {
+        int ci = argbOf(rgb, alphaIn), co = argbOf(rgb, alphaOut);
+        for (int s = 0; s < sides; s++) {
+            double t0 = Math.PI * 2 * s / sides, t1 = Math.PI * 2 * (s + 1) / sides;
+            float c0 = (float) Math.cos(t0), s0 = (float) Math.sin(t0), c1 = (float) Math.cos(t1), s1 = (float) Math.sin(t1);
+            f.vertex(m, cx + c0 * rIn, y, cz + s0 * rIn).color(ci);
+            f.vertex(m, cx + c0 * rOut, y, cz + s0 * rOut).color(co);
+            f.vertex(m, cx + c1 * rOut, y, cz + s1 * rOut).color(co);
+            f.vertex(m, cx + c1 * rIn, y, cz + s1 * rIn).color(ci);
         }
     }
 
@@ -214,6 +261,7 @@ public final class Render3D {
     /** Draws everything written this frame. */
     public void flush() {
         consumers.draw(StellaPipelines.FILLS);
+        consumers.draw(StellaPipelines.FILLS_GLOW);
         consumers.draw(StellaPipelines.LINES);
         if (!tracers.isEmpty()) {
             drawTracerGlow(consumers.getBuffer(StellaPipelines.GLOW));
