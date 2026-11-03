@@ -1,0 +1,63 @@
+name: Build Stella Client
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Compile and package
+        run: |
+          chmod +x gradlew
+          ./gradlew build --stacktrace --no-daemon
+
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: stella-client-jar
+          path: build/libs/*.jar
+          if-no-files-found: error
+
+  smoke-test:
+    # Boots the real Minecraft client under a virtual display, force-applies
+    # every mixin (MixinEnvironment.audit), renders the ClickGUI, HUD editor and
+    # an in-world frame, then exits. Fails if the marker line is missing.
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Install virtual display
+        run: sudo apt-get update && sudo apt-get install -y xvfb libgl1-mesa-dri mesa-utils
+      - name: Run smoke test
+        run: |
+          chmod +x gradlew
+          export LIBGL_ALWAYS_SOFTWARE=1
+          timeout 1500 xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew runSmoke --no-daemon 2>&1 | tee smoke.log || true
+          grep -q "STELLA_SMOKE_OK" smoke.log
+      - name: Upload smoke log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-log
+          path: |
+            smoke.log
+            run-smoke/logs/latest.log
+            run-smoke/crash-reports/

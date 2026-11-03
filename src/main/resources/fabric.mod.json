@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "stella",
+  "version": "${version}",
+  "name": "Stella Client",
+  "description": "A purple-themed, DonutSMP-focused Fabric client: multi-panel ClickGUI, independent movable HUD, ESP, base-finding scanners, custom skies and visuals.",
+  "authors": ["Stella Client"],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/stella/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["dev.stella.client.StellaClient"]
+  },
+  "mixins": ["stella.mixins.json"],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

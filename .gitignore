@@ -1,0 +1,10 @@
+.gradle/
+build/
+out/
+run/
+run-smoke/
+*.iml
+.idea/
+.vscode/
+bin/
+remappedSrc/

@@ -1,0 +1,25 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.stella.client.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "BackgroundRendererMixin",
+    "ChatScreenMixin",
+    "ClientPlayNetworkHandlerMixin",
+    "ClientWorldMixin",
+    "CreateWorldScreenAccessor",
+    "GameRendererMixin",
+    "InGameHudMixin",
+    "ItemEntityRendererMixin",
+    "LayerRenderStateMixin",
+    "MouseMixin",
+    "OverlayTextureMixin",
+    "SimpleOptionMixin",
+    "WorldMixin",
+    "WorldRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
