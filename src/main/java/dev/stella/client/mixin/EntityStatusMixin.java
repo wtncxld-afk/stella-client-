@@ -12,15 +12,17 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Totem pops arrive as entity status 35. */
+/** Totem pops arrive as entity status 35, deaths as status 3. */
 @Mixin(ClientPlayNetworkHandler.class)
 public abstract class EntityStatusMixin {
     @Inject(method = "onEntityStatus", at = @At("TAIL"))
     private void stella$status(EntityStatusS2CPacket packet, CallbackInfo ci) {
-        if (!StellaClient.isReady() || packet.getStatus() != 35) return;
+        if (!StellaClient.isReady() || (packet.getStatus() != 35 && packet.getStatus() != 3)) return;
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.world == null) return;
         Entity e = packet.getEntity(mc.world);
-        if (e != null) ModuleManager.get(TotemPopCounter.class).onPop(e);
+        if (e == null) return;
+        TotemPopCounter tpc = ModuleManager.get(TotemPopCounter.class);
+        if (packet.getStatus() == 35) tpc.onPop(e); else tpc.onDeath(e);
     }
 }

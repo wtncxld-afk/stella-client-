@@ -35,18 +35,21 @@ public class TotemPopCounter extends Module {
                 .append(Text.literal(n + (n == 1 ? " totem" : " totems")).formatted(Formatting.GOLD)));
     }
 
+    /** Called from the network mixin for entity status 3 (death). */
+    public void onDeath(Entity e) {
+        if (!(e instanceof PlayerEntity p)) return;
+        Integer n = pops.remove(p.getUuid());
+        if (n == null || !isEnabled() || !announceDeath.isOn()) return;
+        ChatUtil.send(Text.literal(p.getGameProfile().name()).formatted(Formatting.RED)
+                .append(Text.literal(" died after popping ").formatted(Formatting.GRAY))
+                .append(Text.literal(n + (n == 1 ? " totem" : " totems")).formatted(Formatting.GOLD)));
+    }
+
+    private Object lastWorld;
+
     @Override
     public void onTick() {
-        if (!inGame()) return;
-        // death: a counted player whose health hit zero
-        for (PlayerEntity p : mc.world.getPlayers()) {
-            Integer n = pops.get(p.getUuid());
-            if (n == null || !p.isDead()) continue;
-            if (announceDeath.isOn()) ChatUtil.send(Text.literal(p.getGameProfile().name()).formatted(Formatting.RED)
-                    .append(Text.literal(" died after popping ").formatted(Formatting.GRAY))
-                    .append(Text.literal(n + (n == 1 ? " totem" : " totems")).formatted(Formatting.GOLD)));
-            pops.remove(p.getUuid());
-        }
+        if (mc.world != lastWorld) { lastWorld = mc.world; pops.clear(); }
     }
 
     @Override protected void onDisable() { pops.clear(); }
