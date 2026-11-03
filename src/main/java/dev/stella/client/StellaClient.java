@@ -47,10 +47,12 @@ public final class StellaClient implements ClientModInitializer {
             ConfigManager.init();
             ready = true;
             LOGGER.info("Stella Client ready - profile '{}'", ConfigManager.activeProfile());
+            ModuleManager.get(dev.stella.client.modules.settings.AutoUpdaterModule.class).startup();
             if (Boolean.getBoolean("stella.smokeTest")) StellaSmokeTest.start();
         });
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
             if (ready) ConfigManager.save();
+            dev.stella.client.update.AutoUpdater.installOnShutdown();
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {

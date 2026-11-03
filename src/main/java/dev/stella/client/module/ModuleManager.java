@@ -99,6 +99,7 @@ public final class ModuleManager {
         // Settings
         register(new ConfigModule());
         register(new AnimationsModule());
+        register(new dev.stella.client.modules.settings.AutoUpdaterModule());
 
         for (Module m : MODULES) m.finishSetup();
     }

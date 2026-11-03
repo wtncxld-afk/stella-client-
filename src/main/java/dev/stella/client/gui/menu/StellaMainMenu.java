@@ -135,7 +135,9 @@ public class StellaMainMenu extends dev.stella.client.gui.StellaScreen {
         // ---- footer
         String user = "Logged in as " + client.getSession().getUsername();
         StellaFont.draw(ctx, user, 6, height - 12, ColorUtil.mulAlpha(theme.textDim(), a), false);
-        String ver = "Stella " + StellaClient.VERSION + "  ·  Minecraft 1.21.4  ·  Fabric";
+        String ver = "Stella " + StellaClient.VERSION + "  ·  Minecraft 1.21.11  ·  Fabric";
+        String upd = dev.stella.client.update.AutoUpdater.statusLine();
+        if (upd != null) StellaFont.draw(ctx, upd, 6, height - 24, ColorUtil.mulAlpha(theme.accent(), a), false);
         StellaFont.draw(ctx, ver, width - 6 - StellaFont.width(ver), height - 12, ColorUtil.mulAlpha(theme.textDim(), a), false);
         String vanilla = "Vanilla menu";
         int vx = width - 6 - StellaFont.width(vanilla);

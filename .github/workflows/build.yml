@@ -21,7 +21,7 @@ jobs:
       - name: Compile and package
         run: |
           chmod +x gradlew
-          ./gradlew build --stacktrace --no-daemon
+          ./gradlew build --stacktrace --no-daemon -Pmod_version=1.0.${{ github.run_number }}
 
       - name: Upload jar
         uses: actions/upload-artifact@v4
@@ -143,3 +143,33 @@ jobs:
           echo "JAR_SHA256 $(sha256sum $J | cut -d' ' -f1)"
           base64 -w 4000 "$J" | sed 's/^/JAR /'
           echo "JAR_END"
+
+  release:
+    # Publishes the audited jar as a GitHub Release (tag v1.0.<run number>) with
+    # its SHA-256. The in-game Auto Updater reads releases/latest, downloads the
+    # jar, checks the hash and installs it when Minecraft closes. Only runs on
+    # pushes to the release branches, and only after the build, the in-game
+    # smoke test and the malware audit have all passed.
+    needs: [build, smoke-test, jar-audit]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/stella-client-fabric-mod-1i9iw2')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: stella-client-jar
+          path: jar
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          V=1.0.${{ github.run_number }}
+          J=jar/stella-client-$V.jar
+          test -f "$J"
+          (cd jar && sha256sum "stella-client-$V.jar" > "stella-client-$V.jar.sha256")
+          cat "$J.sha256"
+          gh release create "v$V" "$J" "$J.sha256" \
+            --repo "${{ github.repository }}" --target "${{ github.sha }}" \
+            --title "Stella Client $V (Minecraft 1.21.11)" \
+            --notes "Automatic build of ${{ github.sha }}. Passed the in-game smoke test and the jar audit (bytecode scan + ClamAV). SHA-256: $(cut -d' ' -f1 "$J.sha256")"

@@ -28,9 +28,21 @@ loom {
     }
 }
 
+// "1.21.11+build.+" in gradle.properties means "newest Yarn build for this Minecraft
+// version"; Loom needs an exact version, so ask Fabric's meta API which one that is.
+def resolveYarn = { String v ->
+    if (!v.endsWith('+')) return v
+    def mc = project.minecraft_version
+    def json = new groovy.json.JsonSlurper().parse(new URL("https://meta.fabricmc.net/v2/versions/yarn/${mc}"))
+    def latest = json.max { it.build }.version
+    logger.lifecycle("Using Yarn ${latest}")
+    return latest
+}
+def yarnVersion = resolveYarn(project.yarn_mappings)
+
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    mappings "net.fabricmc:yarn:${yarnVersion}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 }
