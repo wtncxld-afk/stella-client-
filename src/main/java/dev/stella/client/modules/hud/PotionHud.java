@@ -19,6 +19,11 @@ public class PotionHud extends HudElement {
 
     public PotionHud() { super("Potion HUD", "Active effects with level and time left", -4, -110, false); }
 
+    private static String formatTicks(int ticks) {
+        int sec = Math.max(0, ticks / 20);
+        return sec >= 3600 ? String.format("%d:%02d:%02d", sec / 3600, sec / 60 % 60, sec % 60) : String.format("%d:%02d", sec / 60, sec % 60);
+    }
+
     private static final String[] ROMAN = {"", "", " II", " III", " IV", " V", " VI", " VII", " VIII", " IX", " X"};
 
     @Override
@@ -30,7 +35,7 @@ public class PotionHud extends HudElement {
             for (StatusEffectInstance e : mc.player.getStatusEffects()) {
                 int amp = e.getAmplifier() + 1;
                 String name = e.getEffectType().value().getName().getString() + (amp < ROMAN.length ? ROMAN[amp] : " " + amp);
-                String time = e.isInfinite() ? "∞" : e.getDurationString();
+                String time = e.isInfinite() ? "∞" : formatTicks(e.getDuration());
                 rows.add(new String[]{name, time});
                 colors.add(0xFF000000 | e.getEffectType().value().getColor());
                 ticks.add(e.isInfinite() ? Integer.MAX_VALUE : e.getDuration());
