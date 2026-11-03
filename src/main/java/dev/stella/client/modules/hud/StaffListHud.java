@@ -24,6 +24,9 @@ public class StaffListHud extends HudElement {
     private final dev.stella.client.hud.CardStyle card = card("Modern");
     private final ColorSetting headerColor = add(new ColorSetting("Header Color", "Title colour (when Theme Colors is off)", 0xFFA855F7));
     private final ColorSetting nameColor = add(new ColorSetting("Name Color", "Name colour", 0xFFF3F0F7));
+    private final dev.stella.client.setting.BoolSetting showLive = add(new dev.stella.client.setting.BoolSetting("Show Live",
+            "Show '● LIVE · Platform' for streaming staff (Staff List module: Live Check)", true));
+    private final dev.stella.client.setting.BoolSetting liveFirst = add(new dev.stella.client.setting.BoolSetting("Live First", "List live staff at the top", true));
     private final ColorSetting rankColor = add(new ColorSetting("Rank Color", "Rank colour", 0xFFC4B5FD));
 
     public StaffListHud() { super("Staff List HUD", "Verified staff roster with tab-list visibility", -4, 112, false); }
@@ -39,12 +42,16 @@ public class StaffListHud extends HudElement {
             if (inTab) visible++;
             if (onlyVisible.isOn() && !inTab) continue;
             if (!q.isEmpty() && !m.name().toLowerCase(Locale.ROOT).contains(q) && !m.rank().toLowerCase(Locale.ROOT).contains(q)) continue;
-            rows.add(new String[]{m.name(), m.rank(), inTab ? "in tab" : "not visible", inTab ? "1" : "0"});
+            var live = showLive.isOn() ? dev.stella.client.module.ModuleManager.get(dev.stella.client.modules.combat.StaffList.class).live(m) : null;
+            rows.add(new String[]{m.name(), m.rank(), inTab ? "in tab" : "not visible", inTab ? "1" : "0",
+                    live == null ? "" : live.platform(), live == null ? "0" : String.valueOf(live.color())});
         }
+        if (liveFirst.isOn()) rows.sort((a, b) -> Boolean.compare(b[4].isEmpty() ? false : true, a[4].isEmpty() ? false : true));
         String header = "STAFF  " + visible + "/" + all.size() + " in tab";
         int w = dev.stella.client.render.StellaFont.width(header);
         List<String[]> shown = rows.subList(0, Math.min(rows.size(), maxRows.getInt()));
-        for (String[] r : shown) w = Math.max(w, dev.stella.client.render.StellaFont.width(r[0] + " [" + r[1] + "]  " + r[2]));
+        for (String[] r : shown) w = Math.max(w, dev.stella.client.render.StellaFont.width(r[0] + " [" + r[1] + "]  " + r[2])
+                + (r[4].isEmpty() ? 0 : dev.stella.client.render.StellaFont.width("  ● LIVE · " + r[4])));
         String empty = all.isEmpty() ? "No verified staff - edit config/stella/staff.json" : "No matches";
         if (shown.isEmpty()) w = Math.max(w, dev.stella.client.render.StellaFont.width(empty));
         int h = 12 + Math.max(1, shown.size()) * 10 - 2;
@@ -64,6 +71,15 @@ public class StaffListHud extends HudElement {
             dev.stella.client.render.StellaFont.draw(ctx, "[" + r[1] + "]", x, y, col(rankColor.argb()), true);
             x += dev.stella.client.render.StellaFont.width("[" + r[1] + "]  ");
             dev.stella.client.render.StellaFont.draw(ctx, r[2], x, y, col(r[3].equals("1") ? 0xFF7CF29A : 0xFF6E6878), false);
+            if (!r[4].isEmpty()) {
+                x += dev.stella.client.render.StellaFont.width(r[2] + "  ");
+                boolean blink = (System.currentTimeMillis() / 600) % 2 == 0;
+                dev.stella.client.render.StellaFont.draw(ctx, "●", x, y, col(blink ? 0xFFFF3333 : 0xFF8A1C1C), false);
+                x += dev.stella.client.render.StellaFont.width("● ");
+                dev.stella.client.render.StellaFont.draw(ctx, "LIVE", x, y, col(0xFFFF5555), true);
+                x += dev.stella.client.render.StellaFont.width("LIVE ");
+                dev.stella.client.render.StellaFont.draw(ctx, "· " + r[4], x, y, col(Integer.parseInt(r[5])), true);
+            }
             y += 10;
         }
         ctx.getMatrices().pop();

@@ -62,6 +62,7 @@ public class AntiVanish extends Module {
             "Shown under the name for MEDIUM confidence evidence", "may be spectating you", 48)).visibleWhen(popup::isOn);
     private final dev.stella.client.setting.TextSetting signOff = add(new dev.stella.client.setting.TextSetting("Sign-off Text",
             "Last line of the popup", "Goodluck Stella user", 48)).visibleWhen(popup::isOn);
+    private final NumberSetting popupOpacity = add(new NumberSetting("Popup Opacity", "Background see-through amount (text stays solid)", 0.55, 0.05, 1, 0.05)).visibleWhen(popup::isOn);
     private final BoolSetting popupReason = add(new BoolSetting("Show Reason", "Small line with the evidence and confidence", true)).visibleWhen(popup::isOn);
     private final BoolSetting preview = add(new BoolSetting("Preview Popup", "Toggle to show an example popup", false)).onChange(this::previewNow);
 
@@ -132,8 +133,8 @@ public class AntiVanish extends Module {
         float x = -w / 2f, y = -h / 2f;
         double pulse = 0.6 + 0.4 * Math.sin(age / 180.0);
         dev.stella.client.render.Render2D.shadow(ctx, x, y, w, h, 7, 6, dev.stella.client.util.ColorUtil.mulAlpha(
-                dev.stella.client.util.ColorUtil.withAlpha(nameColor.argb(), 0x90), a * pulse));
-        dev.stella.client.render.Render2D.roundRect(ctx, x, y, w, h, 7, dev.stella.client.util.ColorUtil.mulAlpha(0xF00C0A10, a));
+                dev.stella.client.util.ColorUtil.withAlpha(nameColor.argb(), 0x90), a * pulse * Math.max(0.35, popupOpacity.get())));
+        dev.stella.client.render.Render2D.roundRect(ctx, x, y, w, h, 7, dev.stella.client.util.ColorUtil.mulAlpha(0xFF0C0A10, a * popupOpacity.get()));
         dev.stella.client.render.Render2D.roundRect(ctx, x, y, w, 2, 1, dev.stella.client.util.ColorUtil.mulAlpha(nameColor.argb(), a));
         int c1 = dev.stella.client.util.ColorUtil.mulAlpha(nameColor.argb(), a);
         int c2 = dev.stella.client.util.ColorUtil.mulAlpha(0xFFF2EFF6, a);

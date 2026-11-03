@@ -111,6 +111,12 @@ Stella only uses information the server actually sends to your client. These are
   hidden bases usually are). Turn off *Only Below Y* to check every height. It gives hints, not proof. Each red chunk shows its reasons and a confidence level.
   Temples, trial chambers, mineshafts and geodes can all cause false positives. Sideways deepslate is the
   strongest signal, because world generation always places deepslate vertically.
+* **Staff live status:** add optional channel handles to an entry in `staff.json`, for example
+  `"twitch": "handle", "youtube": "@handle", "kick": "handle", "tiktok": "handle"`. With the Staff List module on,
+  Stella checks those public channel pages every few minutes, with no API keys or logins. The Staff List HUD then
+  shows **● LIVE · Twitch** (or YouTube, Kick, TikTok). Twitch, YouTube and Kick are reliable; TikTok is best
+  effort because it often blocks automated requests. A live tag in the server's own tab list (keywords such as
+  `live`) is also detected.
 * **Staff List** has no built-in staff data. Add names you have verified yourself to `staff.json`, then
   toggle *Reload staff.json*. "In tab" means the name is in the tab list. If a staff member is missing
   from the tab list, the client cannot tell whether they are offline or vanished.

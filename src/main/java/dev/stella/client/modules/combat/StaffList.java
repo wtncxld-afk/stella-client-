@@ -20,6 +20,12 @@ public class StaffList extends Module {
     private final BoolSetting joinAlerts = add(new BoolSetting("Join Alerts", "Notify when a verified staff member appears in the tab list", true));
     private final BoolSetting leaveAlerts = add(new BoolSetting("Leave Alerts", "Notify when they disappear from the tab list", true));
     private final BoolSetting chat = add(new BoolSetting("Chat Messages", "Also print alerts in chat", false));
+    public final BoolSetting liveCheck = add(new BoolSetting("Live Check", "Check staff channels from staff.json (twitch / youtube / kick / tiktok) for live streams", true));
+    private final dev.stella.client.setting.NumberSetting liveInterval = add(new dev.stella.client.setting.NumberSetting("Live Check Interval",
+            "Minutes between checks of each channel", 3, 1, 30, 1).suffix("m")).visibleWhen(liveCheck::isOn);
+    public final dev.stella.client.setting.TextSetting liveKeywords = add(new dev.stella.client.setting.TextSetting("Tab Live Keywords",
+            "Words in a staff member's tab-list rank that mean they are live", "live, streaming, 🔴", 120));
+    private final BoolSetting liveAlerts = add(new BoolSetting("Live Alerts", "Notify when a staff member goes live", true));
     private final BoolSetting reload = add(new BoolSetting("Reload staff.json", "Toggle to re-read the roster file", false)).onChange(this::reloadNow);
 
     private final Set<String> visible = new HashSet<>();
@@ -35,11 +41,30 @@ public class StaffList extends Module {
         NotificationManager.post("Staff List", StaffDatabase.all().size() + " verified staff loaded", Notification.Type.SUCCESS);
     }
 
-    @Override protected void onEnable() { visible.clear(); primed = false; }
+    @Override
+    protected void onEnable() {
+        visible.clear();
+        primed = false;
+        dev.stella.client.data.LiveChecker.setOnWentLive(msg -> {
+            if (liveAlerts.isOn()) alert(msg, Notification.Type.WARNING);
+        });
+        if (liveCheck.isOn()) dev.stella.client.data.LiveChecker.start();
+    }
+
+    @Override protected void onDisable() { dev.stella.client.data.LiveChecker.stop(); }
+
+    /** Live state for a staff member: the server's own tab tag first, then the channel check. */
+    public dev.stella.client.data.LiveChecker.Live live(StaffDatabase.StaffMember m) {
+        var tab = dev.stella.client.data.LiveChecker.fromTab(StaffDatabase.tabEntry(m), liveKeywords.get());
+        if (tab != null) return tab;
+        return isEnabled() && liveCheck.isOn() ? dev.stella.client.data.LiveChecker.status(m.name()) : null;
+    }
 
     @Override
     public void onTick() {
         if (mc.getNetworkHandler() == null) { visible.clear(); primed = false; return; }
+        dev.stella.client.data.LiveChecker.setInterval(liveInterval.getInt() * 60);
+        if (liveCheck.isOn()) dev.stella.client.data.LiveChecker.start(); else dev.stella.client.data.LiveChecker.stop();
         if (++timer < 20) return;
         timer = 0;
         Set<String> now = new HashSet<>();

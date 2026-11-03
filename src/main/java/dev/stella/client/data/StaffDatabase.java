@@ -25,7 +25,13 @@ import java.util.Locale;
  * normally removed from the tab list and therefore cannot be shown as online.
  */
 public final class StaffDatabase {
-    public record StaffMember(String name, String rank, String uuid) {}
+    /** Channel fields are optional handles used only for the live-status check. */
+    public record StaffMember(String name, String rank, String uuid, String twitch, String youtube, String kick, String tiktok) {
+        public StaffMember(String name, String rank, String uuid) { this(name, rank, uuid, "", "", "", ""); }
+        public boolean hasChannels() { return !twitch.isBlank() || !youtube.isBlank() || !kick.isBlank() || !tiktok.isBlank(); }
+    }
+
+    private static String str(JsonObject o, String k) { return o.has(k) && !o.get(k).isJsonNull() ? o.get(k).getAsString().trim() : ""; }
 
     private static List<StaffMember> staff = new ArrayList<>();
     private static String source = "";
@@ -48,7 +54,7 @@ public final class StaffDatabase {
                 if (name.isEmpty()) continue;
                 list.add(new StaffMember(name,
                         s.has("rank") ? s.get("rank").getAsString() : "Staff",
-                        s.has("uuid") ? s.get("uuid").getAsString() : ""));
+                        str(s, "uuid"), str(s, "twitch"), str(s, "youtube"), str(s, "kick"), str(s, "tiktok")));
             }
             staff = list;
             source = o.has("source") ? o.get("source").getAsString() : "";
@@ -62,7 +68,9 @@ public final class StaffDatabase {
     private static void writeTemplate(Path f) {
         JsonObject o = new JsonObject();
         o.addProperty("_readme", "Add ONLY staff members you have verified yourself (for example from DonutSMP's official website or Discord). "
-                + "Stella ships no staff data and never guesses. Example entry: {\"name\": \"PlayerName\", \"rank\": \"Moderator\", \"uuid\": \"\"}. "
+                + "Stella ships no staff data and never guesses. Example entry: {\"name\": \"PlayerName\", \"rank\": \"Moderator\", \"uuid\": \"\", "
+                + "\"twitch\": \"handle\", \"youtube\": \"@handle\", \"kick\": \"handle\", \"tiktok\": \"handle\"} - the channel fields are optional "
+                + "and only used to show who is live. "
                 + "Use the Staff List module's 'Reload staff.json' option after editing.");
         o.addProperty("source", "");
         o.addProperty("lastVerified", "");
