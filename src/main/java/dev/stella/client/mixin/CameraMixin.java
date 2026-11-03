@@ -7,7 +7,7 @@ import dev.stella.client.modules.misc.Freecam;
 import net.minecraft.client.render.Camera;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.BlockView;
+import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -24,7 +24,7 @@ public abstract class CameraMixin {
     @Shadow protected abstract float clipToSpace(float desiredCameraDistance);
 
     @Inject(method = "update", at = @At("RETURN"))
-    private void stella$override(BlockView area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickDelta, CallbackInfo ci) {
+    private void stella$override(World area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickDelta, CallbackInfo ci) {
         if (!StellaClient.isReady()) return;
         Freecam fc = ModuleManager.get(Freecam.class);
         if (fc.active()) {
