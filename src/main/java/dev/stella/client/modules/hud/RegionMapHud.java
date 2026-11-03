@@ -18,7 +18,8 @@ import java.util.List;
 /**
  * Compact top-left region grid matching the DonutSMP region-map reference:
  * opaque numbered cells, "Position" and "Current Region" lines, a swatch
- * legend and the STAFF list with player heads. No card, no heading.
+ * legend and the STAFF list with player heads. No card, no heading. Text uses
+ * the Stella font (follows the global "Custom Font" toggle).
  */
 public class RegionMapHud extends HudElement {
     private final NumberSetting cellSize = add(new NumberSetting("Cell Size", "Pixel size of one grid cell", 13, 6, 24, 1));
@@ -67,12 +68,12 @@ public class RegionMapHud extends HudElement {
                 ctx.fill(x, y, x + cs, y + cs, col(ColorUtil.mulAlpha(base, cellAlpha.get())));
                 if (numbers.isOn()) {
                     String n = String.valueOf(number(r, c));
-                    int tw = mc.textRenderer.getWidth(n);
+                    int tw = dev.stella.client.render.StellaFont.width(n);
                     float s = Math.min(0.62f, (cs - 2f) / Math.max(1, tw));
                     ctx.getMatrices().push();
                     ctx.getMatrices().translate(x + cs / 2f - tw * s / 2f, y + cs / 2f - 3.5f * s, 0);
                     ctx.getMatrices().scale(s, s, 1);
-                    ctx.drawText(mc.textRenderer, n, 0, 0, col(numberColor.argb()), false);
+                    dev.stella.client.render.StellaFont.draw(ctx, n, 0, 0, col(numberColor.argb()), false);
                     ctx.getMatrices().pop();
                 }
                 if (outlineCell.isOn() && c == pc && r == pr) ctx.drawBorder(x - 1, y - 1, cs + 2, cs + 2, col(highlight.argb()));
@@ -91,23 +92,23 @@ public class RegionMapHud extends HudElement {
         int w = gridW;
 
         String pos = "Position: X: " + MathHelper.floor(px) + ", Z: " + MathHelper.floor(pz);
-        ctx.drawText(mc.textRenderer, pos, 0, y, tc, true);
-        w = Math.max(w, mc.textRenderer.getWidth(pos));
+        dev.stella.client.render.StellaFont.draw(ctx, pos, 0, y, tc, true);
+        w = Math.max(w, dev.stella.client.render.StellaFont.width(pos));
         y += 9;
 
         String mark = RegionConfig.placeholder && unverifiedMark.isOn() ? "*" : "";
         String regionLine = RegionConfig.inGrid(pc, pr)
                 ? "Current Region: " + number(pr, pc) + " (" + (current == null ? "None" : current.name()) + ")" + mark
                 : "Current Region: - (outside grid)" + mark;
-        ctx.drawText(mc.textRenderer, regionLine, 0, y, tc, true);
-        w = Math.max(w, mc.textRenderer.getWidth(regionLine));
+        dev.stella.client.render.StellaFont.draw(ctx, regionLine, 0, y, tc, true);
+        w = Math.max(w, dev.stella.client.render.StellaFont.width(regionLine));
         y += 11;
 
         if (legend.isOn()) {
             for (RegionConfig.Region reg : RegionConfig.regions) {
                 ctx.fill(0, y, 8, y + 8, col(reg.color()));
-                ctx.drawText(mc.textRenderer, reg.name(), 11, y, tc, true);
-                w = Math.max(w, 11 + mc.textRenderer.getWidth(reg.name()));
+                dev.stella.client.render.StellaFont.draw(ctx, reg.name(), 11, y, tc, true);
+                w = Math.max(w, 11 + dev.stella.client.render.StellaFont.width(reg.name()));
                 y += 9;
             }
             y += 5;
@@ -118,12 +119,12 @@ public class RegionMapHud extends HudElement {
             ctx.getMatrices().push();
             ctx.getMatrices().translate(0, y, 0);
             ctx.getMatrices().scale(0.75f, 0.75f, 1);
-            ctx.drawText(mc.textRenderer, "STAFF", 0, 1, col(0xFF9A9A9A), true);
+            dev.stella.client.render.StellaFont.draw(ctx, "STAFF", 0, 1, col(0xFF9A9A9A), true);
             ctx.getMatrices().pop();
-            ctx.drawText(mc.textRenderer, String.valueOf(online.size()), 26, y, tc, true);
+            dev.stella.client.render.StellaFont.draw(ctx, String.valueOf(online.size()), 26, y, tc, true);
             y += 12;
             for (StaffDatabase.StaffMember m : online) {
-                int rowW = 14 + mc.textRenderer.getWidth(m.name()) + 6;
+                int rowW = 14 + dev.stella.client.render.StellaFont.width(m.name()) + 6;
                 Render2D.roundRect(ctx, -1, y - 2, rowW, 13, 3, col(0x70000000));
                 PlayerListEntry e = StaffDatabase.tabEntry(m);
                 int tx = 2;
@@ -131,7 +132,7 @@ public class RegionMapHud extends HudElement {
                     PlayerSkinDrawer.draw(ctx, e.getSkinTextures(), 1, y, 9);
                     tx = 13;
                 }
-                ctx.drawText(mc.textRenderer, m.name(), tx, y + 1, tc, true);
+                dev.stella.client.render.StellaFont.draw(ctx, m.name(), tx, y + 1, tc, true);
                 w = Math.max(w, rowW);
                 y += 15;
             }
