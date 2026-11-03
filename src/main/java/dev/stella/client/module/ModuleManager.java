@@ -76,6 +76,9 @@ public final class ModuleManager {
         register(new ItemPhysics());
         register(new EnchantmentGlint());
         register(new DamageTint());
+        register(new GlowOutline());
+        register(new SwingSpeed());
+        register(new ItemScale());
         // Client
         register(new ClickGuiModule());
         register(new HudEditorModule());

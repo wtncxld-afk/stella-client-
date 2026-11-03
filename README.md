@@ -66,7 +66,9 @@ Free Look (hold **Left Alt** to look around without turning your head, in third 
 **Visuals:** Custom FOV, Custom Crosshair (with presets and a live preview in its settings), Custom Sky
 (Cosmic Stella, Lavender Sunset, Blood Moon, Arctic Aurora, Midnight, Custom), Fullbright, Ambience,
 Motion Blur, Fog Customizer, Weather Customizer, Hurt Camera, No Pumpkin Overlay, Zoom, World Time,
-Item Physics, Enchantment Glint, Damage Tint.
+Item Physics, Enchantment Glint, Damage Tint, Glow Outline (glowing outlines around dropped items, coloured
+by rarity, plus optional players and mobs), Swing Speed (slower or faster arm swing, visual only), Item Scale
+(size and position of held items, and size of dropped items).
 
 **Client:** ClickGUI (theme and GUI key), HUD Editor.
 

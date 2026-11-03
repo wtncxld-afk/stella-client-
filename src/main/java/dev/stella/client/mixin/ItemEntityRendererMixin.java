@@ -16,12 +16,31 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ItemEntityRenderer.class)
 public abstract class ItemEntityRendererMixin {
+    @org.spongepowered.asm.mixin.Unique private boolean stella$pushed;
+
+    @Inject(method = "render(Lnet/minecraft/client/render/entity/state/ItemEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V",
+            at = @At("RETURN"))
+    private void stella$popScale(ItemEntityRenderState state, MatrixStack matrices, VertexConsumerProvider vcp, int light, CallbackInfo ci) {
+        if (stella$pushed) {
+            stella$pushed = false;
+            matrices.pop();
+        }
+    }
+
     @Inject(method = "render(Lnet/minecraft/client/render/entity/state/ItemEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V",
             at = @At("HEAD"), cancellable = true)
     private void stella$physics(ItemEntityRenderState state, MatrixStack matrices, VertexConsumerProvider vcp, int light, CallbackInfo ci) {
         if (!StellaClient.isReady()) return;
         ItemPhysics ip = ModuleManager.get(ItemPhysics.class);
-        if (!ip.isEnabled() || state.itemRenderState.isEmpty()) return;
+        float dropScale = ModuleManager.get(dev.stella.client.modules.visuals.ItemScale.class).droppedScale();
+        if (!ip.isEnabled() || state.itemRenderState.isEmpty()) {
+            if (dropScale != 1f) {
+                matrices.push();
+                matrices.scale(dropScale, dropScale, dropScale);
+                stella$pushed = true;
+            }
+            return;
+        }
         ci.cancel();
         boolean depth = state.itemRenderState.hasDepth();
         float angle = ip.randomRotation.isOn() ? (float) Math.toDegrees(state.uniqueOffset) : 0f;
@@ -29,7 +48,7 @@ public abstract class ItemEntityRendererMixin {
         matrices.push();
         matrices.translate(0f, depth ? 0f : 0.02f, 0f);
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(angle));
-        float sc = ip.scale.getFloat();
+        float sc = ip.scale.getFloat() * dropScale;
         matrices.scale(sc, sc, sc);
         float spread = ip.stackSpread.getFloat();
         if (!depth) matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(90f));
