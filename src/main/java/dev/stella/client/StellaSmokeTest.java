@@ -49,7 +49,7 @@ final class StellaSmokeTest {
         try {
             switch (stage) {
                 case 0 -> {
-                    if (tick < 40) return;
+                    if (tick < 40 || mc.getOverlay() != null) return;
                     MixinEnvironment.getCurrentEnvironment().audit();
                     StellaClient.LOGGER.info("[smoke] mixin audit passed");
                     mc.setScreen(new ClickGuiScreen());

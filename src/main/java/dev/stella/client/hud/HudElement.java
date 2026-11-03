@@ -31,7 +31,10 @@ public abstract class HudElement extends Module {
     /** Draw at local origin (0,0); called inside a transform for position/scale. */
     public abstract void render(DrawContext ctx, float tickDelta, boolean editor);
 
-    public void setSize(int w, int h) { this.width = Math.max(4, w); this.height = Math.max(4, h); }
+    private boolean sized;
+
+    public void setSize(int w, int h) { this.width = Math.max(4, w); this.height = Math.max(4, h); this.sized = true; }
+    public boolean isSized() { return sized; }
     public int getWidth() { return width; }
     public int getHeight() { return height; }
     public float scaledWidth() { return (float) (width * scale.get()); }

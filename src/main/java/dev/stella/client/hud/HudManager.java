@@ -31,6 +31,7 @@ public final class HudManager {
     public static void renderElement(DrawContext ctx, HudElement h, float tickDelta, boolean editor) {
         clamp(h);
         ctx.getMatrices().push();
+        if (!h.isSized()) ctx.getMatrices().translate(-10000, -10000, 0); // measure off-screen first
         ctx.getMatrices().translate(h.x(), h.y(), 0);
         float s = h.scale.getFloat();
         ctx.getMatrices().scale(s, s, 1);
@@ -47,6 +48,7 @@ public final class HudManager {
         MinecraftClient mc = MinecraftClient.getInstance();
         int sw = mc.getWindow().getScaledWidth(), sh = mc.getWindow().getScaledHeight();
         // negative default coordinates anchor to the right / bottom edge on first layout
+        if (!h.isSized()) return; // anchor once the real size is known
         if (h.x() < 0) h.posX.set((double) (sw + h.x() - h.scaledWidth()));
         if (h.y() < 0) h.posY.set((double) (sh + h.y() - h.scaledHeight()));
         float w = h.scaledWidth(), hh = h.scaledHeight();

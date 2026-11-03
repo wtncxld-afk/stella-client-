@@ -66,8 +66,9 @@ public class MotionBlur extends Module {
         GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, main.fbo);
         GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, history.fbo);
         GL30.glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
-        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
-        main.beginWrite(false);
+        // Restore the real binding to the main framebuffer: GlStateManager still
+        // believes main is bound, so the actual GL state must match that cache.
+        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, main.fbo);
     }
 
     /** Wraps the history framebuffer's colour attachment so DrawContext can sample it. */
