@@ -52,24 +52,29 @@ public class SusChunkFinder extends Module {
     private final BoolSetting redstone = add(new BoolSetting("Redstone", "Look for clusters of redstone components", true));
     private final BoolSetting amethyst = add(new BoolSetting("Grown Amethyst", "Look for geodes with many fully grown clusters", true));
     private final BoolSetting deepslate = add(new BoolSetting("Rotated Deepslate", "Look for deepslate placed sideways", true));
+    private final BoolSetting unnatural = add(new BoolSetting("Unnatural Blocks", "Look for blocks world generation never places (concrete, observers...)", true));
+    private final dev.stella.client.setting.BlockListSetting unnaturalBlocks = add(new dev.stella.client.setting.BlockListSetting("Unnatural Block List",
+            "Blocks that only players place. Edit to add your own", defaultUnnatural())).visibleWhen(unnatural::isOn);
     private final NumberSetting range = add(new NumberSetting("Range", "Analysis radius in blocks", 128, 16, 512, 16));
     private final ModeSetting minConfidence = add(new ModeSetting("Min Confidence", "Hide findings below this level", "Low", "Low", "Medium", "High"));
-    private final ModeSetting boxMode = add(new ModeSetting("Box Mode", "Chunk column around the detections, flat square at a Y-level, or the full chunk height",
-            "Column", "Column", "Flat", "Full Height"));
+    private final ModeSetting boxMode = add(new ModeSetting("Box Mode", "Flat translucent square at a Y-level, a column around the detections, or the full chunk height",
+            "Flat", "Flat", "Column", "Full Height"));
     private final NumberSetting flatY = add(new NumberSetting("Flat Y", "Y-level of the flat square (Flat mode)", 64, -64, 320, 1)).visibleWhen(() -> boxMode.is("Flat"));
-    private final BoolSetting flatAtPlayer = add(new BoolSetting("Flat At Player Y", "Put the flat square at your feet", true)).visibleWhen(() -> boxMode.is("Flat"));
-    private final ColorSetting color = add(new ColorSetting("Color", "Chunk box colour", 0xFFFF2B2B));
-    private final BoolSetting confidenceFill = add(new BoolSetting("Confidence Opacity", "Stronger red for higher confidence", true));
-    private final BoolSetting showBlocks = add(new BoolSetting("Show Blocks", "Also outline the exact suspicious blocks", true));
+    private final BoolSetting flatAtPlayer = add(new BoolSetting("Flat At Player Y", "Put the flat square at your feet instead of Flat Y", false)).visibleWhen(() -> boxMode.is("Flat"));
+    private final ColorSetting color = add(new ColorSetting("Color", "Chunk fill colour (alpha = opacity)", 0xB4FF4A33));
+    private final BoolSetting outline = add(new BoolSetting("Outline", "Draw an outline around each chunk", false));
+    private final BoolSetting confidenceFill = add(new BoolSetting("Confidence Opacity", "Fainter squares for lower confidence", false));
+    private final BoolSetting showBlocks = add(new BoolSetting("Show Blocks", "Also outline the exact suspicious blocks", false));
     private final BoolSetting tracers = add(new BoolSetting("Tracers", "Lines to each sus chunk", false));
     private final NumberSetting tracerWidth = add(new NumberSetting("Tracer Width", "Line thickness in screen pixels", 2, 0.5, 5, 0.5)).visibleWhen(tracers::isOn);
-    private final BoolSetting labels = add(new BoolSetting("Labels", "Show reason and confidence labels", true));
+    private final BoolSetting labels = add(new BoolSetting("Labels", "Show reason and confidence labels", false));
     private final BoolSetting notify = add(new BoolSetting("Notify", "Notify on new Medium/High findings", true));
 
     private final ScanTarget redstoneTarget;
     private final ScanTarget clusterTarget;
     private final ScanTarget budTarget;
     private final ScanTarget deepslateTarget;
+    private final ScanTarget unnaturalTarget;
     private List<Finding> findings = new ArrayList<>();
     private final Set<String> notified = new HashSet<>();
     private int timer;
@@ -88,6 +93,9 @@ public class SusChunkFinder extends Module {
         deepslateTarget = BlockScanner.register(new ScanTarget("Sus/Deepslate",
                 s -> s.isOf(Blocks.DEEPSLATE) && s.contains(Properties.AXIS) && s.get(Properties.AXIS) != Direction.Axis.Y,
                 () -> isEnabled() && deepslate.isOn()));
+        unnaturalTarget = BlockScanner.register(new ScanTarget("Sus/Unnatural", st -> unnaturalBlocks.contains(st.getBlock()), () -> isEnabled() && unnatural.isOn()));
+        unnaturalBlocks.setListener(unnaturalTarget::invalidate);
+        unnatural.onChange(unnaturalTarget::invalidate);
         redstone.onChange(redstoneTarget::invalidate);
         amethyst.onChange(() -> { clusterTarget.invalidate(); budTarget.invalidate(); });
         deepslate.onChange(deepslateTarget::invalidate);
@@ -98,6 +106,7 @@ public class SusChunkFinder extends Module {
     @Override
     protected void onEnable() {
         redstoneTarget.invalidate(); clusterTarget.invalidate(); budTarget.invalidate(); deepslateTarget.invalidate();
+        unnaturalTarget.invalidate();
         findings = new ArrayList<>();
     }
 
@@ -111,6 +120,7 @@ public class SusChunkFinder extends Module {
         if (redstone.isOn()) analyseRedstone(redstoneTarget.near(center, r, 5000), out);
         if (amethyst.isOn()) analyseAmethyst(clusterTarget.near(center, r, 5000), budTarget.near(center, r, 5000), out);
         if (deepslate.isOn()) analyseDeepslate(deepslateTarget.near(center, r, 5000), out);
+        if (unnatural.isOn()) analyseUnnatural(unnaturalTarget.near(center, r, 5000), out);
         Confidence min = Confidence.valueOf(minConfidence.get().toUpperCase());
         out.removeIf(f -> f.confidence.ordinal() < min.ordinal());
         findings = out;
@@ -178,6 +188,43 @@ public class SusChunkFinder extends Module {
             Confidence c = ratio > 0.8 && mature >= 12 ? Confidence.MEDIUM : Confidence.LOW;
             BlockPos[] b = bounds(e.getValue());
             out.add(new Finding("Grown Amethyst", b[0], b[1], mature, c, reasons));
+        }
+    }
+
+    /** Blocks no world-generation feature or structure places in the Overworld or Nether. */
+    private static String[] defaultUnnatural() {
+        String[] colors = {"white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray",
+                "cyan", "purple", "blue", "brown", "green", "red", "black"};
+        java.util.List<String> ids = new java.util.ArrayList<>();
+        for (String c : colors) { ids.add("minecraft:" + c + "_concrete"); ids.add("minecraft:" + c + "_concrete_powder"); }
+        ids.addAll(java.util.List.of("minecraft:observer", "minecraft:comparator", "minecraft:redstone_block", "minecraft:slime_block",
+                "minecraft:honey_block", "minecraft:crafter", "minecraft:target", "minecraft:hopper", "minecraft:dropper",
+                "minecraft:daylight_detector", "minecraft:note_block", "minecraft:jukebox", "minecraft:beacon",
+                "minecraft:enchanting_table", "minecraft:ender_chest", "minecraft:netherite_block", "minecraft:diamond_block",
+                "minecraft:emerald_block", "minecraft:lapis_block", "minecraft:iron_block", "minecraft:respawn_anchor",
+                "minecraft:lodestone", "minecraft:conduit"));
+        return ids.toArray(new String[0]);
+    }
+
+    private void analyseUnnatural(List<BlockPos> list, List<Finding> out) {
+        if (mc.world != null && mc.world.getRegistryKey() == net.minecraft.world.World.END) return; // End cities are natural there
+        for (List<BlockPos> group : bucket(list).values()) {
+            int n = group.size();
+            java.util.Map<String, Integer> kinds = new java.util.TreeMap<>();
+            for (BlockPos p : group) kinds.merge(mc.world.getBlockState(p).getBlock().getName().getString(), 1, Integer::sum);
+            StringBuilder names = new StringBuilder();
+            int shown = 0;
+            for (var e : kinds.entrySet()) {
+                if (shown++ == 3) { names.append(", ..."); break; }
+                if (names.length() > 0) names.append(", ");
+                names.append(e.getValue()).append("x ").append(e.getKey());
+            }
+            List<String> reasons = new ArrayList<>();
+            reasons.add(n + " player-made block" + (n == 1 ? "" : "s") + ": " + names);
+            reasons.add("these blocks are never placed by world generation");
+            Confidence c = n >= 4 || kinds.size() >= 2 ? Confidence.HIGH : Confidence.MEDIUM;
+            BlockPos[] b = bounds(group);
+            out.add(new Finding("Unnatural Blocks", b[0], b[1], n, c, reasons));
         }
     }
 
@@ -252,11 +299,16 @@ public class SusChunkFinder extends Module {
             }
             double a = alphaFor(c.confidence);
             int outline = ColorUtil.mulAlpha(color.argb(), Math.max(0.6, a));
-            int fill = ColorUtil.withAlpha(color.argb(), (int) (0x46 * a));
+            int fill = ColorUtil.mulAlpha(color.argb(), a);
             Box box = chunkBox(c);
-            // never tint the whole screen: inside a sus chunk only the outline is drawn
-            boolean inside = box.expand(0.5).contains(r.cameraPos());
-            r.box(box, outline, fill, true, !inside);
+            if (boxMode.is("Flat")) {
+                r.quadXZ(box.minX, box.minZ, box.maxX, box.maxZ, box.minY, fill);
+                if (this.outline.isOn()) r.boxOutline(new Box(box.minX, box.minY, box.minZ, box.maxX, box.minY, box.maxZ), outline);
+            } else {
+                // never tint the whole screen: inside a sus chunk only the outline is drawn
+                boolean inside = box.expand(0.5).contains(r.cameraPos());
+                r.box(box, outline, fill, this.outline.isOn() || inside, !inside);
+            }
             if (showBlocks.isOn()) {
                 for (Finding f : c.findings) {
                     Box b = new Box(f.min.getX(), f.min.getY(), f.min.getZ(), f.max.getX() + 1, f.max.getY() + 1, f.max.getZ() + 1).expand(0.03);

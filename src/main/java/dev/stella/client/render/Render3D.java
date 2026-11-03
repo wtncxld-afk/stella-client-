@@ -87,6 +87,18 @@ public final class Render3D {
         f.vertex(m, x2, y2, z2).color(r, g, bl, a); f.vertex(m, x2, y1, z2).color(r, g, bl, a);
     }
 
+    /** Single horizontal translucent quad (both sides visible) — used for flat chunk overlays. */
+    public void quadXZ(double x1, double z1, double x2, double z2, double y, int argb) {
+        Matrix4f m = matrices.peek().getPositionMatrix();
+        BufferBuilder f = fills();
+        float ax = (float) (x1 - cam.x), az = (float) (z1 - cam.z), bx = (float) (x2 - cam.x), bz = (float) (z2 - cam.z), yy = (float) (y - cam.y);
+        int r = (argb >> 16) & 0xFF, g = (argb >> 8) & 0xFF, bl = argb & 0xFF, al = (argb >>> 24) & 0xFF;
+        f.vertex(m, ax, yy, az).color(r, g, bl, al);
+        f.vertex(m, ax, yy, bz).color(r, g, bl, al);
+        f.vertex(m, bx, yy, bz).color(r, g, bl, al);
+        f.vertex(m, bx, yy, az).color(r, g, bl, al);
+    }
+
     public void box(Box box, int outline, int fill, boolean drawOutline, boolean drawFill) {
         if (drawFill) boxFill(box, fill);
         if (drawOutline) boxOutline(box, outline);

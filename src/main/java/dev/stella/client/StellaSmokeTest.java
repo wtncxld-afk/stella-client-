@@ -97,6 +97,8 @@ final class StellaSmokeTest {
                         h.sendChatCommand("time set 18000");
                         h.sendChatCommand("gamerule doDaylightCycle false");
                         h.sendChatCommand("fill ~3 ~-1 ~-4 ~12 ~-1 ~4 minecraft:deepslate[axis=x]");
+                        h.sendChatCommand("fill ~-14 ~ ~18 ~-12 ~1 ~20 minecraft:white_concrete");
+                        h.sendChatCommand("setblock ~-13 ~2 ~19 minecraft:observer");
                         h.sendChatCommand("setblock ~5 ~ ~-2 minecraft:chest");
                         h.sendChatCommand("setblock ~5 ~ ~ minecraft:barrel");
                         h.sendChatCommand("setblock ~5 ~ ~2 minecraft:shulker_box");
@@ -140,7 +142,8 @@ final class StellaSmokeTest {
                             if (m.getCategory() == dev.stella.client.module.Category.CLIENT || m.getCategory() == dev.stella.client.module.Category.SETTINGS) continue;
                             if (!keep.contains(m.getName())) m.setEnabled(false);
                         }
-                        // step back and up (flying, so we stay there) to see the red chunk box from outside
+                        setting("Sus Chunk Finder", "Flat Y", Math.floor(mc.player.getY()) + 6.0);
+                        // step back and up (flying, so we stay there) to see the red chunk squares from outside
                         mc.player.getAbilities().flying = true;
                         mc.player.sendAbilitiesUpdate();
                         mc.player.networkHandler.sendChatCommand("tp @s ~-24 ~14 ~");
