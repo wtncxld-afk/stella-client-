@@ -42,7 +42,8 @@ import java.util.Set;
 public class SusChunkFinder extends Module {
     public enum Confidence { LOW, MEDIUM, HIGH }
 
-    public record Finding(String type, BlockPos min, BlockPos max, int count, Confidence confidence, List<String> reasons) {
+    /** {@code score} is 0-100: how strongly this finding points at a player base. */
+    public record Finding(String type, BlockPos min, BlockPos max, int count, int score, Confidence confidence, List<String> reasons) {
         public Vec3d center() {
             return new Vec3d((min.getX() + max.getX() + 1) / 2.0, (min.getY() + max.getY() + 1) / 2.0, (min.getZ() + max.getZ() + 1) / 2.0);
         }
@@ -59,12 +60,17 @@ public class SusChunkFinder extends Module {
     private final BoolSetting belowY = add(new BoolSetting("Only Below Y", "Only count suspicious blocks at or below Max Y", true));
     private final NumberSetting maxY = add(new NumberSetting("Max Y", "Highest Y-level that is checked", 0, -64, 320, 1)).visibleWhen(belowY::isOn);
     private final NumberSetting minYSetting = add(new NumberSetting("Min Y", "Lowest Y-level that is checked", -64, -64, 320, 1));
-    private final ModeSetting minConfidence = add(new ModeSetting("Min Confidence", "Hide findings below this level", "Low", "Low", "Medium", "High"));
+    private final NumberSetting sensitivity = add(new NumberSetting("Sensitivity",
+            "Minimum suspicion score (0-100) a chunk needs to be flagged. Higher = fewer flags, each one far more likely a real base. Lower = flags even tiny hints",
+            45, 0, 100, 5));
+    private final BoolSetting ignoreStructures = add(new BoolSetting("Ignore Natural Structures",
+            "Ignore redstone, deepslate and amethyst next to trial chambers, ancient cities and strongholds", true));
     private final ModeSetting boxMode = add(new ModeSetting("Box Mode", "Flat translucent square at a Y-level, a column around the detections, or the full chunk height",
             "Flat", "Flat", "Column", "Full Height"));
     private final NumberSetting flatY = add(new NumberSetting("Flat Y", "Y-level of the flat square (Flat mode)", 64, -64, 320, 1)).visibleWhen(() -> boxMode.is("Flat"));
     private final BoolSetting flatAtPlayer = add(new BoolSetting("Flat At Player Y", "Put the flat square at your feet instead of Flat Y", false)).visibleWhen(() -> boxMode.is("Flat"));
-    private final ColorSetting color = add(new ColorSetting("Color", "Chunk fill colour (alpha = opacity)", 0xB4FF4A33));
+    private final ColorSetting color = add(new ColorSetting("Color", "Chunk colour", 0xFFFF4A33));
+    private final NumberSetting opacity = add(new NumberSetting("Opacity", "How see-through the red chunk squares are (0 = invisible, 1 = solid)", 0.7, 0.05, 1, 0.05));
     private final BoolSetting outline = add(new BoolSetting("Outline", "Draw an outline around each chunk", false));
     private final BoolSetting confidenceFill = add(new BoolSetting("Confidence Opacity", "Fainter squares for lower confidence", false));
     private final BoolSetting showBlocks = add(new BoolSetting("Show Blocks", "Also outline the exact suspicious blocks", false));
@@ -79,6 +85,7 @@ public class SusChunkFinder extends Module {
     private final ScanTarget budTarget;
     private final ScanTarget deepslateTarget;
     private final ScanTarget unnaturalTarget;
+    private final ScanTarget structureTarget;
     private List<Finding> findings = new ArrayList<>();
     private final Set<String> notified = new HashSet<>();
     private int timer;
@@ -98,6 +105,8 @@ public class SusChunkFinder extends Module {
                 s -> s.isOf(Blocks.DEEPSLATE) && s.contains(Properties.AXIS) && s.get(Properties.AXIS) != Direction.Axis.Y,
                 () -> isEnabled() && deepslate.isOn()));
         unnaturalTarget = BlockScanner.register(new ScanTarget("Sus/Unnatural", st -> unnaturalBlocks.contains(st.getBlock()), () -> isEnabled() && unnatural.isOn()));
+        structureTarget = BlockScanner.register(new ScanTarget("Sus/Structures", st -> STRONG_STRUCTURE.contains(st.getBlock()) || isWeakStructure(st.getBlock()),
+                () -> isEnabled() && ignoreStructures.isOn()));
         unnaturalBlocks.setListener(unnaturalTarget::invalidate);
         unnatural.onChange(unnaturalTarget::invalidate);
         redstone.onChange(redstoneTarget::invalidate);
@@ -110,7 +119,7 @@ public class SusChunkFinder extends Module {
     @Override
     protected void onEnable() {
         redstoneTarget.invalidate(); clusterTarget.invalidate(); budTarget.invalidate(); deepslateTarget.invalidate();
-        unnaturalTarget.invalidate();
+        unnaturalTarget.invalidate(); structureTarget.invalidate();
         findings = new ArrayList<>();
     }
 
@@ -125,15 +134,14 @@ public class SusChunkFinder extends Module {
         if (amethyst.isOn()) analyseAmethyst(inY(clusterTarget.near(center, r, 5000)), inY(budTarget.near(center, r, 5000)), out);
         if (deepslate.isOn()) analyseDeepslate(inY(deepslateTarget.near(center, r, 5000)), out);
         if (unnatural.isOn()) analyseUnnatural(inY(unnaturalTarget.near(center, r, 5000)), out);
-        Confidence min = Confidence.valueOf(minConfidence.get().toUpperCase());
-        out.removeIf(f -> f.confidence.ordinal() < min.ordinal());
+        if (ignoreStructures.isOn()) explainByStructures(out, structureTarget.near(center, r + 48, 20000));
         findings = out;
         if (notify.isOn()) {
-            for (Finding f : out) {
-                if (f.confidence == Confidence.LOW || !notified.add(f.key())) continue;
+            for (SusChunk c : suspectChunks()) {
+                if (!notified.add(c.cx + "," + c.cz)) continue;
                 NotificationManager.post("Sus Chunk Finder",
-                        f.type + " (" + f.confidence.name().toLowerCase() + ") at " + (int) f.center().x + " " + (int) f.center().y + " " + (int) f.center().z,
-                        f.confidence == Confidence.HIGH ? Notification.Type.WARNING : Notification.Type.INFO);
+                        "Score " + c.score + " (" + c.confidence.name().toLowerCase() + ") at chunk " + (c.cx << 4) + " " + (c.cz << 4),
+                        c.confidence == Confidence.HIGH ? Notification.Type.WARNING : Notification.Type.INFO);
             }
         }
     }
@@ -169,20 +177,16 @@ public class SusChunkFinder extends Module {
             Set<Block> kinds = new HashSet<>();
             for (BlockPos p : group) kinds.add(mc.world.getBlockState(p).getBlock());
             int n = group.size();
-            if (n < 3) continue;
+            if (n < 2) continue;
             List<String> reasons = new ArrayList<>();
             reasons.add(n + " redstone components, " + kinds.size() + " types");
-            Confidence c = Confidence.LOW;
-            if (n >= 6 && kinds.size() >= 3) c = Confidence.MEDIUM;
-            if (n >= 14 && kinds.size() >= 4) c = Confidence.HIGH;
+            int score = Math.min(85, n * 4 + kinds.size() * 7);
             if (kinds.contains(Blocks.OBSERVER) || kinds.contains(Blocks.COMPARATOR)) {
                 reasons.add("observers/comparators do not generate naturally");
-                if (c == Confidence.LOW) c = Confidence.MEDIUM;
-            } else {
-                reasons.add("could be a natural structure (temple, trial chamber, mineshaft)");
+                score = Math.min(100, score + 25);
             }
             BlockPos[] b = bounds(group);
-            out.add(new Finding("Redstone", b[0], b[1], n, c, reasons));
+            out.add(new Finding("Redstone", b[0], b[1], n, score, confidenceOf(score), reasons));
         }
     }
 
@@ -196,9 +200,9 @@ public class SusChunkFinder extends Module {
             List<String> reasons = new ArrayList<>();
             reasons.add(mature + " mature clusters vs " + small + " buds (" + (int) (ratio * 100) + "% mature)");
             reasons.add("clusters only grow while the chunk is loaded; geodes also generate some mature clusters");
-            Confidence c = ratio > 0.8 && mature >= 12 ? Confidence.MEDIUM : Confidence.LOW;
+            int score = (int) Math.min(55, mature * 2 * ratio + (ratio > 0.8 ? 15 : 0));
             BlockPos[] b = bounds(e.getValue());
-            out.add(new Finding("Grown Amethyst", b[0], b[1], mature, c, reasons));
+            out.add(new Finding("Grown Amethyst", b[0], b[1], mature, score, confidenceOf(score), reasons));
         }
     }
 
@@ -209,8 +213,8 @@ public class SusChunkFinder extends Module {
         java.util.List<String> ids = new java.util.ArrayList<>();
         for (String c : colors) { ids.add("minecraft:" + c + "_concrete"); ids.add("minecraft:" + c + "_concrete_powder"); }
         ids.addAll(java.util.List.of("minecraft:observer", "minecraft:comparator", "minecraft:redstone_block", "minecraft:slime_block",
-                "minecraft:honey_block", "minecraft:crafter", "minecraft:target", "minecraft:hopper", "minecraft:dropper",
-                "minecraft:daylight_detector", "minecraft:note_block", "minecraft:jukebox", "minecraft:beacon",
+                "minecraft:honey_block", "minecraft:target",
+                "minecraft:daylight_detector", "minecraft:jukebox", "minecraft:beacon",
                 "minecraft:enchanting_table", "minecraft:ender_chest", "minecraft:netherite_block", "minecraft:diamond_block",
                 "minecraft:emerald_block", "minecraft:lapis_block", "minecraft:iron_block", "minecraft:respawn_anchor",
                 "minecraft:lodestone", "minecraft:conduit"));
@@ -233,9 +237,9 @@ public class SusChunkFinder extends Module {
             List<String> reasons = new ArrayList<>();
             reasons.add(n + " player-made block" + (n == 1 ? "" : "s") + ": " + names);
             reasons.add("these blocks are never placed by world generation");
-            Confidence c = n >= 4 || kinds.size() >= 2 ? Confidence.HIGH : Confidence.MEDIUM;
+            int score = Math.min(100, 40 + n * 6 + (kinds.size() - 1) * 10);
             BlockPos[] b = bounds(group);
-            out.add(new Finding("Unnatural Blocks", b[0], b[1], n, c, reasons));
+            out.add(new Finding("Unnatural Blocks", b[0], b[1], n, score, confidenceOf(score), reasons));
         }
     }
 
@@ -245,16 +249,64 @@ public class SusChunkFinder extends Module {
             List<String> reasons = new ArrayList<>();
             reasons.add(n + " deepslate block" + (n == 1 ? "" : "s") + " with a horizontal axis");
             reasons.add("world generation places deepslate vertically; sideways deepslate is usually player-placed");
-            Confidence c = n >= 3 ? Confidence.HIGH : Confidence.MEDIUM;
+            int score = Math.min(100, 30 + n * 8);
             BlockPos[] b = bounds(group);
-            out.add(new Finding("Rotated Deepslate", b[0], b[1], n, c, reasons));
+            out.add(new Finding("Rotated Deepslate", b[0], b[1], n, score, confidenceOf(score), reasons));
         }
     }
 
-    /** One suspected chunk with all of its findings. */
-    public record SusChunk(int cx, int cz, int minY, int maxY, Confidence confidence, List<Finding> findings) {}
+    private static Confidence confidenceOf(int score) {
+        return score >= 70 ? Confidence.HIGH : score >= 40 ? Confidence.MEDIUM : Confidence.LOW;
+    }
 
-    private List<SusChunk> chunks() {
+    /** Blocks that only generate in trial chambers, ancient cities or strongholds. */
+    private static final Set<Block> STRONG_STRUCTURE = Set.of(Blocks.TRIAL_SPAWNER, Blocks.VAULT,
+            Blocks.REINFORCED_DEEPSLATE, Blocks.SCULK_SHRIEKER, Blocks.END_PORTAL_FRAME);
+
+    /** Typical trial chamber building blocks (tuff bricks, copper bulbs and grates). */
+    private static boolean isWeakStructure(Block b) {
+        if (b == Blocks.TUFF_BRICKS || b == Blocks.CHISELED_TUFF || b == Blocks.CHISELED_TUFF_BRICKS || b == Blocks.POLISHED_TUFF) return true;
+        String id = net.minecraft.registry.Registries.BLOCK.getId(b).getPath();
+        return id.endsWith("copper_bulb") || id.endsWith("copper_grate");
+    }
+
+    /**
+     * Natural structures generate redstone, dispensers, sideways blocks and amethyst. Findings next to
+     * trial chamber / ancient city / stronghold blocks keep only evidence those structures can never
+     * produce (concrete, observers...); everything else is dropped.
+     */
+    private void explainByStructures(List<Finding> out, List<BlockPos> markers) {
+        if (markers.isEmpty()) return;
+        List<BlockPos> strong = new ArrayList<>(), weak = new ArrayList<>();
+        for (BlockPos p : markers) (STRONG_STRUCTURE.contains(mc.world.getBlockState(p).getBlock()) ? strong : weak).add(p);
+        List<Finding> keep = new ArrayList<>();
+        for (Finding f : out) {
+            Box area = new Box(f.min.getX(), f.min.getY(), f.min.getZ(), f.max.getX() + 1, f.max.getY() + 1, f.max.getZ() + 1);
+            boolean natural = strong.stream().anyMatch(p -> area.expand(48).contains(Vec3d.ofCenter(p)))
+                    || weak.stream().filter(p -> area.expand(20).contains(Vec3d.ofCenter(p))).limit(12).count() >= 12;
+            if (!natural) { keep.add(f); continue; }
+            if (f.type.equals("Unnatural Blocks")) {
+                List<String> reasons = new ArrayList<>(f.reasons);
+                reasons.add("next to a natural structure, but these blocks never generate in one");
+                keep.add(new Finding(f.type, f.min, f.max, f.count, f.score, f.confidence, reasons));
+            }
+        }
+        out.clear();
+        out.addAll(keep);
+    }
+
+    /** One suspected chunk with all of its findings; {@code score} 0-100. */
+    public record SusChunk(int cx, int cz, int minY, int maxY, int score, Confidence confidence, List<Finding> findings) {}
+
+    /** Chunks whose score reaches the Sensitivity threshold. */
+    public List<SusChunk> suspectChunks() {
+        List<SusChunk> all = chunks();
+        int min = sensitivity.getInt();
+        all.removeIf(c -> c.score < min);
+        return all;
+    }
+
+    public List<SusChunk> chunks() {
         Map<Long, List<Finding>> byChunk = new HashMap<>();
         for (Finding f : findings) {
             Vec3d c = f.center();
@@ -264,23 +316,26 @@ public class SusChunkFinder extends Module {
         List<SusChunk> out = new ArrayList<>();
         for (Map.Entry<Long, List<Finding>> e : byChunk.entrySet()) {
             int minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
-            Confidence best = Confidence.LOW;
+            int top = 0, rest = 0;
+            Set<String> types = new HashSet<>();
             for (Finding f : e.getValue()) {
                 minY = Math.min(minY, f.min.getY());
                 maxY = Math.max(maxY, f.max.getY());
-                if (f.confidence.ordinal() > best.ordinal()) best = f.confidence;
+                types.add(f.type);
+                if (f.score > top) { rest += top; top = f.score; } else rest += f.score;
             }
-            // several independent signals in one chunk raise confidence
-            if (e.getValue().size() >= 2 && best == Confidence.MEDIUM) best = Confidence.HIGH;
+            // independent kinds of evidence in one chunk add up
+            int score = Math.min(100, top + (int) (rest * 0.35) + (types.size() - 1) * 10);
             out.add(new SusChunk(net.minecraft.util.math.ChunkPos.getPackedX(e.getKey()), net.minecraft.util.math.ChunkPos.getPackedZ(e.getKey()),
-                    minY, maxY, best, e.getValue()));
+                    minY, maxY, score, confidenceOf(score), e.getValue()));
         }
         return out;
     }
 
     private double alphaFor(Confidence c) {
-        if (!confidenceFill.isOn()) return 1;
-        return switch (c) { case HIGH -> 1.0; case MEDIUM -> 0.7; case LOW -> 0.45; };
+        double base = opacity.get();
+        if (!confidenceFill.isOn()) return base;
+        return base * switch (c) { case HIGH -> 1.0; case MEDIUM -> 0.7; case LOW -> 0.45; };
     }
 
     private Box chunkBox(SusChunk c) {
@@ -302,15 +357,15 @@ public class SusChunkFinder extends Module {
         if (!inGame()) return;
         r.setLineWidth(2.5f);
         Vec3d origin = Tracers.start("Crosshair", 50, 50);
-        for (SusChunk c : chunks()) {
+        for (SusChunk c : suspectChunks()) {
             if (tracers.isOn()) {
                 Box tb = chunkBox(c);
                 Vec3d center = new Vec3d((tb.minX + tb.maxX) / 2, Math.min(tb.maxY, Math.max(tb.minY, mc.player.getY())) + 1, (tb.minZ + tb.maxZ) / 2);
                 Tracers.draw(r, origin, center, tracerWidth.getFloat(), ColorUtil.mulAlpha(color.argb(), 0.85), tracerStyle);
             }
             double a = alphaFor(c.confidence);
-            int outline = ColorUtil.mulAlpha(color.argb(), Math.max(0.6, a));
-            int fill = ColorUtil.mulAlpha(color.argb(), a);
+            int outline = ColorUtil.withAlpha(color.argb(), (int) (255 * Math.min(1, Math.max(0.6, a + 0.2))));
+            int fill = ColorUtil.withAlpha(color.argb(), (int) (255 * a));
             Box box = chunkBox(c);
             if (boxMode.is("Flat")) {
                 r.quadXZ(box.minX, box.minZ, box.maxX, box.maxZ, box.minY, fill);
@@ -332,14 +387,14 @@ public class SusChunkFinder extends Module {
     @Override
     public void onRenderOverlay(DrawContext ctx, float tickDelta) {
         if (!inGame()) return;
-        for (SusChunk c : chunks()) {
+        for (SusChunk c : suspectChunks()) {
             Box b = chunkBox(c);
             Vec3d center = new Vec3d((b.minX + b.maxX) / 2, Math.min(b.maxY, Math.max(b.minY, mc.player.getY())) + 1, (b.minZ + b.maxZ) / 2);
             if (!labels.isOn()) continue;
             Vec3d s = Projection.toScreen(center.add(0, 1.5, 0));
             if (!Projection.onScreen(s)) continue;
             int dist = (int) Math.sqrt(mc.player.squaredDistanceTo(center));
-            Render2D.label(ctx, "SUS CHUNK  " + c.confidence.name() + "  " + dist + "m", s.x, s.y - 11, 0.85f, 0xFFFF5555, 0xB0000000);
+            Render2D.label(ctx, "SUS CHUNK  " + c.score + "/100  " + c.confidence.name() + "  " + dist + "m", s.x, s.y - 11, 0.85f, 0xFFFF5555, 0xB0000000);
             int line = 0;
             for (Finding f : c.findings) {
                 if (line >= 3) break;

@@ -50,21 +50,31 @@ public class ThemesPanel {
         ctx.enableScissor(x, y + 16, x + WIDTH, y + h);
         int cy = y + 19 - (int) scroll;
         int start = cy;
+        // two-column swatch grid
+        int colW = (WIDTH - 8) / 2, col = 0;
         for (int i = 0; i < Theme.NAMES.length; i++) {
             String name = Theme.NAMES[i];
             if (name.equals(Theme.CUSTOM) && !gui.theme.is(Theme.CUSTOM)) continue;
             boolean sel = gui.theme.is(name);
+            boolean animated = name.equals(Theme.RAINBOW) || Theme.animatedHues(name) != null;
             int dot = name.equals(Theme.RAINBOW) ? ThemeManager.accentAt(0.33) | 0xFF000000
                     : name.equals(Theme.CUSTOM) ? gui.customAccent.argb() | 0xFF000000 : Theme.ACCENTS[i];
-            boolean hover = GuiDraw.in(mx, my, x + 3, cy, WIDTH - 6, 11);
-            if (sel) Render2D.roundRect(ctx, x + 3, cy, WIDTH - 6, 11, 3, ColorUtil.mulAlpha(ColorUtil.withAlpha(t.accent(), 0x40), a));
-            else if (hover) Render2D.roundRect(ctx, x + 3, cy, WIDTH - 6, 11, 3, ColorUtil.mulAlpha(t.rowHover(), a));
-            GuiDraw.radio(ctx, x + 7, cy + 2, dot, sel, a);
-            GuiDraw.small(ctx, name.toUpperCase(Locale.ROOT), x + 18, cy + 3, TEXT, ColorUtil.mulAlpha(sel ? t.text() : t.textDim(), a));
+            if (animated && !name.equals(Theme.RAINBOW)) {
+                float[] rng = Theme.animatedHues(name);
+                double t = 0.5 + 0.5 * Math.sin(System.currentTimeMillis() / 1800.0);
+                dot = ColorUtil.fromHsb((float) (rng[0] + (rng[1] - rng[0]) * t), 0.6f, 1f, 255);
+            }
+            int cx = x + 3 + col * (colW + 2);
+            boolean hover = GuiDraw.in(mx, my, cx, cy, colW, 11);
+            if (sel) Render2D.roundRect(ctx, cx, cy, colW, 11, 3, ColorUtil.mulAlpha(ColorUtil.withAlpha(t.accent(), 0x40), a));
+            else if (hover) Render2D.roundRect(ctx, cx, cy, colW, 11, 3, ColorUtil.mulAlpha(t.rowHover(), a));
+            GuiDraw.radio(ctx, cx + 4, cy + 2, dot, sel, a);
+            GuiDraw.small(ctx, name.toUpperCase(Locale.ROOT), cx + 14, cy + 3.5f, 0.66f, ColorUtil.mulAlpha(sel ? t.text() : t.textDim(), a));
             final String pick = name;
-            click(x + 3, cy, WIDTH - 6, 11, () -> gui.theme.set(pick));
-            cy += 12;
+            click(cx, cy, colW, 11, () -> gui.theme.set(pick));
+            if (++col == 2) { col = 0; cy += 12; }
         }
+        if (col != 0) cy += 12;
         // + ADD CUSTOM
         boolean ch = GuiDraw.in(mx, my, x + 3, cy, WIDTH - 6, 11);
         Render2D.roundRect(ctx, x + 3, cy, WIDTH - 6, 11, 3, ColorUtil.mulAlpha(ch ? t.rowHover() : t.row(), a));

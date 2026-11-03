@@ -46,6 +46,18 @@ final class StellaSmokeTest {
     }
 
     private static int slow;
+    private static int ox, oy, oz;
+
+    /** Logs every chunk the Sus Chunk Finder scored, flagged or not, so false positives are visible in CI. */
+    private static void logSus(String when) {
+        var sus = ModuleManager.get(dev.stella.client.modules.combat.SusChunkFinder.class);
+        StellaClient.LOGGER.info("[smoke] sus {}: base chunk {} {}, trial chamber chunk {} {}", when, (ox + 40) >> 4, (oz - 56) >> 4, (ox + 40) >> 4, (oz + 70) >> 4);
+        for (var c : sus.chunks()) {
+            StringBuilder why = new StringBuilder();
+            for (var f : c.findings()) why.append(" | ").append(f.type()).append(" ").append(f.score()).append(": ").append(String.join("; ", f.reasons()));
+            StellaClient.LOGGER.info("[smoke] sus chunk {} {} score {} flagged={}{}", c.cx(), c.cz(), c.score(), sus.suspectChunks().stream().anyMatch(x -> x.cx() == c.cx() && x.cz() == c.cz()), why);
+        }
+    }
 
     private static void onTick(MinecraftClient mc) {
         // In-world showcase runs at half speed so the recorded preview video is watchable.
@@ -122,6 +134,24 @@ final class StellaSmokeTest {
                         h.sendChatCommand("setblock ~8 ~ ~1 minecraft:amethyst_block");
                         h.sendChatCommand("setblock ~8 ~1 ~1 minecraft:amethyst_cluster");
                         h.sendChatCommand("summon minecraft:item ~4 ~ ~1 {Item:{id:\"minecraft:diamond_sword\",count:1}}");
+                        // A realistic hidden base below Y 0 (sideways-deepslate room, storage, small redstone farm)
+                        ox = mc.player.getBlockX(); oy = mc.player.getBlockY(); oz = mc.player.getBlockZ();
+                        int bx = ox + 40, by = -40, bz = oz - 56;
+                        h.sendChatCommand("fill " + bx + " " + by + " " + bz + " " + (bx + 9) + " " + (by + 5) + " " + (bz + 9) + " minecraft:deepslate[axis=z] hollow");
+                        h.sendChatCommand("setblock " + (bx + 2) + " " + (by + 1) + " " + (bz + 2) + " minecraft:chest");
+                        h.sendChatCommand("setblock " + (bx + 3) + " " + (by + 1) + " " + (bz + 2) + " minecraft:chest");
+                        h.sendChatCommand("setblock " + (bx + 4) + " " + (by + 1) + " " + (bz + 2) + " minecraft:barrel");
+                        h.sendChatCommand("setblock " + (bx + 2) + " " + (by + 1) + " " + (bz + 6) + " minecraft:observer[facing=up]");
+                        h.sendChatCommand("setblock " + (bx + 2) + " " + (by + 2) + " " + (bz + 6) + " minecraft:sticky_piston[facing=up]");
+                        h.sendChatCommand("setblock " + (bx + 3) + " " + (by + 1) + " " + (bz + 6) + " minecraft:redstone_wire");
+                        h.sendChatCommand("setblock " + (bx + 4) + " " + (by + 1) + " " + (bz + 6) + " minecraft:repeater[facing=west]");
+                        h.sendChatCommand("setblock " + (bx + 5) + " " + (by + 1) + " " + (bz + 6) + " minecraft:comparator[facing=west]");
+                        h.sendChatCommand("setblock " + (bx + 6) + " " + (by + 1) + " " + (bz + 6) + " minecraft:hopper");
+                        h.sendChatCommand("setblock " + (bx + 7) + " " + (by + 1) + " " + (bz + 6) + " minecraft:redstone_lamp");
+                        h.sendChatCommand("setblock " + (bx + 6) + " " + (by + 1) + " " + (bz + 4) + " minecraft:white_concrete");
+                        // A real, naturally generated trial chamber: must NOT be flagged
+                        h.sendChatCommand("place structure minecraft:trial_chambers " + (ox + 40) + " -30 " + (oz + 70));
+                        setting("Sus Chunk Finder", "Range", 192.0);
                         mc.player.setYaw(-90f);
                         mc.player.setPitch(18f);
                         next();
@@ -158,14 +188,16 @@ final class StellaSmokeTest {
                             if (m.getCategory() == dev.stella.client.module.Category.CLIENT || m.getCategory() == dev.stella.client.module.Category.SETTINGS) continue;
                             if (!keep.contains(m.getName())) m.setEnabled(false);
                         }
-                        setting("Sus Chunk Finder", "Flat Y", Math.floor(mc.player.getY()) + 1.0);
-                        setting("Sus Chunk Finder", "Only Below Y", false); // test blocks sit at the surface
-                        // step back and up (flying, so we stay there) to see the red chunk squares from outside
-                        // spectator mode so the camera stays in the air for the shot
+                        // real-world settings: only below Y 0, default sensitivity
+                        setting("Sus Chunk Finder", "Flat Y", (double) oy + 1);
+                        setting("Sus Chunk Finder", "Only Below Y", true);
+                        setting("Sus Chunk Finder", "Labels", true);
+                        // spectator camera in the air, looking down at the hidden base's chunk
                         mc.player.networkHandler.sendChatCommand("gamemode spectator");
-                        mc.player.networkHandler.sendChatCommand("tp @s ~-26 ~22 ~4");
+                        mc.player.networkHandler.sendChatCommand("tp @s " + (ox + 12) + " " + (oy + 30) + " " + (oz - 51));
                     }
-                    if (inStage() == 252) { mc.player.setYaw(-75f); mc.player.setPitch(38f); }
+                    if (inStage() == 252) { mc.player.setYaw(-90f); mc.player.setPitch(42f); }
+                    if (inStage() == 283) logSus("hidden base shot");
                     if (inStage() == 280) mc.inGameHud.getChatHud().clear(false);
                     if (inStage() == 285) shot(mc, "sus-chunk-finder");
                     if (inStage() == 287) mc.player.networkHandler.sendChatCommand("gamemode creative");
@@ -257,7 +289,28 @@ final class StellaSmokeTest {
                     }
                     if (inStage() == 482) mc.inGameHud.getChatHud().clear(false);
                     if (inStage() == 486) shot(mc, "tracers");
-                    if (inStage() == 492) {
+                    if (inStage() == 488) {
+                        // Trial chamber check: Block ESP marks its trial spawners / vaults, the Sus Chunk Finder must stay quiet there
+                        setting("Block ESP", "Blocks", new java.util.ArrayList<>(java.util.List.of("minecraft:trial_spawner", "minecraft:vault")));
+                        setting("Block ESP", "Tracers", false);
+                        setting("Storage ESP", "Tracers", false);
+                        for (String n : new String[]{"Storage ESP", "Block ESP", "Sus Chunk Finder"})
+                            ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> { m.setEnabled(false); m.setEnabled(true); });
+                        ModuleManager.all().stream().filter(m -> m.getName().equals("Coordinates HUD") || m.getName().equals("Stella Branding HUD")).forEach(m -> m.setEnabled(true));
+                        mc.player.networkHandler.sendChatCommand("gamemode spectator");
+                        mc.player.networkHandler.sendChatCommand("tp @s " + (ox + 5) + " " + (oy + 40) + " " + (oz + 70));
+                    }
+                    if (inStage() == 492) { mc.player.setYaw(-90f); mc.player.setPitch(48f); }
+                    if (inStage() == 506) { mc.inGameHud.getChatHud().clear(false); logSus("trial chamber shot"); }
+                    if (inStage() == 510) shot(mc, "sus-trial-chamber");
+                    if (inStage() == 512) { setting("ClickGUI", "Theme", "Sunset"); mc.setScreen(new ClickGuiScreen()); }
+                    if (inStage() == 526) shot(mc, "theme-sunset");
+                    if (inStage() == 528) setting("ClickGUI", "Theme", "Ocean");
+                    if (inStage() == 538) shot(mc, "theme-ocean");
+                    if (inStage() == 540) setting("ClickGUI", "Theme", "Galaxy");
+                    if (inStage() == 550) shot(mc, "theme-galaxy");
+                    if (inStage() == 552) { setting("ClickGUI", "Theme", "Stella"); mc.setScreen(null); }
+                    if (inStage() == 556) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {
