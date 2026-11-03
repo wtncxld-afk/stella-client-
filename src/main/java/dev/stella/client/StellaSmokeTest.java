@@ -245,7 +245,20 @@ final class StellaSmokeTest {
                     if (inStage() == 440) mc.setScreen(new net.minecraft.client.gui.screen.GameMenuScreen(true));
                     if (inStage() == 462) shot(mc, "pause-menu");
                     if (inStage() == 466) mc.setScreen(null);
-                    if (inStage() == 490) {
+                    if (inStage() == 468) {
+                        // Clean tracer shot: storage / block ESP with tracers from the bottom of the screen, HUD elements off.
+                        for (Module m : ModuleManager.all())
+                            if (m.getCategory() == dev.stella.client.module.Category.HUD) m.setEnabled(false);
+                        setting("Storage ESP", "Tracer Origin", "Bottom");
+                        setting("Block ESP", "Tracer Origin", "Bottom");
+                        for (String n : new String[]{"Storage ESP", "Block ESP", "Custom Sky", "Fullbright"})
+                            ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> m.setEnabled(true));
+                        mc.player.setYaw(-90f);
+                        mc.player.setPitch(12f);
+                    }
+                    if (inStage() == 482) mc.inGameHud.getChatHud().clear(false);
+                    if (inStage() == 486) shot(mc, "tracers");
+                    if (inStage() == 492) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {
