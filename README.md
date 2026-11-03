@@ -71,7 +71,8 @@ Item Physics, Enchantment Glint, Damage Tint.
 **Client:** ClickGUI (theme and GUI key), HUD Editor.
 
 **HUD (one module per element):** Stella Branding, Keystrokes (+CPS), FPS, TPS, Coordinates, Ping,
-Region Map (with its own *Map Scale* slider up to 6×), Notifications, Staff List, Block Notifier list,
+Region Map (with its own *Map Scale* slider up to 6×), Music HUD (cover, title, artist, progress and
+⏮ ⏯ ⏭ controls), Notifications, Staff List, Block Notifier list,
 Player Detector list. Each element has its
 own toggle, position, scale, opacity and colours, and moving or disabling one never affects another.
 Turning any module on or off shows a small popup; switch this off with *Module Toggle Popups* in the
@@ -130,6 +131,16 @@ Stella only uses information the server actually sends to your client. These are
   prefix/suffix) contains one of its keywords (`media`, `youtube`, `streamer`… — editable), plus any names
   you add to `config/stella/media.json`. The client only knows who is in your tab list, so "your region"
   means the server you are connected to; it cannot see where those players' bases are.
+* **Music HUD** needs no Spotify account linking or developer key. It reads what your computer is already
+  playing:
+  * **Windows:** the Windows media controls (the same ones media keys use), through a small PowerShell helper
+    bundled in the mod. With *Spotify Only* off it also shows browsers and other players.
+  * **macOS:** the Spotify app, through AppleScript.
+  * **Linux:** MPRIS, through `playerctl` (install it from your package manager).
+
+  Click the controls with chat open, or bind *Play/Pause*, *Next* and *Previous* keys in its settings.
+  The Windows and macOS paths could not be tested in CI (Linux only); if the card stays on "Nothing playing"
+  while music is playing, please report it.
 * **Region Map** is a 9×9 grid of 50,000-block cells spanning −225k…+225k on X and Z. The layout comes
   from two references you supplied: an in-game screenshot (cell IDs and colours) and a region diagram
   (region shapes and geometry). The cell IDs were read from a low-resolution image, so correct any that

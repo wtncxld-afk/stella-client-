@@ -91,6 +91,7 @@ public final class ModuleManager {
         register(new StaffListHud());
         register(new BlockNotifierHud());
         register(new PlayerDetectorHud());
+        register(new MusicHud());
         // Settings
         register(new ConfigModule());
         register(new AnimationsModule());
