@@ -135,7 +135,9 @@ public class KnifeSkins extends Module {
         m.translate(0.04f * side * dIn, -0.32f * dIn, 0.05f * dIn);
 
         float tilt = t >= 0 ? (float) Math.sin(clamp((t - 0.14f) / 0.22f) * Math.PI) : 0;
-        m.translate(lerp(0.0f, -0.17f, pose) * side, lerp(0.13f, 0.21f, pose) + breathe * 0.006f, lerp(-0.06f, -0.04f, pose));
+        // held pose: the grip sits inside your fist like a sword (only the pommel peeks out under the hand)
+        float hand = showHand.isOn() ? 1f : 0f;
+        m.translate(lerp(0.27f * hand, -0.17f, pose) * side, lerp(0.13f - 0.11f * hand, 0.21f, pose) + breathe * 0.006f, lerp(-0.06f + 0.02f * hand, -0.04f, pose));
         m.multiply(RotationAxis.POSITIVE_X.rotationDegrees(lerp(-68, -14, pose) + breathe * 0.8f));
         m.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((lerp(16, 64, pose) + 20 * tilt) * side));
         m.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((lerp(0, -16, pose) + 180 * roll) * side - 360 * dIn * side));
