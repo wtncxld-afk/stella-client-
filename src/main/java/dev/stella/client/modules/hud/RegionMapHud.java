@@ -65,7 +65,7 @@ public class RegionMapHud extends HudElement {
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
                 RegionConfig.Region reg = RegionConfig.regionAt(c, r);
-                int base = reg == null ? 0xFF2A2A2A : reg.color();
+                int base = reg == null ? 0xFF262A33 : reg.color(); // unmarked cells: dark slate
                 int x = c * step, y = r * step;
                 ctx.fill(x, y, x + cs, y + cs, col(ColorUtil.mulAlpha(base, cellAlpha.get())));
                 if (numbers.isOn()) {

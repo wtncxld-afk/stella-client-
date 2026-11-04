@@ -25,7 +25,7 @@ public final class RegionConfig {
     public record Region(String name, int color) {}
 
     public static boolean placeholder = true;
-    public static final int LAYOUT_VERSION = 3;
+    public static final int LAYOUT_VERSION = 4;
     public static int originX = -225000, originZ = -225000, cellSize = 50000, columns = 9, rows = 9;
     public static List<Region> regions = new ArrayList<>();
     /** [row][col] region index (-1 = none). */
@@ -107,28 +107,28 @@ public final class RegionConfig {
             {88, 54, 18, 61, 62, 21, 22, 33, 97},
             {89, 26, 27, 28, 29, 30, 59, 32, 98},
             {90, 107, 108, 109, 110, 111, 112, 113, 99}};
-    /** 0 EU Central, 1 EU West, 2 NA East, 3 NA West, 4 Asia, 5 Oceania. */
+    /**
+     * Category per cell, from the user's annotated map: 0 = Glitched (no RTP spots),
+     * 1 = Good for media / baltop, 2 = Good for media / other bases, -1 = unmarked.
+     */
     private static final int[][] DEFAULT_CELLS = {
-            {5, 3, 3, 3, 2, 2, 2, 2, 2},
-            {5, 3, 3, 3, 2, 2, 2, 2, 2},
-            {5, 3, 3, 3, 2, 2, 2, 2, 2},
-            {5, 5, 5, 3, 2, 2, 2, 2, 2},
-            {4, 4, 4, 4, 2, 2, 2, 2, 2},
-            {4, 1, 1, 0, 0, 0, 0, 0, 2},
-            {4, 1, 1, 0, 0, 0, 0, 0, 2},
-            {0, 1, 0, 0, 0, 0, 0, 0, 0},
-            {0, 1, 1, 1, 1, 1, 1, 0, 0}};
+            {-1, -1, 0, -1, 0, 0, -1, -1, -1},
+            {-1, -1, -1, -1, -1, -1, -1, -1, -1},
+            {-1, -1, -1, -1, -1, -1, -1, -1, -1},
+            {-1, -1, -1, -1, 2, -1, -1, -1, -1},
+            {2, -1, -1, -1, 1, 1, -1, -1, -1},
+            {-1, -1, -1, -1, 1, 2, -1, 2, -1},
+            {2, -1, -1, -1, -1, -1, -1, -1, 0},
+            {0, -1, -1, 2, 2, 1, 2, 2, 2},
+            {0, -1, -1, 2, -1, -1, 2, 2, 2}};
 
     private static void defaults() {
         placeholder = false;
         originX = -225000; originZ = -225000; cellSize = 50000; columns = 9; rows = 9;
         regions = new ArrayList<>(List.of(
-                new Region("EU Central", 0xFF8A9868),
-                new Region("EU West", 0xFF3A7356),
-                new Region("NA East", 0xFF5A84B0),
-                new Region("NA West", 0xFF3A5592),
-                new Region("Asia", 0xFFC99A5E),
-                new Region("Oceania", 0xFFC27632)));
+                new Region("Glitched (no rtp spots)", 0xFFA35CE0),
+                new Region("Good for media / baltop", 0xFF3478E1),
+                new Region("Good for media / other bases", 0xFFA6A6AE)));
         cells = new int[rows][columns];
         numbers = new int[rows][columns];
         for (int r = 0; r < rows; r++) {
@@ -142,7 +142,7 @@ public final class RegionConfig {
         JsonObject o = new JsonObject();
         o.addProperty("_readme", "9x9 grid of 50,000-block cells spanning -225k..+225k on X and Z, from user-supplied DonutSMP references. "
                 + "'numbers' = in-game cell IDs (transcribed from a low-resolution screenshot - correct any that differ), "
-                + "'cells' = region index per cell (-1 = none). The HUD can also show plain 1-81 numbering. "
+                + "'cells' = category per cell (0 glitched / no RTP spots, 1 good for media / baltop, 2 good for media / other bases, -1 unmarked). The HUD can also show plain 1-81 numbering. "
                 + "Set \"placeholder\": true to show the * unverified marker. Use the Region Map HUD's 'Reload regions.json' to apply.");
         o.addProperty("layoutVersion", LAYOUT_VERSION);
         o.addProperty("generatedDefault", true);

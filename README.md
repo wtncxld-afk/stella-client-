@@ -218,11 +218,11 @@ Stella only uses information the server actually sends to your client. These are
   Click the controls with chat open, or bind *Play/Pause*, *Next* and *Previous* keys in its settings.
   The Windows and macOS paths could not be tested in CI (Linux only); if the card stays on "Nothing playing"
   while music is playing, please report it.
-* **Region Map** is a 9×9 grid of 50,000-block cells spanning −225k…+225k on X and Z. The layout comes
-  from two references you supplied: an in-game screenshot (cell IDs and colours) and a region diagram
-  (region shapes and geometry). The cell IDs were read from a low-resolution image, so correct any that
-  differ in `regions.json`, then toggle *Reload regions.json*. The *Numbering* setting switches between the
-  in-game IDs and plain 1–81 numbering. The STAFF section uses your verified `staff.json` plus tab-list data.
+* **Region Map** is a 9×9 grid of 50,000-block cells spanning −225k…+225k on X and Z, numbered with the in-game
+  cell IDs. Cells are coloured from a user-supplied annotated map: **purple** = glitched (no RTP spots),
+  **blue** = good for media / baltop, **grey** = good for media / other bases; other cells are unmarked.
+  Edit `regions.json` (then toggle *Reload regions.json*) to change any of it. The *Numbering* setting switches
+  between the in-game IDs and plain 1–81 numbering. The STAFF section uses your verified `staff.json` plus tab-list data.
 * **TPS** is estimated from world-time packets. It shows `...` until it has enough samples, and it is
   affected by network jitter.
 * **Player health** is whatever the server sends. Many servers hide or fake other players' health.
