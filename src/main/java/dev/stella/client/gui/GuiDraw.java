@@ -87,6 +87,7 @@ public final class GuiDraw {
             case RENDER -> "◉";
             case VISUALS -> "◈";
             case COSMETICS -> "✧";
+            case ANTI_CHEAT_OFF -> "⚠";
             case CLIENT -> ">_";
             case WORLD -> "⛰";
             case HUD -> "▣";

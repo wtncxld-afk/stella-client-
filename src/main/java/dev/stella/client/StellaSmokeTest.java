@@ -1038,7 +1038,29 @@ final class StellaSmokeTest {
                     }
                     if (T == 1490) shot(mc, "knife-enchanted");
                     if (T == 1494) caption = null;
-                    if (inStage() == 1500) {
+                    // Anti Cheat Off: allowed in singleplayer (and only on servers listed in Test Environment)
+                    if (T == 1498) {
+                        caption = null;
+                        boolean ok = dev.stella.client.modules.anticheatoff.TestEnvironment.allowed();
+                        ModuleManager.get(dev.stella.client.modules.anticheatoff.FastMine.class).setEnabled(true);
+                        ModuleManager.get(dev.stella.client.modules.anticheatoff.SpeedMine.class).setEnabled(true);
+                        StellaClient.LOGGER.info("[smoke] anti cheat off: allowed in singleplayer = {}", ok);
+                        if (!ok) fail("Test Environment should allow singleplayer");
+                        mc.setScreen(new ClickGuiScreen());
+                    }
+                    if (T == 1504 && mc.currentScreen instanceof ClickGuiScreen gui) gui.openSettingsFor("Test Environment");
+                    if (T == 1508) {
+                        boolean still = ModuleManager.get(dev.stella.client.modules.anticheatoff.SpeedMine.class).isEnabled();
+                        StellaClient.LOGGER.info("[smoke] anti cheat off: SpeedMine still enabled after ticks = {}", still);
+                        if (!still) fail("SpeedMine switched itself off in singleplayer");
+                        shot(mc, "anti-cheat-off-gui");
+                    }
+                    if (T == 1512) {
+                        mc.setScreen(null);
+                        ModuleManager.get(dev.stella.client.modules.anticheatoff.FastMine.class).setEnabled(false);
+                        ModuleManager.get(dev.stella.client.modules.anticheatoff.SpeedMine.class).setEnabled(false);
+                    }
+                    if (inStage() == 1520) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {

@@ -10,6 +10,7 @@ public enum Category {
     WORLD("World"),
     HUD("HUD"),
     COSMETICS("Cosmetics"),
+    ANTI_CHEAT_OFF("Anti Cheat Off"),
     SETTINGS("Settings");
 
     public final String displayName;

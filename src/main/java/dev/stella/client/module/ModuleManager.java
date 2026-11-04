@@ -68,6 +68,15 @@ public final class ModuleManager {
         register(new dev.stella.client.modules.cosmetics.JumpCircles());
         register(new dev.stella.client.modules.cosmetics.KnifeSkins());
         register(new dev.stella.client.modules.cosmetics.CustomGlint());
+        register(new dev.stella.client.modules.anticheatoff.TestEnvironment());
+        register(new dev.stella.client.modules.anticheatoff.Flight());
+        register(new dev.stella.client.modules.anticheatoff.BoatFly());
+        register(new dev.stella.client.modules.anticheatoff.AirJump());
+        register(new dev.stella.client.modules.anticheatoff.WaterSpeed());
+        register(new dev.stella.client.modules.anticheatoff.ElytraFly());
+        register(new dev.stella.client.modules.anticheatoff.SpeedMine());
+        register(new dev.stella.client.modules.anticheatoff.InstantBreak());
+        register(new dev.stella.client.modules.anticheatoff.FastMine());
         register(new dev.stella.client.modules.hud.PotionHud());
         register(new dev.stella.client.modules.hud.ItemCounterHud());
         register(new StaffList());

@@ -109,6 +109,15 @@ Chinese Hat (theme / rainbow / custom colour, glowing rim), Jump Circles (a ring
 blooming where you land), Knife Skins (swords look like a Karambit, Butterfly, Bayonet or Stella Dagger in first
 person, in Nebula / Theme / Ruby / Emerald / Sapphire / Gold / Midnight / Rainbow finishes; press **Y** to inspect,
 rebindable). Other players still see your normal sword and no wings - nothing is sent to the server.
+**Anti Cheat Off (singleplayer and your own authorized test servers only):** Flight (Velocity or Abilities mode,
+horizontal + vertical speed), BoatFly (speed, vertical speed, glide fall), AirJump (jump height, max air jumps,
+hold to repeat), WaterSpeed (swim speed, vertical speed, lava), ElytraFly (Control or Boost mode, speed, vertical
+speed, hover), SpeedMine (speed multiplier, finish-at), InstantBreak (max hardness, require right tool) and FastMine
+(break delay). There is no Nuker. These modules only run in your singleplayer worlds and on servers you list
+yourself under **Anti Cheat Off → Test Environment → Authorized Servers** (default: `localhost`); anywhere else they
+switch themselves off with a notice. They contain no anti-cheat bypass - only add servers where you have
+permission (for example your own test server). Every module has its own toggle, keybind and sliders, and all of it
+is saved in your profile between launches.
 Turning any module on or off shows a small popup; switch this off with *Module Toggle Popups* in the
 Notifications HUD settings.
 
