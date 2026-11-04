@@ -109,6 +109,46 @@ Notifications HUD settings.
 
 **Settings:** Config (auto-save), Animations, Auto Updater.
 
+## Player Detector
+
+Finds players near you that you **can't currently see** and shows where they are.
+
+**How it works:** the server sends your client every player inside its entity-tracking range
+(on most servers 48–128 blocks; the server decides). Five times a second Stella checks each of those players:
+
+* **Behind wall:** a ray from your eyes to theirs (and to their body) hits a solid block in your loaded world;
+* **Out of view:** nothing in the way, but they are off your screen (behind you, far to the side);
+* **Visible:** you can see them.
+
+Detected players get an animated **blue square over their chunk**, a hitbox outline through walls, their
+**distance**, a **direction arrow** (relative to where you look), a compass direction and height difference,
+and a **dropdown** slides in listing them with their heads. A chat line (only you see it) announces each new one.
+
+It only uses data your client already receives. It cannot see players beyond tracking range or players the
+server does not send (e.g. fully vanished staff), and it sends nothing to the server.
+
+**Install:** it is part of Stella. Install Stella (above), open the ClickGUI (**Right Shift**) → **DonutSMP** →
+**Player Detector**. Move or resize the dropdown in the HUD Editor like any HUD element.
+
+**Configure** (right-click the module or click its ⚙):
+
+| Setting | Default | What it does |
+|---|---|---|
+| Detect | Hidden Only | *Hidden Only* lists players you can't see; *All Players* lists every tracked player |
+| Out Of View Counts As Hidden | on | Players behind you / off-screen also count as hidden |
+| Range | 128 | Maximum distance (the server limits what it sends) |
+| Ignore Invisible / Ignore Names | off / empty | Skip invisible players / a comma-separated friends list |
+| Chunk Highlight, Chunk Color, Chunk Opacity | on, blue, 0.6 | The animated chunk square |
+| Chunk Height | Their Feet | Draw the square at their height or at yours |
+| Player Box | on | Hitbox outline through walls |
+| Chat Message / Notification / Sound | on / off / on | How you are told about a new player |
+| Staff Only Alerts | off | Only alert for names in `staff.json` |
+| Alert Cooldown | 30 s | Minimum time between alerts for the same player |
+| Hide When Empty | on | The dropdown slides in only while someone is detected |
+| Visible Rows / Width | 5 / 180 | Dropdown size (scroll with chat open for more) |
+
+Click the dropdown header (with chat open) to collapse it.
+
 ## Configuration
 
 Everything lives in `.minecraft/config/stella/`:
