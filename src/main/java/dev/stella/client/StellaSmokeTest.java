@@ -609,7 +609,17 @@ final class StellaSmokeTest {
                     if (inStage() == 740) mc.reloadResources(); // shows the startup / reload overlay
                     if (inStage() == 750 && mc.getOverlay() != null) shot(mc, "loading-splash");
                     if (inStage() > 750 && inStage() < 900 && mc.getOverlay() != null) return; // wait for the reload to finish
-                    if (inStage() == 900) {
+                    // Animation showcase for the preview video: GUI open, toggles sweeping, settings pop, staggered close
+                    if (inStage() == 900) { mc.inGameHud.getChatHud().clear(false); mc.setScreen(new ClickGuiScreen()); }
+                    if (inStage() >= 916 && inStage() <= 940 && (inStage() - 916) % 6 == 0) {
+                        String[] showcase = {"Fullbright", "Zoom", "Item Physics", "Swing Speed", "Custom Crosshair"};
+                        String n = showcase[(inStage() - 916) / 6];
+                        ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(Module::toggle);
+                    }
+                    if (inStage() == 946 && mc.currentScreen instanceof ClickGuiScreen gui) gui.openSettingsFor("Custom Sky");
+                    if (inStage() == 950) shot(mc, "animations-gui");
+                    if (inStage() == 962 && mc.currentScreen != null) mc.currentScreen.close();
+                    if (inStage() == 980) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {
