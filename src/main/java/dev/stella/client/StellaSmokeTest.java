@@ -191,6 +191,7 @@ final class StellaSmokeTest {
         try {
             switch (stage) {
                 case 0 -> {
+                    if (inStage() == 1) mc.options.getViewDistance().setValue(6); // software rendering in CI: keep FPS up
                     if (tick < 40 || mc.getOverlay() != null) return;
                     // a fresh install first shows vanilla's one-time accessibility screen: continue past it
                     if (mc.currentScreen != null && mc.currentScreen.getClass().getSimpleName().contains("Onboarding")) {
@@ -213,7 +214,19 @@ final class StellaSmokeTest {
                 case 1 -> {
                     if (inStage() == 30 && mc.currentScreen instanceof ClickGuiScreen gui) gui.openSettingsFor("Custom Crosshair");
                     if (inStage() == 50) shot(mc, "clickgui");
-                    if (inStage() == 60) { mc.setScreen(new HudEditorScreen(null)); next(); }
+                    // Animation showcase in the main menu (much higher FPS than in a world, so the video is smoother):
+                    // close + reopen the GUI, toggles sweeping on and off, a settings window popping in
+                    if (inStage() == 54 && mc.currentScreen != null) mc.currentScreen.close();
+                    if (inStage() == 74) mc.setScreen(new ClickGuiScreen());
+                    if (inStage() >= 96 && inStage() <= 150 && (inStage() - 96) % 9 == 0) {
+                        String[] showcase = {"Zoom", "Item Physics", "Swing Speed", "Zoom", "Item Physics", "Swing Speed", "Custom FOV"};
+                        String n = showcase[(inStage() - 96) / 9];
+                        ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(Module::toggle);
+                    }
+                    if (inStage() == 156) ModuleManager.all().stream().filter(m -> m.getName().equals("Custom FOV")).forEach(Module::toggle);
+                    if (inStage() == 162 && mc.currentScreen instanceof ClickGuiScreen gui) gui.openSettingsFor("Custom Sky");
+                    if (inStage() == 186 && mc.currentScreen != null) mc.currentScreen.close();
+                    if (inStage() == 206) { mc.setScreen(new HudEditorScreen(null)); next(); }
                 }
                 case 2 -> {
                     if (inStage() == 30) shot(mc, "hudeditor");
