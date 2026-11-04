@@ -15,26 +15,30 @@ public class AutoInvTotem extends Module {
     private final BoolSetting offhand = add(new BoolSetting("Offhand", "Put a totem in the offhand", true));
     private final BoolSetting hotbarTotem = add(new BoolSetting("Hotbar Totem", "Also keep a totem in a hotbar slot", true));
     private final NumberSetting hotbarSlot = add(new NumberSetting("Hotbar Slot", "Hotbar slot for the spare totem", 9, 1, 9, 1)).visibleWhen(hotbarTotem::isOn);
-    private final BoolSetting autoClose = add(new BoolSetting("Auto Close", "Close the inventory once done", false));
+    private final BoolSetting autoClose = add(new BoolSetting("Auto Close", "Close the inventory after moving a totem (never when nothing needed moving)", false));
     private int opened = -1, cooldown;
+    private boolean moved;
 
     public AutoInvTotem() { super("Auto Inv Totem", "Opening your inventory equips totems in your offhand and a hotbar slot", Category.COMBAT); }
 
     @Override
     public void onTick() {
         if (!inGame() || !(mc.currentScreen instanceof InventoryScreen)) { opened = -1; return; }
-        if (opened < 0) { opened = 0; cooldown = openDelay.getInt(); }
+        if (opened < 0) { opened = 0; moved = false; cooldown = openDelay.getInt(); }
         if (cooldown-- > 0) return;
         int sync = mc.player.playerScreenHandler.syncId;
         if (offhand.isOn() && !InvUtil.offhandHas(Items.TOTEM_OF_UNDYING)) {
             int slot = InvUtil.anySlot(Items.TOTEM_OF_UNDYING, true);
-            if (slot >= 0) { InvUtil.swapToOffhand(sync, slot); cooldown = delay.getInt(); return; }
+            if (slot >= 0) { InvUtil.swapToOffhand(sync, slot); moved = true; cooldown = delay.getInt(); return; }
         }
         int hb = hotbarSlot.getInt() - 1;
         if (hotbarTotem.isOn() && !mc.player.getInventory().getStack(hb).isOf(Items.TOTEM_OF_UNDYING)) {
             int slot = InvUtil.anySlot(Items.TOTEM_OF_UNDYING, false);
-            if (slot >= 0) { InvUtil.swapToHotbar(sync, slot, hb); cooldown = delay.getInt(); return; }
+            if (slot >= 0) { InvUtil.swapToHotbar(sync, slot, hb); moved = true; cooldown = delay.getInt(); return; }
         }
-        if (autoClose.isOn() && opened == 0) { opened = 1; mc.player.closeHandledScreen(); }
+        if (opened == 0) {
+            opened = 1; // done for this opening
+            if (autoClose.isOn() && moved) mc.player.closeHandledScreen(); // only close if we actually changed something
+        }
     }
 }
