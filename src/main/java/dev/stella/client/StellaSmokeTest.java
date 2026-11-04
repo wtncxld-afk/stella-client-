@@ -1109,8 +1109,10 @@ public final class StellaSmokeTest {
     /** Scripted demo of the Anti Cheat Off modules for the preview video. */
     private static void acoDemo(MinecraftClient mc, int T, String me) {
         int x = ox, y = oy, z = oz;
+        mc.getToastManager().clear(); // no recipe / advancement popups in the video
+        if (T % 10 == 0) mc.inGameHud.getChatHud().clear(false);
         if (T == 1516) {
-            for (String c : new String[]{"gamemode survival " + me, "clear " + me, "effect give " + me + " minecraft:resistance 600 4 true",
+            for (String c : new String[]{"gamerule announceAdvancements false", "gamemode survival " + me, "clear " + me, "effect give " + me + " minecraft:resistance 600 4 true",
                     "fill " + (x - 12) + " " + y + " " + (z - 30) + " " + (x + 12) + " " + (y + 40) + " " + (z + 12) + " minecraft:air",
                     "fill " + (x - 12) + " " + (y - 1) + " " + (z - 30) + " " + (x + 12) + " " + (y - 1) + " " + (z + 12) + " minecraft:smooth_quartz",
                     "tp " + me + " " + (x + 0.5) + " " + y + " " + (z + 6.5) + " 180 10"}) serverCmd(mc, c);
