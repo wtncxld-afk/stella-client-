@@ -30,22 +30,31 @@ public class AutoTool extends Module {
         if (!mining || (mc.player.isCreative() && !creative.isOn())) { restore(); return; }
         BlockState state = mc.world.getBlockState(((BlockHitResult) mc.crosshairTarget).getBlockPos());
         if (state.isAir()) return;
+        int best = bestSlot(state);
+        float bestScore = best < 0 ? 0 : score(mc.player.getInventory().getStack(best), state);
+        // only switch when it is actually faster than what you hold
+        float heldScore = score(mc.player.getMainHandStack(), state);
+        if (best < 0 || best == InvUtil.selected() || bestScore <= heldScore || bestScore <= 1f) return;
+        if (previous < 0) previous = InvUtil.selected();
+        InvUtil.select(best);
+    }
+
+    private static float score(ItemStack st, BlockState state) {
+        // a tool that can actually harvest the block (drops it) always beats one that can't
+        return st.getMiningSpeedMultiplier(state) + (st.isSuitableFor(state) ? 1000 : 0);
+    }
+
+    /** Hotbar slot (0-8) that mines this block best, or -1. */
+    public int bestSlot(BlockState state) {
         int best = -1;
         float bestScore = 0;
         for (int i = 0; i < 9; i++) {
             ItemStack st = mc.player.getInventory().getStack(i);
             if (protect.isOn() && st.isDamageable() && st.getMaxDamage() - st.getDamage() < minUses.getInt()) continue;
-            float speed = st.getMiningSpeedMultiplier(state);
-            // a tool that can actually harvest the block (drops it) always beats one that can't
-            float score = speed + (st.isSuitableFor(state) ? 1000 : 0);
-            if (score > bestScore) { bestScore = score; best = i; }
+            float sc = score(st, state);
+            if (sc > bestScore) { bestScore = sc; best = i; }
         }
-        // only switch when it is actually faster than what you hold
-        ItemStack held = mc.player.getMainHandStack();
-        float heldScore = held.getMiningSpeedMultiplier(state) + (held.isSuitableFor(state) ? 1000 : 0);
-        if (best < 0 || best == InvUtil.selected() || bestScore <= heldScore || bestScore <= 1f) return;
-        if (previous < 0) previous = InvUtil.selected();
-        InvUtil.select(best);
+        return best;
     }
 
     private void restore() {

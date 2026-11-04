@@ -575,7 +575,15 @@ final class StellaSmokeTest {
                     if (inStage() == 726) {
                         mc.player.setPitch(0f);
                         mc.player.getInventory().setSelectedSlot(0);
-                        mc.options.attackKey.setPressed(true);
+                    }
+                    if (inStage() >= 727 && inStage() < 732) mc.options.attackKey.setPressed(true); // keep "holding" left-click
+                    if (inStage() == 729) {
+                        var at = ModuleManager.get(dev.stella.client.modules.misc.AutoTool.class);
+                        var tgt = mc.crosshairTarget;
+                        String block = tgt instanceof net.minecraft.util.hit.BlockHitResult bh ? mc.world.getBlockState(bh.getBlockPos()).toString() : "none";
+                        StellaClient.LOGGER.info("[smoke] auto tool diag: attackKey={} target={} block={} creative={} enabled={} bestSlot={}",
+                                mc.options.attackKey.isPressed(), tgt == null ? null : tgt.getType(), block, mc.player.isCreative(), at.isEnabled(),
+                                at.bestSlot(net.minecraft.block.Blocks.STONE.getDefaultState()));
                     }
                     if (inStage() == 732) {
                         int sel = mc.player.getInventory().getSelectedSlot();
