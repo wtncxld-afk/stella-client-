@@ -71,7 +71,7 @@ final class StellaSmokeTest {
 
     // Sus Chunk Finder stays on for the whole tour: re-enabling it would throw away its findings and rescan
     private static final String[] TOUR = {"Storage ESP", "Block ESP", "Spawner Finder", "Player ESP", "Player Detector",
-            "Staff List", "Anti Vanish", "Media Base Finder", "Auto Tool", "Region Map HUD", "Staff List HUD", "Notifications HUD"};
+            "Staff List", "Anti Vanish", "Media Base Finder", "Auto Tool", "Region Map HUD", "Staff List HUD", "Notifications HUD", "Radar HUD"};
 
     /** Turns on exactly these tour modules (the rest of TOUR off). */
     private static void only(String... on) {
@@ -858,7 +858,9 @@ final class StellaSmokeTest {
                     if (T == 1140) shot(mc, "tour-3-spawner-finder");
                     if (T == 1144) {
                         caption("Player Detector + Player ESP", "Blue chunk + list for players the client knows about but you can't see");
-                        only("Player Detector", "Player ESP");
+                        only("Player Detector", "Player ESP", "Radar HUD");
+                        setting("Radar HUD", "Range", 32.0);
+                        setting("Radar HUD", "Distance", true);
                         setting("Player ESP", "Tracers", true);
                         serverCmd(mc, "fill " + (bx + 15) + " " + by + " " + (bz + 3) + " " + (bx + 17) + " " + (by + 2) + " " + (bz + 5) + " minecraft:air");
                         serverCmd(mc, "setblock " + (bx + 16) + " " + (by + 2) + " " + (bz + 3) + " minecraft:lantern[hanging=true]");
@@ -871,10 +873,15 @@ final class StellaSmokeTest {
                     if (T > 1163 && T < 1172) { mc.player.setYaw(-112f + (T - 1163) * 1.5f); }
                     if (T == 1168) logDetectorTour();
                     if (T == 1172) shot(mc, "tour-4-player-detector");
+                    if (T == 1173) {
+                        // close-up of the radar for the preview
+                        var rd = ModuleManager.get(dev.stella.client.modules.hud.RadarHud.class);
+                        StellaClient.LOGGER.info("[smoke] radar hud at {} {} size {}x{}", rd.x(), rd.y(), rd.getWidth(), rd.getHeight());
+                    }
                     if (T == 1176) {
                         tourPlayers(mc, false, 0, 0, 0, 0, 0, 0);
                         caption("Staff List + Anti Vanish", "A staff member joins and goes /gmsp - Anti Vanish catches it");
-                        only("Staff List", "Anti Vanish");
+                        only("Staff List", "Anti Vanish", "Radar HUD");
                         aerial(mc, bx + 6.5, oy, bz + 5.5, oy + 10, 12f);
                     }
                     if (T == 1180) { mc.player.setYaw(camYaw); mc.player.setPitch(camPitch); }

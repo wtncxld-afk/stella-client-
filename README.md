@@ -102,7 +102,7 @@ be switched back to vanilla).
 **HUD (one module per element):** Stella Branding, Keystrokes (+CPS), FPS, TPS, Coordinates, Ping,
 Region Map (with its own *Map Scale* slider up to 6×), Music HUD (cover, title, artist, progress and
 ⏮ ⏯ ⏭ controls), Notifications, Staff List, Block Notifier list,
-Player Detector list, Armor (durability), Potions (time left), Item Counter (totems, crystals, pearls...). Each element has its
+Player Detector list, Armor (durability), Potions (time left), Item Counter (totems, crystals, pearls...), Radar (circle with each loaded player's head at their exact position, rotating N/E/S/W, sweep, optional mob dots). Each element has its
 own toggle, position, scale, opacity and colours, and moving or disabling one never affects another.
 Turning any module on or off shows a small popup; switch this off with *Module Toggle Popups* in the
 Notifications HUD settings.
