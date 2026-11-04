@@ -11,7 +11,7 @@ import net.minecraft.util.Identifier;
 
 /**
  * Stella's UI font: TNH Xuong (SIL Open Font License, see
- * assets/stella/font/XUONG-OFL.txt), loaded as a Minecraft TTF font provider
+ * assets/stella/font/xuong-ofl.txt), loaded as a Minecraft TTF font provider
  * with the vanilla font as fallback for symbols it does not contain. Can be
  * turned off from the THEMES panel ("Custom Font"), which falls back to the
  * vanilla font everywhere.
