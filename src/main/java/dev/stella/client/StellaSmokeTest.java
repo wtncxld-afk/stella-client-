@@ -113,6 +113,13 @@ final class StellaSmokeTest {
 
     private static MinecraftClient mc() { return MinecraftClient.getInstance(); }
 
+    /** Runs a command on the integrated server without chat feedback. */
+    private static void serverCmd(MinecraftClient mc, String cmd) {
+        var server = mc.getServer();
+        if (server == null) return;
+        server.execute(() -> server.getCommandManager().parseAndExecute(server.getCommandSource().withSilent(), cmd));
+    }
+
     private static final java.util.UUID HIDDEN_UUID = java.util.UUID.fromString("5e1a5a11-0000-4000-8000-0000000000d1");
     private static final java.util.UUID OPEN_UUID = java.util.UUID.fromString("5e1a5a11-0000-4000-8000-0000000000d2");
     private static final java.util.List<net.fabricmc.fabric.api.entity.FakePlayer> scenePlayers = new java.util.ArrayList<>();
@@ -545,7 +552,43 @@ final class StellaSmokeTest {
                     if (inStage() == 696) setting("Player Detector", "Detect", "All Players");
                     if (inStage() == 704) logDetector("all players");
                     if (inStage() == 706) detectorScene(mc, false);
-                    if (inStage() == 710) {
+                    if (inStage() == 712) {
+                        // Light Level Overlay + Auto Tool: a pitch-dark stone room, sword in hand, pickaxe in the hotbar
+                        int x = mc.player.getBlockX(), y = mc.player.getBlockY(), z = mc.player.getBlockZ();
+                        serverCmd(mc, "fill " + (x - 4) + " " + (y - 1) + " " + (z - 4) + " " + (x + 4) + " " + (y + 4) + " " + (z + 4) + " minecraft:stone hollow");
+                        serverCmd(mc, "gamemode survival " + mc.player.getGameProfile().name());
+                        serverCmd(mc, "clear " + mc.player.getGameProfile().name());
+                        serverCmd(mc, "item replace entity " + mc.player.getGameProfile().name() + " hotbar.0 with minecraft:diamond_sword");
+                        serverCmd(mc, "item replace entity " + mc.player.getGameProfile().name() + " hotbar.3 with minecraft:diamond_pickaxe");
+                        serverCmd(mc, "tp " + mc.player.getGameProfile().name() + " " + x + ".5 " + y + " " + z + ".5");
+                        ModuleManager.get(dev.stella.client.modules.combat.PlayerDetector.class).setEnabled(false);
+                        setting("Light Level Overlay", "Style", "Both");
+                        ModuleManager.get(dev.stella.client.modules.world.LightLevelOverlay.class).setEnabled(true);
+                        ModuleManager.get(dev.stella.client.modules.misc.AutoTool.class).setEnabled(true);
+                        mc.player.setYaw(-90f);
+                        mc.player.setPitch(40f);
+                        mc.inGameHud.getChatHud().clear(false);
+                    }
+                    if (inStage() == 724) shot(mc, "light-overlay");
+                    if (inStage() == 726) {
+                        mc.player.setPitch(0f);
+                        mc.player.getInventory().setSelectedSlot(0);
+                        mc.options.attackKey.setPressed(true);
+                    }
+                    if (inStage() == 732) {
+                        int sel = mc.player.getInventory().getSelectedSlot();
+                        StellaClient.LOGGER.info("[smoke] auto tool while mining stone: slot {} ({})", sel, mc.player.getMainHandStack().getItem());
+                        if (sel != 3) fail("Auto Tool did not pick the pickaxe");
+                        mc.options.attackKey.setPressed(false);
+                    }
+                    if (inStage() == 736) {
+                        int sel = mc.player.getInventory().getSelectedSlot();
+                        StellaClient.LOGGER.info("[smoke] auto tool after mining: slot {}", sel);
+                        if (sel != 0) fail("Auto Tool did not switch back");
+                        StellaClient.LOGGER.info("[smoke] light overlay spots: {}", dev.stella.client.modules.world.LightLevelOverlay.lastCount);
+                        serverCmd(mc, "gamemode creative " + mc.player.getGameProfile().name());
+                    }
+                    if (inStage() == 740) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {

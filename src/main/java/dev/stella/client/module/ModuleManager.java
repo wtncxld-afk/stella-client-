@@ -59,6 +59,8 @@ public final class ModuleManager {
         register(new dev.stella.client.modules.misc.ToggleSprint());
         register(new dev.stella.client.modules.misc.DeathCoordinates());
         register(new dev.stella.client.modules.misc.DurabilityWarning());
+        register(new dev.stella.client.modules.misc.AutoTool());
+        register(new dev.stella.client.modules.world.LightLevelOverlay());
         register(new dev.stella.client.modules.hud.ArmorHud());
         register(new dev.stella.client.modules.hud.PotionHud());
         register(new dev.stella.client.modules.hud.ItemCounterHud());

@@ -225,6 +225,13 @@ public final class Render3D {
         f.vertex(m, ax, yy, bz).color(c12);
     }
 
+    /** Horizontal translucent quad hidden behind blocks like normal geometry (depth-tested). */
+    public void quadXZDepth(double x1, double z1, double x2, double z2, double y, int argb) {
+        Matrix4f m = matrices.peek().getPositionMatrix();
+        float ax = (float) (x1 - cam.x), az = (float) (z1 - cam.z), bx = (float) (x2 - cam.x), bz = (float) (z2 - cam.z), yy = (float) (y - cam.y);
+        quad(consumers.getBuffer(StellaPipelines.SKY), m, ax, yy, az, ax, yy, bz, bx, yy, bz, bx, yy, az, argb);
+    }
+
     /** Single horizontal translucent quad — used for flat chunk overlays. */
     public void quadXZ(double x1, double z1, double x2, double z2, double y, int argb) {
         Matrix4f m = matrices.peek().getPositionMatrix();
@@ -318,6 +325,7 @@ public final class Render3D {
 
     /** Draws everything written this frame. */
     public void flush() {
+        consumers.draw(StellaPipelines.SKY); // depth-tested fills (light overlay)
         consumers.draw(StellaPipelines.FILLS);
         consumers.draw(StellaPipelines.FILLS_GLOW);
         consumers.draw(StellaPipelines.LINES);
