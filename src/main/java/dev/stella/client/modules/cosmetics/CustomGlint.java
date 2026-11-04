@@ -36,8 +36,21 @@ public class CustomGlint extends Module {
 
     public CustomGlint() { super("Custom Glint", "Recolour and restyle the enchantment glint (Stella sparkles, waves, shine)", Category.COSMETICS, false); }
 
+    private static final Identifier[] OWN = {Identifier.of(StellaClient.MOD_ID, "dynamic/glint_item"), Identifier.of(StellaClient.MOD_ID, "dynamic/glint_entity")};
+
+    /** Used by the TextureManager hook: our texture for a vanilla glint id while enabled, else null. */
+    public static net.minecraft.client.texture.AbstractTexture override(Identifier id) {
+        CustomGlint g = INSTANCE;
+        if (g == null || !g.isEnabled()) return null;
+        for (int i = 0; i < TARGETS.length; i++) if (TARGETS[i].equals(id)) return g.textures[i];
+        return null;
+    }
+
+    private static CustomGlint INSTANCE;
+
     @Override
     protected void onEnable() {
+        INSTANCE = this;
         OptionOverrides.set(mc.options.getGlintSpeed(), () -> speed.get());
         OptionOverrides.set(mc.options.getGlintStrength(), () -> strength.get());
         lastKey = "";
@@ -46,15 +59,9 @@ public class CustomGlint extends Module {
 
     @Override
     protected void onDisable() {
+        // the hook stops serving our texture; vanilla's glint texture was never touched
         OptionOverrides.clear(mc.options.getGlintSpeed());
         OptionOverrides.clear(mc.options.getGlintStrength());
-        try {
-            for (int i = 0; i < TARGETS.length; i++) {
-                if (textures[i] != null) mc.getTextureManager().registerTexture(TARGETS[i]); // back to the vanilla texture
-                textures[i] = null;
-            }
-        } catch (Throwable t) { StellaClient.reportError("Custom Glint", t); }
-        lastKey = "";
     }
 
     @Override
@@ -65,20 +72,19 @@ public class CustomGlint extends Module {
         refresh();
     }
 
-    /** Regenerates the texture when a setting or the theme changes, and re-applies it after a resource reload. */
+    /** Regenerates the texture when a setting or the theme changes. */
     private void refresh() {
+        INSTANCE = this;
         String key = style.get() + colorMode.get() + color1.get() + color2.get() + brightness.get() + ThemeManager.get().accent() + ThemeManager.accentAt(0.5);
-        boolean replaced = false;
-        for (int i = 0; i < TARGETS.length; i++) if (textures[i] == null || mc.getTextureManager().getTexture(TARGETS[i]) != textures[i]) replaced = true;
-        if (key.equals(lastKey) && !replaced) return;
+        if (key.equals(lastKey) && textures[0] != null) return;
         lastKey = key;
         try {
             for (int i = 0; i < TARGETS.length; i++) {
                 NativeImage img = generate();
-                if (textures[i] == null || mc.getTextureManager().getTexture(TARGETS[i]) != textures[i]) {
+                if (textures[i] == null) {
                     final int idx = i;
                     textures[i] = new NativeImageBackedTexture(() -> "stella_glint_" + idx, img);
-                    mc.getTextureManager().registerTexture(TARGETS[i], textures[i]);
+                    mc.getTextureManager().registerTexture(OWN[i], textures[i]);
                 } else {
                     textures[i].setImage(img);
                 }

@@ -21,6 +21,7 @@
     "GlowOutlineMixin",
     "HeldItemRendererMixin",
     "InteractionManagerAccessor",
+    "TextureManagerMixin",
     "KnifeRenderMixin",
     "InGameHudMixin",
     "HandledScreenAccessor",
