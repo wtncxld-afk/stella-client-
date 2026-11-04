@@ -73,6 +73,10 @@ public final class ModuleManager {
         register(new dev.stella.client.modules.hud.CombatTimerHud());
         register(new dev.stella.client.modules.pvp.HitEffects());
         register(new dev.stella.client.modules.pvp.ArmorBreakAlerts());
+        register(new dev.stella.client.modules.combat.AuctionHelper());
+        register(new dev.stella.client.modules.combat.RegionAlerts());
+        register(new dev.stella.client.modules.combat.BaseSaver());
+        register(new dev.stella.client.modules.hud.MoneyTrackerHud());
         register(new dev.stella.client.modules.anticheatoff.TestEnvironment());
         register(new dev.stella.client.modules.anticheatoff.Flight());
         register(new dev.stella.client.modules.anticheatoff.BoatFly());

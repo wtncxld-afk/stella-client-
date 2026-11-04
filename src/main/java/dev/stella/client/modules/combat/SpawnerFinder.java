@@ -48,6 +48,44 @@ public class SpawnerFinder extends HudElement {
     private final BoolSetting chat = add(new BoolSetting("Chat Message", "Chat message (only you see it) when a spawner is found", true));
     private final NumberSetting rows = add(new NumberSetting("Visible Rows", "Dropdown entries shown before scrolling", 6, 1, 30, 1));
     private final NumberSetting widthSetting = add(new NumberSetting("Width", "Dropdown width", 170, 120, 400, 5));
+    private final BoolSetting copyAll = add(new BoolSetting("Copy All Coordinates", "Toggle to copy every spawner (type + x y z) to the clipboard", false)).onChange(this::copyAllNow);
+    private final BoolSetting exportFile = add(new BoolSetting("Export To File", "Toggle to save the list to config/stella/spawners-<date>.txt", false)).onChange(this::exportNow);
+
+    /** Text list of all spawners found: "Zombie 12 -40 88 (35m)". */
+    public String listText() {
+        StringBuilder sb = new StringBuilder();
+        java.util.Map<String, Integer> counts = new java.util.TreeMap<>();
+        for (Spawner sp : list) counts.merge(sp.type(), 1, Integer::sum);
+        sb.append("Spawners: ").append(list.size());
+        counts.forEach((k, v) -> sb.append(" | ").append(v).append("x ").append(k));
+        sb.append('\n');
+        for (Spawner sp : list) {
+            BlockPos b = sp.pos();
+            int d = mc.player == null ? 0 : (int) Math.sqrt(mc.player.getBlockPos().getSquaredDistance(b));
+            sb.append(sp.type()).append(' ').append(b.getX()).append(' ').append(b.getY()).append(' ').append(b.getZ()).append(" (").append(d).append("m)\n");
+        }
+        return sb.toString();
+    }
+
+    private void copyAllNow() {
+        if (!copyAll.isOn()) return;
+        copyAll.set(false);
+        mc.keyboard.setClipboard(listText());
+        dev.stella.client.notification.NotificationManager.post("Spawner Finder", list.size() + " spawners copied", dev.stella.client.notification.Notification.Type.SUCCESS, 2500);
+    }
+
+    private void exportNow() {
+        if (!exportFile.isOn()) return;
+        exportFile.set(false);
+        try {
+            String name = "spawners-" + java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")) + ".txt";
+            java.nio.file.Path f = dev.stella.client.config.ConfigManager.root().resolve(name);
+            java.nio.file.Files.writeString(f, listText());
+            dev.stella.client.notification.NotificationManager.post("Spawner Finder", "Saved " + name, dev.stella.client.notification.Notification.Type.SUCCESS, 3000);
+        } catch (Exception e) {
+            dev.stella.client.notification.NotificationManager.post("Spawner Finder", "Export failed: " + e.getMessage(), dev.stella.client.notification.Notification.Type.ALERT, 3000);
+        }
+    }
 
     public record Spawner(BlockPos pos, String type, net.minecraft.entity.EntityType<?> entityType) {}
 
