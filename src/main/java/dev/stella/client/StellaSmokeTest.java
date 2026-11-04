@@ -1060,7 +1060,9 @@ final class StellaSmokeTest {
                         ModuleManager.get(dev.stella.client.modules.anticheatoff.FastMine.class).setEnabled(false);
                         ModuleManager.get(dev.stella.client.modules.anticheatoff.SpeedMine.class).setEnabled(false);
                     }
-                    if (inStage() == 1520) {
+                    // ================= Anti Cheat Off showcase (singleplayer): simulated key presses =================
+                    if (T >= 1516 && T < 1830) acoDemo(mc, T, me);
+                    if (inStage() == 1840) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {
@@ -1087,6 +1089,130 @@ final class StellaSmokeTest {
         StellaClient.LOGGER.info("[smoke] terrain ready after {} ticks", held);
         held = 0;
         return false;
+    }
+
+    private static void keys(MinecraftClient mc, boolean fwd, boolean jump, boolean sneak, boolean sprint) {
+        mc.options.forwardKey.setPressed(fwd);
+        mc.options.jumpKey.setPressed(jump);
+        mc.options.sneakKey.setPressed(sneak);
+        mc.options.sprintKey.setPressed(sprint);
+    }
+
+    private static void aco(String name, boolean on) {
+        ModuleManager.all().stream().filter(m -> m.getName().equals(name)).forEach(m -> m.setEnabled(on));
+    }
+
+    private static int mineIndex;
+
+    /** Scripted demo of the Anti Cheat Off modules for the preview video. */
+    private static void acoDemo(MinecraftClient mc, int T, String me) {
+        int x = ox, y = oy, z = oz;
+        if (T == 1516) {
+            for (String c : new String[]{"gamemode survival " + me, "clear " + me, "effect give " + me + " minecraft:resistance 600 4 true",
+                    "fill " + (x - 12) + " " + y + " " + (z - 30) + " " + (x + 12) + " " + (y + 40) + " " + (z + 12) + " minecraft:air",
+                    "fill " + (x - 12) + " " + (y - 1) + " " + (z - 30) + " " + (x + 12) + " " + (y - 1) + " " + (z + 12) + " minecraft:smooth_quartz",
+                    "tp " + me + " " + (x + 0.5) + " " + y + " " + (z + 6.5) + " 180 10"}) serverCmd(mc, c);
+            mc.options.setPerspective(net.minecraft.client.option.Perspective.THIRD_PERSON_BACK);
+            setting("Flight", "Mode", "Velocity"); setting("Flight", "Horizontal Speed", 0.7); setting("Flight", "Vertical Speed", 0.45);
+            caption("Anti Cheat Off \u2022 Flight", "Velocity mode - adjustable horizontal and vertical speed");
+        }
+        if (T == 1520) { mc.player.setYaw(180f); mc.player.setPitch(10f); aco("Flight", true); }
+        if (T >= 1522 && T < 1534) keys(mc, false, true, false, false);      // rise
+        if (T >= 1534 && T < 1556) keys(mc, true, false, false, false);      // fly forward
+        if (T >= 1556 && T < 1562) keys(mc, false, false, true, false);      // descend
+        if (T == 1562) { keys(mc, false, false, false, false); aco("Flight", false); }
+        // AirJump: climb an invisible staircase
+        if (T == 1566) {
+            serverCmd(mc, "tp " + me + " " + (x + 0.5) + " " + y + " " + (z + 6.5) + " 180 5");
+            setting("AirJump", "Jump Height", 0.5); setting("AirJump", "Max Air Jumps", 0.0);
+            aco("AirJump", true);
+            caption("Anti Cheat Off \u2022 AirJump", "Jump again in mid-air - adjustable jump height");
+        }
+        if (T >= 1570 && T < 1604) { mc.player.setYaw(180f); keys(mc, true, (T - 1570) % 4 < 2, false, false); }
+        if (T == 1604) { keys(mc, false, false, false, false); aco("AirJump", false); }
+        // ElytraFly: launch from height, then controlled flight
+        if (T == 1610) {
+            serverCmd(mc, "item replace entity " + me + " armor.chest with minecraft:elytra");
+            serverCmd(mc, "tp " + me + " " + (x + 0.5) + " " + (y + 25) + " " + (z + 8.5) + " 180 5");
+            setting("ElytraFly", "Mode", "Control"); setting("ElytraFly", "Speed", 1.2);
+            aco("ElytraFly", true);
+            caption("Anti Cheat Off \u2022 ElytraFly", "Fly where you look at a set speed, hover when idle");
+        }
+        if (T == 1616) keys(mc, false, true, false, false);                  // open the elytra
+        if (T == 1618) keys(mc, false, false, false, false);
+        if (T == 1620) keys(mc, false, true, false, false);
+        if (T == 1622) keys(mc, false, false, false, false);
+        if (T >= 1624 && T < 1650) { mc.player.setYaw(180f + (T - 1624) * 3f); mc.player.setPitch(5f); keys(mc, true, false, false, false); }
+        if (T == 1626) StellaClient.LOGGER.info("[smoke] aco: gliding = {}", mc.player.isGliding());
+        if (T == 1650) { keys(mc, false, false, false, false); aco("ElytraFly", false); serverCmd(mc, "item replace entity " + me + " armor.chest with minecraft:air"); }
+        // BoatFly
+        if (T == 1656) {
+            serverCmd(mc, "tp " + me + " " + (x + 0.5) + " " + y + " " + (z + 6.5) + " 180 10");
+            serverCmd(mc, "summon minecraft:oak_boat " + (x + 0.5) + " " + y + " " + (z + 6.5));
+            setting("BoatFly", "Speed", 0.8); setting("BoatFly", "Vertical Speed", 0.35);
+            caption("Anti Cheat Off \u2022 BoatFly", "Steer a boat through the air - speed, vertical speed, glide");
+        }
+        if (T == 1660) serverCmd(mc, "ride " + me + " mount @e[type=minecraft:oak_boat,limit=1,sort=nearest]");
+        if (T == 1664) { aco("BoatFly", true); mc.player.setYaw(180f); StellaClient.LOGGER.info("[smoke] aco: in boat = {}", mc.player.getVehicle() != null); }
+        if (T >= 1666 && T < 1678) keys(mc, false, true, false, false);
+        if (T >= 1678 && T < 1700) { mc.player.setYaw(180f + (T - 1678) * 2f); keys(mc, true, false, false, false); }
+        if (T == 1700) {
+            keys(mc, false, false, false, false); aco("BoatFly", false);
+            serverCmd(mc, "ride " + me + " dismount");
+            serverCmd(mc, "kill @e[type=minecraft:oak_boat]");
+        }
+        // WaterSpeed: a pool
+        if (T == 1704) {
+            serverCmd(mc, "fill " + (x - 4) + " " + (y - 3) + " " + (z - 24) + " " + (x + 4) + " " + (y - 1) + " " + (z + 4) + " minecraft:water");
+            serverCmd(mc, "tp " + me + " " + (x + 0.5) + " " + (y - 2) + " " + (z + 3.5) + " 180 15");
+            setting("WaterSpeed", "Swim Speed", 0.5);
+            caption("Anti Cheat Off \u2022 WaterSpeed", "Adjustable swimming speed");
+        }
+        if (T == 1708) { aco("WaterSpeed", true); mc.player.setYaw(180f); }
+        if (T >= 1710 && T < 1736) keys(mc, true, false, false, false);
+        if (T == 1736) { keys(mc, false, false, false, false); aco("WaterSpeed", false); serverCmd(mc, "fill " + (x - 4) + " " + (y - 3) + " " + (z - 24) + " " + (x + 4) + " " + (y - 1) + " " + (z + 4) + " minecraft:smooth_quartz"); }
+        // Mining: a wall of stone, SpeedMine + FastMine, then InstantBreak
+        if (T == 1740) {
+            mc.options.setPerspective(net.minecraft.client.option.Perspective.FIRST_PERSON);
+            serverCmd(mc, "tp " + me + " " + (x + 0.5) + " " + y + " " + (z + 0.5) + " 180 20");
+            serverCmd(mc, "fill " + (x - 3) + " " + y + " " + (z - 3) + " " + (x + 3) + " " + (y + 2) + " " + (z - 3) + " minecraft:stone");
+            serverCmd(mc, "item replace entity " + me + " hotbar.0 with minecraft:diamond_pickaxe");
+            setting("SpeedMine", "Speed", 2.5); setting("FastMine", "Break Delay", 0.0);
+            caption("Anti Cheat Off \u2022 SpeedMine + FastMine", "2.5x mining speed, no delay between blocks");
+            mineIndex = 0;
+        }
+        if (T == 1744) { mc.player.getInventory().setSelectedSlot(0); aco("SpeedMine", true); aco("FastMine", true); }
+        if (T == 1786) {
+            aco("SpeedMine", false); aco("FastMine", false); aco("InstantBreak", true);
+            serverCmd(mc, "gamemode creative " + me); // the server only accepts instant breaks where you could really do it
+            serverCmd(mc, "fill " + (x - 3) + " " + y + " " + (z - 3) + " " + (x + 3) + " " + (y + 2) + " " + (z - 3) + " minecraft:stone");
+            caption("Anti Cheat Off \u2022 InstantBreak", "Instant breaking where the server allows it (creative here)");
+            mineIndex = 0;
+        }
+        if ((T >= 1746 && T < 1784) || (T >= 1790 && T < 1826)) mineWall(mc, x, y, z);
+        if (T == 1784 || T == 1826) {
+            mc.interactionManager.cancelBlockBreaking();
+            StellaClient.LOGGER.info("[smoke] aco: wall blocks broken = {}", mineIndex);
+        }
+        if (T == 1828) { aco("InstantBreak", false); caption = null; serverCmd(mc, "gamemode creative " + me); }
+    }
+
+    /** Breaks the wall left to right, top to bottom, the way a player holding attack would. */
+    private static void mineWall(MinecraftClient mc, int x, int y, int z) {
+        for (int guard = 0; guard < 21; guard++) {
+            int i = mineIndex;
+            if (i >= 21) return;
+            net.minecraft.util.math.BlockPos pos = new net.minecraft.util.math.BlockPos(x - 3 + i % 7, y + 2 - i / 7, z - 3);
+            if (mc.world.getBlockState(pos).isAir()) { mineIndex++; continue; }
+            var eye = mc.player.getEyePos();
+            double dx = pos.getX() + 0.5 - eye.x, dy = pos.getY() + 0.5 - eye.y, dz = pos.getZ() + 0.5 - eye.z;
+            mc.player.setYaw((float) Math.toDegrees(Math.atan2(-dx, dz)));
+            mc.player.setPitch((float) -Math.toDegrees(Math.atan2(dy, Math.hypot(dx, dz))));
+            if (!mc.interactionManager.isBreakingBlock()) mc.interactionManager.attackBlock(pos, net.minecraft.util.math.Direction.SOUTH);
+            else mc.interactionManager.updateBlockBreakingProgress(pos, net.minecraft.util.math.Direction.SOUTH);
+            mc.player.swingHand(net.minecraft.util.Hand.MAIN_HAND);
+            return;
+        }
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
