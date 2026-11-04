@@ -47,7 +47,7 @@ final class StellaSmokeTest {
 
     private static int slow;
     private static boolean loadingShot;
-    private static int ox, oy, oz, spawnX, spawnZ;
+    private static int ox, oy, oz, spawnX, spawnZ, stashX, stashZ;
     private static net.minecraft.util.math.BlockPos breakPos;
     private static net.minecraft.util.math.Direction breakSide;
     private static boolean autoToolPicked;
@@ -644,7 +644,71 @@ final class StellaSmokeTest {
                     if (inStage() == 946 && mc.currentScreen instanceof ClickGuiScreen gui) gui.openSettingsFor("Custom Sky");
                     if (inStage() == 950) shot(mc, "animations-gui");
                     if (inStage() == 962 && mc.currentScreen != null) mc.currentScreen.close();
+                    // ESP / tracers / Sus Chunk showcase: a hidden stash with a kelp farm at Y -30
                     if (inStage() == 980) {
+                        int bx = ox - 40, by = -30, bz = oz + 20;
+                        stashX = bx; stashZ = bz;
+                        String[] cmds = {
+                            "forceload add " + (bx - 16) + " " + (bz - 16) + " " + (bx + 28) + " " + (bz + 26),
+                            "fill " + bx + " " + (by - 1) + " " + bz + " " + (bx + 12) + " " + (by + 5) + " " + (bz + 10) + " minecraft:deepslate[axis=x] hollow",
+                            // storage wall
+                            "setblock " + (bx + 2) + " " + by + " " + (bz + 1) + " minecraft:chest[facing=south]",
+                            "setblock " + (bx + 3) + " " + by + " " + (bz + 1) + " minecraft:chest[facing=south]",
+                            "setblock " + (bx + 4) + " " + by + " " + (bz + 1) + " minecraft:chest[facing=south]",
+                            "setblock " + (bx + 5) + " " + by + " " + (bz + 1) + " minecraft:barrel[facing=up]",
+                            "setblock " + (bx + 6) + " " + by + " " + (bz + 1) + " minecraft:purple_shulker_box",
+                            "setblock " + (bx + 7) + " " + by + " " + (bz + 1) + " minecraft:magenta_shulker_box",
+                            "setblock " + (bx + 8) + " " + by + " " + (bz + 1) + " minecraft:ender_chest[facing=south]",
+                            "setblock " + (bx + 2) + " " + (by + 1) + " " + (bz + 1) + " minecraft:chest[facing=south]",
+                            "setblock " + (bx + 3) + " " + (by + 1) + " " + (bz + 1) + " minecraft:chest[facing=south]",
+                            // dispenser row
+                            "fill " + (bx + 2) + " " + by + " " + (bz + 9) + " " + (bx + 5) + " " + by + " " + (bz + 9) + " minecraft:dispenser[facing=north]",
+                            // kelp farm: glass column with water + kelp, observer watching it, piston, redstone, hoppers into a chest
+                            "fill " + (bx + 8) + " " + by + " " + (bz + 4) + " " + (bx + 10) + " " + (by + 4) + " " + (bz + 6) + " minecraft:glass",
+                            "fill " + (bx + 9) + " " + by + " " + (bz + 5) + " " + (bx + 9) + " " + (by + 4) + " " + (bz + 5) + " minecraft:water",
+                            "fill " + (bx + 9) + " " + by + " " + (bz + 5) + " " + (bx + 9) + " " + (by + 2) + " " + (bz + 5) + " minecraft:kelp_plant",
+                            "setblock " + (bx + 9) + " " + (by + 3) + " " + (bz + 5) + " minecraft:kelp",
+                            "setblock " + (bx + 9) + " " + (by + 2) + " " + (bz + 4) + " minecraft:observer[facing=south]",
+                            "setblock " + (bx + 9) + " " + (by + 1) + " " + (bz + 4) + " minecraft:sticky_piston[facing=south]",
+                            "setblock " + (bx + 9) + " " + (by + 2) + " " + (bz + 3) + " minecraft:redstone_wire",
+                            "setblock " + (bx + 9) + " " + (by + 1) + " " + (bz + 3) + " minecraft:repeater[facing=north]",
+                            "setblock " + (bx + 10) + " " + by + " " + (bz + 3) + " minecraft:hopper[facing=east]",
+                            "setblock " + (bx + 11) + " " + by + " " + (bz + 3) + " minecraft:chest[facing=west]",
+                            "setblock " + (bx + 8) + " " + (by + 2) + " " + (bz + 7) + " minecraft:observer[facing=north]",
+                            "setblock " + (bx + 1) + " " + (by + 2) + " " + (bz + 5) + " minecraft:lantern[hanging=false]",
+                            "setblock " + (bx + 11) + " " + (by + 2) + " " + (bz + 8) + " minecraft:lantern[hanging=false]"};
+                        for (String c : cmds) serverCmd(mc, c);
+                        // modules: Storage ESP + Block ESP (farm parts) with neon tracers, Sus Chunk Finder; clean HUD
+                        for (Module m : ModuleManager.all())
+                            if (m.getCategory() == dev.stella.client.module.Category.HUD && !m.getName().equals("Stella Branding HUD")
+                                    && !m.getName().equals("Coordinates HUD")) m.setEnabled(false);
+                        for (String n : new String[]{"Light Level Overlay", "Auto Tool", "Player Detector", "Spawner Finder", "Glow Outline"})
+                            ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> m.setEnabled(false));
+                        setting("Block ESP", "Blocks", new java.util.ArrayList<>(java.util.List.of("minecraft:observer", "minecraft:sticky_piston",
+                                "minecraft:piston", "minecraft:dispenser", "minecraft:hopper")));
+                        setting("Block ESP", "Tracers", true);
+                        setting("Storage ESP", "Tracers", true);
+                        setting("Block ESP", "Tracer Origin", "Crosshair");
+                        setting("Storage ESP", "Tracer Origin", "Crosshair");
+                        setting("Sus Chunk Finder", "Only Below Y", true);
+                        setting("Sus Chunk Finder", "Flat Y", (double) oy + 1);
+                        setting("Sus Chunk Finder", "Range", 192.0);
+                        for (String n : new String[]{"Storage ESP", "Block ESP", "Sus Chunk Finder", "Custom Sky"})
+                            ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> { m.setEnabled(false); m.setEnabled(true); });
+                        serverCmd(mc, "gamemode spectator " + mc.player.getGameProfile().name());
+                        serverCmd(mc, "tp " + mc.player.getGameProfile().name() + " " + (bx + 6.5) + " " + (oy + 24) + " " + (bz - 14.5) + " 0 48");
+                        mc.inGameHud.getChatHud().clear(false);
+                    }
+                    if (inStage() == 1006) { mc.player.setYaw(0f); mc.player.setPitch(48f); }
+                    if (inStage() == 1012) {
+                        var sus = ModuleManager.get(dev.stella.client.modules.combat.SusChunkFinder.class);
+                        StellaClient.LOGGER.info("[smoke] stash: sus chunks flagged {}", sus.suspectChunks().size());
+                    }
+                    if (inStage() == 1014) shot(mc, "stash-aerial");
+                    if (inStage() == 1016) serverCmd(mc, "tp " + mc.player.getGameProfile().name() + " " + (stashX + 1.5) + " -29 " + (stashZ + 8.5) + " -135 12");
+                    if (inStage() == 1022) { mc.player.setYaw(-135f); mc.player.setPitch(12f); }
+                    if (inStage() == 1034) shot(mc, "stash-inside");
+                    if (inStage() == 1040) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {
