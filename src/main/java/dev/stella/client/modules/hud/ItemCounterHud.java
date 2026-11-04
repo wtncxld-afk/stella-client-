@@ -26,7 +26,7 @@ public class ItemCounterHud extends HudElement {
     private final BoolSetting hideZero = add(new BoolSetting("Hide Zero", "Hide items you have none of", true));
     private final BoolSetting warn = add(new BoolSetting("Low Totem Warning", "Count turns red at 1 or fewer totems", true));
 
-    public ItemCounterHud() { super("Item Counter HUD", "Counts totems, crystals, pearls and other PvP items you carry", -4, -150, false); }
+    public ItemCounterHud() { super("Item Counter HUD", "Counts totems, crystals, pearls and other PvP items you carry", -4, -232, false); }
 
     private int count(Item item) {
         if (mc.player == null) return 0;
