@@ -21,6 +21,7 @@ public abstract class CommandSuggestionsMixin {
         if (!StellaClient.isReady()) return;
         List<String> names = new ArrayList<>();
         packet.getSuggestions().getList().forEach(s -> names.add(s.getText()));
-        ModuleManager.get(AntiVanish.class).onSuggestions(packet.id(), names);
+        AntiVanish av = ModuleManager.get(AntiVanish.class);
+        if (av != null) av.onSuggestions(packet.id(), names);
     }
 }

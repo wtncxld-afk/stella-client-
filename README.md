@@ -75,7 +75,7 @@ Every module has its own keybind setting (click the value, press a key; right-cl
 distance, health, each with its own settings), Player Detector, Storage ESP (chests, trapped chests, barrels,
 shulkers, ender chests, hoppers, dispensers, plus your own block list, with optional tracers), Block ESP
 (with optional tracers), Sus Chunk Finder (flat red squares over suspected chunks below a Y-level you choose),
-Staff List, Anti Vanish, Media Base Finder (lists media / content creators in your region with their heads), Spawner Finder
+Staff List, Media Base Finder (lists media / content creators in your region with their heads), Spawner Finder
 (beacon-style beam above every spawner, plus a dropdown with each spawner's mob type, direction arrow and distance).
 
 **Combat:** Auto Totem, Auto Inv Totem, Hover Totem, Auto Crystal, Auto Anchor, Double Anchor (keybind macro), Totem Pop Counter.
@@ -188,7 +188,7 @@ Stella only uses information the server actually sends to your client. These are
 * **Staff List** has no built-in staff data. Add names you have verified yourself to `staff.json`, then
   toggle *Reload staff.json*. "In tab" means the name is in the tab list. If a staff member is missing
   from the tab list, the client cannot tell whether they are offline or vanished.
-* **Anti Vanish** can only report evidence it can observe:
+* **Anti Vanish** is removed for now (the code is kept but the module is not registered). When it returns, it can only report evidence it can observe:
   * any player's tab entry switches to spectator mode (e.g. `/gmsp`), staff.json or not (*Any Player In Spectator*);
   * a verified staff member's tab entry shows spectator mode;
   * a spectator-mode player entity is nearby;

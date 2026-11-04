@@ -66,7 +66,8 @@ public final class ModuleManager {
         register(new dev.stella.client.modules.hud.PotionHud());
         register(new dev.stella.client.modules.hud.ItemCounterHud());
         register(new StaffList());
-        register(new AntiVanish());
+        // Anti Vanish removed until further notice (source kept in modules/combat/AntiVanish.java)
+        // register(new AntiVanish());
         register(new dev.stella.client.modules.combat.MediaBaseFinder());
         // Misc
         register(new AutoRelog());

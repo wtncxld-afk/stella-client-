@@ -197,6 +197,7 @@ final class StellaSmokeTest {
 
     private static void logAntiVanish(String when) {
         var av = ModuleManager.get(dev.stella.client.modules.combat.AntiVanish.class);
+        if (av == null) return; // Anti Vanish is currently removed
         var tab = mc().getNetworkHandler().getPlayerListEntry(STAFF_UUID);
         boolean entity = mc().world.getPlayers().stream().anyMatch(p -> p.getUuid().equals(STAFF_UUID));
         StellaClient.LOGGER.info("[smoke] anti vanish {}: tab entry={} gamemode={} entity visible to client={} alerts={}", when,
@@ -495,16 +496,14 @@ final class StellaSmokeTest {
                         for (Module m : ModuleManager.all())
                             if (m.getCategory() == dev.stella.client.module.Category.HUD && !m.getName().equals("Stella Branding HUD")) m.setEnabled(false);
                         var av = ModuleManager.get(dev.stella.client.modules.combat.AntiVanish.class);
-                        av.setEnabled(false);
-                        av.setEnabled(true);
-                        av.log().clear();
+                        if (av != null) { av.setEnabled(false); av.setEnabled(true); av.log().clear(); }
                         ModuleManager.get(dev.stella.client.modules.combat.MediaBaseFinder.class).setEnabled(true);
                         mc.inGameHud.getChatHud().clear(false);
                         // Case 1: a verified staff member switches to spectator mode near us (real server-side player)
                         staffTest(mc, 1);
                     }
                     if (inStage() == 366) logAntiVanish("case 1: staff in spectator mode");
-                    if (inStage() == 368) shot(mc, "anti-vanish");
+                    if (inStage() == 368) shot(mc, "staff-join");
                     if (inStage() == 370) staffTest(mc, 2); // Case 2: vanish plugin hides them from tab but still sends their body
                     if (inStage() == 380) staffTest(mc, 4);
                     if (inStage() == 400) logAntiVanish("case 2: hidden from tab list, entity still sent");
@@ -512,14 +511,13 @@ final class StellaSmokeTest {
                     if (inStage() == 402) staffTest(mc, 5); // Case 3: unlisted player does /gmsp
                     if (inStage() == 409) { logAntiVanish("case 3: player not in staff.json does /gmsp"); staffTest(mc, 6); }
                     if (inStage() == 372) mc.setScreen(new ClickGuiScreen());
-                    if (inStage() == 385 && mc.currentScreen instanceof ClickGuiScreen gui) gui.openSettingsFor("Anti Vanish");
-                    if (inStage() == 405) shot(mc, "anti-vanish-gui");
+                    if (inStage() == 385 && mc.currentScreen instanceof ClickGuiScreen gui) gui.openSettingsFor("Radar HUD");
+                    if (inStage() == 405) shot(mc, "radar-gui");
                     if (inStage() == 410) {
                         mc.setScreen(null);
                         ModuleManager.get(dev.stella.client.modules.visuals.GlowOutline.class).setEnabled(true);
                         ModuleManager.get(dev.stella.client.modules.visuals.ItemScale.class).setEnabled(true);
                         ModuleManager.get(dev.stella.client.modules.visuals.SwingSpeed.class).setEnabled(true);
-                        ModuleManager.get(dev.stella.client.modules.combat.AntiVanish.class).setEnabled(false);
                         // back on the ground, so the dropped items land right in front of the camera
                         var h2 = mc.player.networkHandler;
                         h2.sendChatCommand("gamemode creative");
@@ -880,14 +878,14 @@ final class StellaSmokeTest {
                     }
                     if (T == 1176) {
                         tourPlayers(mc, false, 0, 0, 0, 0, 0, 0);
-                        caption("Staff List + Anti Vanish", "A staff member joins and goes /gmsp - Anti Vanish catches it");
-                        only("Staff List", "Anti Vanish", "Radar HUD");
+                        caption("Staff List + Radar", "A staff member from staff.json joins - alert, and their head on the radar");
+                        only("Staff List", "Radar HUD");
                         aerial(mc, bx + 6.5, oy, bz + 5.5, oy + 10, 12f);
                     }
                     if (T == 1180) { mc.player.setYaw(camYaw); mc.player.setPitch(camPitch); }
                     if (T == 1182) staffTest(mc, 1);
                     if (T == 1196) logAntiVanish("tour");
-                    if (T == 1200) shot(mc, "tour-5-staff-anti-vanish");
+                    if (T == 1200) shot(mc, "tour-5-staff-radar");
                     if (T == 1204) {
                         staffTest(mc, 3);
                         caption("Media Base Finder + Region Map", "Shows media players in your region and which region you're in");
