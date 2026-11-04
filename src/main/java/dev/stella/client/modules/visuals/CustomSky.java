@@ -24,8 +24,13 @@ import java.util.Random;
  * terrain and the far plane, so it only fills pixels where no terrain is.
  */
 public class CustomSky extends Module {
-    private final ModeSetting preset = add(new ModeSetting("Preset", "Sky style", "Cosmic Stella",
-            "Cosmic Stella", "Lavender Sunset", "Blood Moon", "Arctic Aurora", "Midnight", "Custom")).onChange(this::applyPreset);
+    private final ModeSetting preset = add(new ModeSetting("Preset", "Sky design. Match GUI Theme switches with your ClickGUI theme",
+            "Match GUI Theme", SkyStyles.PRESETS)).onChange(this::applyPreset);
+    private final BoolSetting body = add(new BoolSetting("Moon / Sun", "The design's moon or sun with its glow", true));
+    private final BoolSetting shooting = add(new BoolSetting("Shooting Stars", "Occasional shooting stars", true));
+    private final BoolSetting milkyWay = add(new BoolSetting("Milky Way", "Glowing band of stars (designs that have one)", true));
+    private final BoolSetting particles = add(new BoolSetting("Sky Particles", "Petals, embers, snow, bubbles or sparkles drifting through the sky", true));
+    private final BoolSetting rays = add(new BoolSetting("Light Rays", "Soft god rays from the sun / moon", true));
     private final ColorSetting top = add(new ColorSetting("Zenith Color", "Colour overhead", 0xFF0B0418));
     private final ColorSetting horizon = add(new ColorSetting("Horizon Color", "Colour at the horizon", 0xFF3B1466));
     private final ColorSetting bottom = add(new ColorSetting("Lower Color", "Colour below the horizon", 0xFF07030D));
@@ -49,19 +54,35 @@ public class CustomSky extends Module {
     private int builtStars = -1;
 
     public CustomSky() {
-        super("Custom Sky", "Cosmic Stella, Lavender Sunset, Blood Moon, Arctic Aurora and Midnight skies", Category.VISUALS);
+        super("Custom Sky", "15 animated sky designs, one for every GUI theme (moons, galaxies, auroras, petals...)", Category.VISUALS);
     }
 
+    /** Picking a design copies its colours into the Custom settings, so Custom starts from what you liked. */
     private void applyPreset() {
-        switch (preset.get()) {
-            case "Cosmic Stella" -> set(0xFF0B0418, 0xFF3B1466, 0xFF07030D, 0.35, true, 1500, 0xFFF3E8FF, true, 0x80A855F7, 0x60EC4899, false, 0x9022D3EE);
-            case "Lavender Sunset" -> set(0xFF2E1F5E, 0xFFF4A3C8, 0xFF5B3A7A, 0.6, true, 300, 0xFFFFF1F8, true, 0x50C4B5FD, 0x50FDA4AF, false, 0x9022D3EE);
-            case "Blood Moon" -> set(0xFF120203, 0xFF6B0F14, 0xFF0A0102, 0.45, true, 700, 0xFFFFC2C2, true, 0x60B91C1C, 0x407F1D1D, false, 0x9022D3EE);
-            case "Arctic Aurora" -> set(0xFF020B1A, 0xFF0E3B5C, 0xFF01060E, 0.3, true, 1800, 0xFFE0F2FE, false, 0x6038BDF8, 0x4022D3EE, true, 0xA022D3EE);
-            case "Midnight" -> set(0xFF020205, 0xFF0D0F1C, 0xFF010103, 0.25, true, 900, 0xFFCBD5E1, false, 0x40475569, 0x40334155, false, 0x9022D3EE);
-            default -> { }
-        }
+        String p = preset.get();
+        if (p.equals("Custom") || p.equals("Match GUI Theme")) return;
+        SkyStyles.Style st = SkyStyles.preset(p);
+        set(st.top(), st.horizon(), st.bottom(), st.atmosphere(), st.stars() > 0, Math.max(100, st.stars()), st.starColor(),
+                st.nebulaA() != 0, st.nebulaA() != 0 ? st.nebulaA() : 0x80A855F7, st.nebulaB() != 0 ? st.nebulaB() : 0x60EC4899,
+                st.aurora() != 0, st.aurora() != 0 ? st.aurora() : 0x9022D3EE);
     }
+
+    /** The design in use this frame. */
+    private SkyStyles.Style style() {
+        String p = preset.get();
+        if (p.equals("Custom")) {
+            return new SkyStyles.Style(top.argb(), horizon.argb(), bottom.argb(), atmosphere.get(), stars.isOn() ? starDensity.getInt() : 0, starColor.argb(),
+                    nebula.isOn() ? nebulaColor1.argb() : 0, nebula.isOn() ? nebulaColor2.argb() : 0, aurora.isOn() ? cur.aurora() : 0,
+                    SkyStyles.CRESCENT, 0xFFF3E8FF, 0.05f, 0.55f, 2.8f, true, 0, 0, SkyStyles.P_SPARKLES, starColor.argb(), false, false);
+        }
+        if (p.equals("Match GUI Theme")) {
+            String d = SkyStyles.forTheme(dev.stella.client.gui.theme.ThemeManager.name());
+            return d.equals("Accent") ? SkyStyles.fromAccent() : SkyStyles.preset(d);
+        }
+        return SkyStyles.preset(p);
+    }
+
+    private SkyStyles.Style cur;
 
     private void set(int t, int h, int b, double atm, boolean st, int dens, int sc, boolean neb, int n1, int n2, boolean aur, int ac) {
         top.set(t); horizon.set(h); bottom.set(b); atmosphere.set(atm); stars.set(st); starDensity.set((double) dens);
@@ -77,7 +98,7 @@ public class CustomSky extends Module {
 
     public float[] fogColor() {
         if (!active() || !matchFog.isOn()) return null;
-        int c = shade(horizon.argb(), 1f);
+        int c = shade((cur != null ? cur : style()).horizon(), 1f);
         return new float[]{((c >> 16) & 0xFF) / 255f, ((c >> 8) & 0xFF) / 255f, (c & 0xFF) / 255f};
     }
 
@@ -94,7 +115,7 @@ public class CustomSky extends Module {
     }
 
     private void buildStatic() {
-        int n = starDensity.getInt();
+        int n = Math.max(1, cur.stars());
         if (builtStars == n && starData != null) return;
         builtStars = n;
         Random r = new Random(0x57E11AL);
@@ -120,13 +141,13 @@ public class CustomSky extends Module {
 
     /** Elevation gradient: -1 (straight down) .. 1 (zenith). */
     private int gradient(float y) {
-        float atm = atmosphere.getFloat();
+        float atm = (float) cur.atmosphere();
         int c;
         if (y >= 0) {
             float t = (float) Math.pow(MathHelper.clamp(y / atm, 0, 1), 0.6);
-            c = ColorUtil.lerp(horizon.argb(), top.argb(), t);
+            c = ColorUtil.lerp(cur.horizon(), cur.top(), t);
         } else {
-            c = ColorUtil.lerp(horizon.argb(), bottom.argb(), MathHelper.clamp(-y / 0.25f, 0, 1));
+            c = ColorUtil.lerp(cur.horizon(), cur.bottom(), MathHelper.clamp(-y / 0.25f, 0, 1));
         }
         return shade(c, 1f) | 0xFF000000;
     }
@@ -134,6 +155,7 @@ public class CustomSky extends Module {
     /** Called from WorldRenderEvents.BEFORE_ENTITIES. Model-view already holds the camera rotation. */
     public void render(MatrixStack matrices, VertexConsumerProvider.Immediate consumers, float tickDelta) {
         if (!active()) return;
+        cur = style();
         buildStatic();
         float radius = Math.max(256f, mc.options.getClampedViewDistance() * 16f * 2.5f);
         Matrix4f m = new Matrix4f(matrices.peek().getPositionMatrix());
@@ -159,10 +181,10 @@ public class CustomSky extends Module {
         consumers.draw(StellaPipelines.SKY);
 
         // ---- nebula (additive glow)
-        if (nebula.isOn() && nightAlpha > 0.02f) {
+        if (cur.nebulaA() != 0 && nightAlpha > 0.02f) {
             VertexConsumer nb = consumers.getBuffer(StellaPipelines.SKY_GLOW);
             for (float[] n : nebulaData) {
-                int c = n[4] == 0 ? nebulaColor1.argb() : nebulaColor2.argb();
+                int c = n[4] == 0 ? cur.nebulaA() : cur.nebulaB();
                 int center = ColorUtil.mulAlpha(c, Math.min(1, intensity.get()) * nightAlpha);
                 int edge = c & 0x00FFFFFF;
                 Vector3f d = new Vector3f(n[0], n[1], n[2]);
@@ -186,7 +208,7 @@ public class CustomSky extends Module {
         }
 
         // ---- aurora curtains
-        if (aurora.isOn() && nightAlpha > 0.02f) {
+        if (cur.aurora() != 0 && nightAlpha > 0.02f) {
             VertexConsumer ab = consumers.getBuffer(StellaPipelines.SKY_GLOW_Q);
             double t = (time % 600000L) / 1000.0;
             for (int band = 0; band < 3; band++) {
@@ -197,9 +219,9 @@ public class CustomSky extends Module {
                     double wave1 = Math.sin(az1 * 4 + t * 0.4 + band) * 0.08, wave2 = Math.sin(az2 * 4 + t * 0.4 + band) * 0.08;
                     float bright1 = (float) (0.5 + 0.5 * Math.sin(az1 * 7 - t * 0.9 + band * 2));
                     float bright2 = (float) (0.5 + 0.5 * Math.sin(az2 * 7 - t * 0.9 + band * 2));
-                    int c1 = ColorUtil.mulAlpha(auroraColor.argb(), bright1 * nightAlpha * Math.min(1, intensity.get()));
-                    int c2 = ColorUtil.mulAlpha(auroraColor.argb(), bright2 * nightAlpha * Math.min(1, intensity.get()));
-                    int cTop = auroraColor.argb() & 0x00FFFFFF;
+                    int c1 = ColorUtil.mulAlpha(cur.aurora(), bright1 * nightAlpha * Math.min(1, intensity.get()));
+                    int c2 = ColorUtil.mulAlpha(cur.aurora(), bright2 * nightAlpha * Math.min(1, intensity.get()));
+                    int cTop = cur.aurora() & 0x00FFFFFF;
                     float[] p1 = dir(az1 + band * 0.9, baseEl + wave1), p2 = dir(az2 + band * 0.9, baseEl + wave2);
                     float[] q1 = dir(az1 + band * 0.9, baseEl + wave1 + 0.22), q2 = dir(az2 + band * 0.9, baseEl + wave2 + 0.22);
                     float rr = radius * 0.95f;
@@ -213,7 +235,7 @@ public class CustomSky extends Module {
         }
 
         // ---- stars
-        if (stars.isOn() && nightAlpha > 0.02f) {
+        if (cur.stars() > 0 && nightAlpha > 0.02f) {
             VertexConsumer sb = consumers.getBuffer(StellaPipelines.SKY);
             double tw = (time % 100000L) / 1000.0;
             float rr = radius * 0.9f;
@@ -222,7 +244,7 @@ public class CustomSky extends Module {
                 Vector3f[] b = basis(d);
                 float size = s[3] * radius / 400f;
                 float twinkle = (float) (0.65 + 0.35 * Math.sin(tw * 2.2 + s[4]));
-                int c = ColorUtil.mulAlpha(starColor.argb(), s[5] * twinkle * nightAlpha * Math.min(1, intensity.get()));
+                int c = ColorUtil.mulAlpha(cur.starColor(), s[5] * twinkle * nightAlpha * Math.min(1, intensity.get()));
                 float cx = d.x * rr, cy = d.y * rr, cz = d.z * rr;
                 v(sb, m, cx + (-b[0].x - b[1].x) * size, cy + (-b[0].y - b[1].y) * size, cz + (-b[0].z - b[1].z) * size, c);
                 v(sb, m, cx + (b[0].x - b[1].x) * size, cy + (b[0].y - b[1].y) * size, cz + (b[0].z - b[1].z) * size, c);
@@ -232,6 +254,8 @@ public class CustomSky extends Module {
             consumers.draw(StellaPipelines.SKY);
         }
 
+        SkyEffects.render(this, cur, m, consumers, radius, nightAlpha, (float) Math.min(1, intensity.get()), time,
+                body.isOn(), shooting.isOn(), milkyWay.isOn(), particles.isOn(), rays.isOn());
     }
 
     private static float[] dir(double azimuth, double elevation) {

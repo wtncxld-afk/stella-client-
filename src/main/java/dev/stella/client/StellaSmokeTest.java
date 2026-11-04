@@ -1085,7 +1085,22 @@ public final class StellaSmokeTest {
                     if (T == 2018 && mc.currentScreen instanceof ClickGuiScreen gui) gui.openSettingsFor("Knife Skins");
                     if (T == 2024) shot(mc, "glass-settings");
                     if (T == 2026) { mc.setScreen(null); setting("ClickGUI", "Theme", "Stella"); }
-                    if (inStage() == 2034) {
+                    // ================= themed skies: Match GUI Theme follows the ClickGUI theme =================
+                    String[] skyThemes = {"Stella", "Pink", "Red", "Emerald", "Midnight", "Ocean", "Sunset", "Galaxy", "Frost", "Liquid Glass"};
+                    if (T == 2028) {
+                        ModuleManager.all().stream().filter(m -> m.getName().equals("Custom Sky")).forEach(m -> m.setEnabled(true));
+                        setting("Custom Sky", "Preset", "Match GUI Theme");
+                        serverCmd(mc, "time set midnight");
+                        mc.options.hudHidden = true;
+                        mc.player.setPitch(-32f);
+                    }
+                    if (T >= 2030 && T < 2030 + skyThemes.length * 8) {
+                        int i = (T - 2030) / 8, k = (T - 2030) % 8;
+                        if (k == 0) { setting("ClickGUI", "Theme", skyThemes[i]); mc.player.setYaw(i * 36f); mc.player.setPitch(-28f - (i % 3) * 6f); }
+                        if (k == 6) shot(mc, "sky-theme-" + skyThemes[i].toLowerCase(java.util.Locale.ROOT).replace(' ', '-'));
+                    }
+                    if (T == 2030 + skyThemes.length * 8) { mc.options.hudHidden = false; setting("ClickGUI", "Theme", "Stella"); }
+                    if (inStage() == 2120) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {
