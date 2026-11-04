@@ -51,8 +51,19 @@ public class AuctionHelper extends Module {
         return false;
     }
 
-    /** Listing price read from the tooltip ("Price: $1.2k", "$15,000", "Cost 3.4m"). NaN if none. */
+    /** Prices are read once per stack (tooltips are expensive to build every frame). */
+    private static final java.util.Map<ItemStack, Double> PRICE_CACHE = java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
     public static double price(ItemStack st) {
+        Double cached = PRICE_CACHE.get(st);
+        if (cached != null) return cached;
+        double p = readPrice(st);
+        PRICE_CACHE.put(st, p);
+        return p;
+    }
+
+    /** Listing price read from the tooltip ("Price: $1.2k", "$15,000", "Cost 3.4m"). NaN if none. */
+    private static double readPrice(ItemStack st) {
         for (Text line : Screen.getTooltipFromItem(net.minecraft.client.MinecraftClient.getInstance(), st)) {
             String l = line.getString().toLowerCase(Locale.ROOT);
             if (l.contains("price") || l.contains("cost") || l.contains("bid") || l.contains("$")) {

@@ -39,7 +39,7 @@ public final class Render2D {
         r = Math.max(0, Math.min(r, Math.min(w, h) / 2f));
         if (r < 0.5f) { rect(ctx, x, y, w, h, color); return; }
         rect(ctx, x, y + r, w, h - 2 * r, color);
-        float step = 0.25f;
+        float step = r > 4 ? 0.5f : 0.34f; // fewer slices, same look at GUI scale
         for (float dy = 0; dy < r; dy += step) {
             float cy = r - dy - step / 2f;
             float inset = r - (float) Math.sqrt(Math.max(0, r * r - cy * cy));

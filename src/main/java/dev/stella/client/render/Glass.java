@@ -63,7 +63,7 @@ public final class Glass {
 
     private static void verticalFade(DrawContext ctx, float x, float y, float w, float h, int top, int bottom) {
         if (w <= 0 || h <= 0) return;
-        int steps = Math.max(1, Math.min(24, (int) h));
+        int steps = Math.max(1, Math.min(10, (int) (h / 2)));
         for (int i = 0; i < steps; i++) {
             float y0 = y + h * i / steps, y1 = y + h * (i + 1) / steps;
             Render2D.rect(ctx, x, y0, w, y1 - y0, ColorUtil.lerp(top, bottom, i / (double) Math.max(1, steps - 1)));

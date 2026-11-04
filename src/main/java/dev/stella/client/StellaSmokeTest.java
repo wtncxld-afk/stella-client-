@@ -1072,7 +1072,7 @@ public final class StellaSmokeTest {
                         setting("ClickGUI", "Theme", "Liquid Glass");
                         mc.options.setPerspective(net.minecraft.client.option.Perspective.FIRST_PERSON);
                         mc.player.setPitch(-8f);
-                        on("Radar HUD", "Clock HUD", "CPS Graph HUD", "Money Tracker HUD", "Armor HUD", "Coordinates HUD", "FPS HUD", "Combat Timer HUD", "Notifications HUD");
+                        on("Radar HUD", "Clock HUD", "CPS Graph HUD", "Money Tracker HUD", "Armor HUD", "Coordinates HUD", "Performance HUD", "Combat Timer HUD", "Notifications HUD");
                         ModuleManager.get(dev.stella.client.modules.hud.CombatTimerHud.class).tag();
                         dev.stella.client.notification.NotificationManager.post("Liquid Glass", "Theme applied to the GUI and every HUD card",
                                 dev.stella.client.notification.Notification.Type.SUCCESS, 8000);

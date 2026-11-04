@@ -88,6 +88,8 @@ public final class ModuleManager {
         register(new dev.stella.client.modules.hud.ClockHud());
         register(new dev.stella.client.modules.hud.CpsGraphHud());
         register(new dev.stella.client.modules.client.ClientTools());
+        register(new dev.stella.client.modules.client.Performance());
+        register(new dev.stella.client.modules.hud.PerformanceHud());
         register(new dev.stella.client.modules.anticheatoff.TestEnvironment());
         register(new dev.stella.client.modules.anticheatoff.Flight());
         register(new dev.stella.client.modules.anticheatoff.BoatFly());

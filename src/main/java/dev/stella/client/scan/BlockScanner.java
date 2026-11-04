@@ -26,7 +26,10 @@ public final class BlockScanner {
     /** chunk key -> bitmask of target indices still to scan. */
     private static final Long2IntLinkedOpenHashMap QUEUE = new Long2IntLinkedOpenHashMap();
     private static final LongOpenHashSet LOADED = new LongOpenHashSet();
-    private static final long BUDGET_NANOS = 3_000_000L;
+    private static long BUDGET_NANOS = 3_000_000L;
+
+    /** Max time per tick spent scanning chunks (Performance module). */
+    public static void setBudgetMillis(double ms) { BUDGET_NANOS = (long) (Math.max(0.5, ms) * 1_000_000L); }
     private static ClientWorld lastWorld;
 
     private BlockScanner() {}

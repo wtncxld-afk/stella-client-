@@ -21,7 +21,7 @@ public class MoneyTrackerHud extends HudElement {
 
     private record Sample(long t, double money, double shards) {}
     private final ArrayDeque<Sample> samples = new ArrayDeque<>();
-    private long lastSample;
+    private long lastSample, lastRead;
     private double money = Double.NaN, shards = Double.NaN;
     private Object lastWorld;
 
@@ -30,9 +30,11 @@ public class MoneyTrackerHud extends HudElement {
     @Override
     public void onTick() {
         if (mc.world != lastWorld) { lastWorld = mc.world; samples.clear(); }
+        long now = System.currentTimeMillis();
+        if (now - lastRead < 1000) return;
+        lastRead = now;
         money = find(moneyKeys.get());
         shards = find(shardKeys.get());
-        long now = System.currentTimeMillis();
         if (now - lastSample >= 5000 && !(Double.isNaN(money) && Double.isNaN(shards))) {
             lastSample = now;
             samples.addLast(new Sample(now, money, shards));
