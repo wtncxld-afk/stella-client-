@@ -21,6 +21,7 @@
     "GlowOutlineMixin",
     "HeldItemRendererMixin",
     "InteractionManagerAccessor",
+    "MinecraftClientMixin",
     "TextureManagerMixin",
     "KnifeRenderMixin",
     "InGameHudMixin",

@@ -24,7 +24,7 @@ import org.spongepowered.asm.mixin.MixinEnvironment;
  * creates a creative test world with every module enabled, takes screenshots
  * and prints STELLA_SMOKE_OK / STELLA_SMOKE_FAIL before exiting.
  */
-final class StellaSmokeTest {
+public final class StellaSmokeTest {
     private static int tick;
     private static int menuShownAt = -1;
     private static int stage;
@@ -1103,6 +1103,8 @@ final class StellaSmokeTest {
     }
 
     private static int mineIndex;
+    /** Read by MinecraftClientMixin: hold attack during the scripted mining demo (CI has no captured mouse). */
+    public static volatile boolean forceAttack;
 
     /** Scripted demo of the Anti Cheat Off modules for the preview video. */
     private static void acoDemo(MinecraftClient mc, int T, String me) {
@@ -1177,8 +1179,8 @@ final class StellaSmokeTest {
             serverCmd(mc, "tp " + me + " " + (x + 0.5) + " " + y + " " + (z + 0.5) + " 180 20");
             serverCmd(mc, "fill " + (x - 3) + " " + y + " " + (z - 3) + " " + (x + 3) + " " + (y + 2) + " " + (z - 3) + " minecraft:stone");
             serverCmd(mc, "item replace entity " + me + " hotbar.0 with minecraft:diamond_pickaxe");
-            setting("SpeedMine", "Speed", 2.5); setting("FastMine", "Break Delay", 0.0);
-            caption("Anti Cheat Off \u2022 SpeedMine + FastMine", "2.5x mining speed, no delay between blocks");
+            setting("SpeedMine", "Speed", 2.0); setting("FastMine", "Break Delay", 0.0);
+            caption("Anti Cheat Off \u2022 SpeedMine + FastMine", "2x mining speed, no delay between blocks");
             mineIndex = 0;
         }
         if (T == 1744) { mc.player.getInventory().setSelectedSlot(0); aco("SpeedMine", true); aco("FastMine", true); }
@@ -1191,8 +1193,14 @@ final class StellaSmokeTest {
         }
         if ((T >= 1746 && T < 1784) || (T >= 1790 && T < 1826)) mineWall(mc, x, y, z);
         if (T == 1784 || T == 1826) {
+            forceAttack = false;
             mc.interactionManager.cancelBlockBreaking();
             StellaClient.LOGGER.info("[smoke] aco: wall blocks broken = {}", mineIndex);
+        }
+        if (T == 1785) {
+            int broken = 0;
+            for (int i = 0; i < 21; i++) if (mc.world.getBlockState(new net.minecraft.util.math.BlockPos(x - 3 + i % 7, y + 2 - i / 7, z - 3)).isAir()) broken++;
+            StellaClient.LOGGER.info("[smoke] aco: survival SpeedMine broke {} of 21", broken);
         }
         if (T == 1828) { aco("InstantBreak", false); caption = null; serverCmd(mc, "gamemode creative " + me); }
     }
@@ -1201,16 +1209,14 @@ final class StellaSmokeTest {
     private static void mineWall(MinecraftClient mc, int x, int y, int z) {
         for (int guard = 0; guard < 21; guard++) {
             int i = mineIndex;
-            if (i >= 21) return;
+            if (i >= 21) { forceAttack = false; return; }
             net.minecraft.util.math.BlockPos pos = new net.minecraft.util.math.BlockPos(x - 3 + i % 7, y + 2 - i / 7, z - 3);
             if (mc.world.getBlockState(pos).isAir()) { mineIndex++; continue; }
             var eye = mc.player.getEyePos();
             double dx = pos.getX() + 0.5 - eye.x, dy = pos.getY() + 0.5 - eye.y, dz = pos.getZ() + 0.5 - eye.z;
             mc.player.setYaw((float) Math.toDegrees(Math.atan2(-dx, dz)));
             mc.player.setPitch((float) -Math.toDegrees(Math.atan2(dy, Math.hypot(dx, dz))));
-            if (!mc.interactionManager.isBreakingBlock()) mc.interactionManager.attackBlock(pos, net.minecraft.util.math.Direction.SOUTH);
-            else mc.interactionManager.updateBlockBreakingProgress(pos, net.minecraft.util.math.Direction.SOUTH);
-            mc.player.swingHand(net.minecraft.util.Hand.MAIN_HAND);
+            forceAttack = true; // vanilla does the actual mining of the block under the crosshair
             return;
         }
     }
