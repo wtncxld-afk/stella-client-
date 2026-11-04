@@ -46,6 +46,7 @@ final class StellaSmokeTest {
     }
 
     private static int slow;
+    private static boolean loadingShot;
     private static int ox, oy, oz, spawnX, spawnZ;
     private static net.minecraft.util.math.BlockPos breakPos;
     private static net.minecraft.util.math.Direction breakSide;
@@ -231,6 +232,10 @@ final class StellaSmokeTest {
                     }
                 }
                 case 4 -> {
+                    if (!loadingShot && mc.currentScreen instanceof net.minecraft.client.gui.screen.world.LevelLoadingScreen && inStage() > 6) {
+                        loadingShot = true;
+                        shot(mc, "loading-world");
+                    }
                     if (mc.world != null && mc.player != null && mc.currentScreen == null) {
                         for (Module m : ModuleManager.all()) {
                             if (m instanceof AutoRelog || m instanceof HudEditorModule || m instanceof Zoom
@@ -580,23 +585,18 @@ final class StellaSmokeTest {
                         mc.player.setPitch(0f);
                         mc.player.getInventory().setSelectedSlot(0);
                     }
-                    if (inStage() == 727 && mc.crosshairTarget instanceof net.minecraft.util.hit.BlockHitResult bh) {
-                        // start a real block break on the stone wall (what holding left-click does)
-                        breakPos = bh.getBlockPos(); breakSide = bh.getSide();
-                        mc.interactionManager.attackBlock(breakPos, breakSide);
-                    }
-                    if (inStage() > 727 && inStage() < 734 && breakPos != null) {
-                        if (mc.world.getBlockState(breakPos).isAir()) breakPos = null;
-                        else mc.interactionManager.updateBlockBreakingProgress(breakPos, breakSide);
+                    // CI has no real mouse (Minecraft cancels breaking without a captured cursor), so drive Auto Tool's logic directly
+                    if (inStage() >= 727 && inStage() < 733) {
+                        var at = ModuleManager.get(dev.stella.client.modules.misc.AutoTool.class);
+                        at.update(true);
                         if (mc.player.getInventory().getSelectedSlot() == 3) autoToolPicked = true;
                         StellaClient.LOGGER.info("[smoke] auto tool tick: {} | slot {}", dev.stella.client.modules.misc.AutoTool.lastDecision,
                                 mc.player.getInventory().getSelectedSlot());
                     }
-                    if (inStage() > 727 && inStage() < 734 && mc.player.getInventory().getSelectedSlot() == 3) autoToolPicked = true;
+                    if (inStage() == 733) ModuleManager.get(dev.stella.client.modules.misc.AutoTool.class).update(false);
                     if (inStage() == 734) {
                         StellaClient.LOGGER.info("[smoke] auto tool picked the pickaxe while mining stone: {}", autoToolPicked);
                         if (!autoToolPicked) fail("Auto Tool did not pick the pickaxe");
-                        mc.interactionManager.cancelBlockBreaking();
                     }
                     if (inStage() == 736) {
                         int sel = mc.player.getInventory().getSelectedSlot();
@@ -606,7 +606,10 @@ final class StellaSmokeTest {
                         if (dev.stella.client.modules.world.LightLevelOverlay.lastCount == 0) fail("Light Level Overlay found no lit blocks");
                         serverCmd(mc, "gamemode creative " + mc.player.getGameProfile().name());
                     }
-                    if (inStage() == 740) {
+                    if (inStage() == 740) mc.reloadResources(); // shows the startup / reload overlay
+                    if (inStage() == 750 && mc.getOverlay() != null) shot(mc, "loading-splash");
+                    if (inStage() > 750 && inStage() < 900 && mc.getOverlay() != null) return; // wait for the reload to finish
+                    if (inStage() == 900) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {

@@ -29,9 +29,13 @@ public class AutoTool extends Module {
     @Override
     public void onTick() {
         if (!inGame() || mc.currentScreen != null) { lastDecision = "screen open: " + mc.currentScreen; return; }
-        // holding left-click on a block, or Minecraft is already breaking one
-        boolean mining = (mc.options.attackKey.isPressed() || mc.interactionManager.isBreakingBlock())
-                && mc.crosshairTarget instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK;
+        // holding left-click, or Minecraft is already breaking a block
+        update(mc.options.attackKey.isPressed() || mc.interactionManager.isBreakingBlock());
+    }
+
+    /** Core logic, also driven directly by the smoke test (CI has no real mouse to hold). */
+    public void update(boolean attacking) {
+        boolean mining = attacking && mc.crosshairTarget instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK;
         if (!mining || (mc.player.isCreative() && !creative.isOn())) {
             lastDecision = "not mining (key=" + mc.options.attackKey.isPressed() + " breaking=" + mc.interactionManager.isBreakingBlock()
                     + " target=" + (mc.crosshairTarget == null ? null : mc.crosshairTarget.getType()) + " creative=" + mc.player.isCreative() + ")";
