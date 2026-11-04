@@ -561,6 +561,8 @@ final class StellaSmokeTest {
                         serverCmd(mc, "item replace entity " + mc.player.getGameProfile().name() + " hotbar.0 with minecraft:diamond_sword");
                         serverCmd(mc, "item replace entity " + mc.player.getGameProfile().name() + " hotbar.3 with minecraft:diamond_pickaxe");
                         serverCmd(mc, "tp " + mc.player.getGameProfile().name() + " " + x + ".5 " + y + " " + z + ".5");
+                        serverCmd(mc, "setblock " + (x + 2) + " " + y + " " + (z + 1) + " minecraft:torch");
+                        serverCmd(mc, "setblock " + (x - 2) + " " + (y + 4) + " " + (z - 2) + " minecraft:glowstone");
                         ModuleManager.get(dev.stella.client.modules.combat.PlayerDetector.class).setEnabled(false);
                         setting("Light Level Overlay", "Style", "Both");
                         ModuleManager.get(dev.stella.client.modules.world.LightLevelOverlay.class).setEnabled(true);
@@ -585,7 +587,8 @@ final class StellaSmokeTest {
                         int sel = mc.player.getInventory().getSelectedSlot();
                         StellaClient.LOGGER.info("[smoke] auto tool after mining: slot {}", sel);
                         if (sel != 0) fail("Auto Tool did not switch back");
-                        StellaClient.LOGGER.info("[smoke] light overlay spots: {}", dev.stella.client.modules.world.LightLevelOverlay.lastCount);
+                        StellaClient.LOGGER.info("[smoke] light overlay lit blocks: {}", dev.stella.client.modules.world.LightLevelOverlay.lastCount);
+                        if (dev.stella.client.modules.world.LightLevelOverlay.lastCount == 0) fail("Light Level Overlay found no lit blocks");
                         serverCmd(mc, "gamemode creative " + mc.player.getGameProfile().name());
                     }
                     if (inStage() == 740) {
