@@ -1225,6 +1225,7 @@ public final class StellaSmokeTest {
                     "minecraft:totem_of_undying[lore=[\"Price: $9k\"]] 1", "minecraft:netherite_ingot[lore=[\"Price: $12.5k\"]] 4",
                     "minecraft:golden_apple[lore=[\"Price: $2,400\"]] 12", "minecraft:totem_of_undying[lore=[\"Price: $7.2k\"]] 1"};
             for (int i = 0; i < items.length; i++) serverCmd(mc, "item replace block " + cx + " " + cy + " " + cz + " container." + (10 + i) + " with " + items[i]);
+            on("Auction Helper");
             caption("New \u2022 Auction Helper", "Price per item, cheapest in green, your watchlist in gold");
         }
         if (T == 1964) {
