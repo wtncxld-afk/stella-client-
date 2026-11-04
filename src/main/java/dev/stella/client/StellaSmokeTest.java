@@ -69,7 +69,8 @@ final class StellaSmokeTest {
             dev.stella.client.render.StellaFont.draw(ctx, captionSub, (sw - dev.stella.client.render.StellaFont.width(captionSub)) / 2, y + 23, (a << 24) | 0xB9A7D6, true);
     }
 
-    private static final String[] TOUR = {"Storage ESP", "Block ESP", "Sus Chunk Finder", "Spawner Finder", "Player ESP", "Player Detector",
+    // Sus Chunk Finder stays on for the whole tour: re-enabling it would throw away its findings and rescan
+    private static final String[] TOUR = {"Storage ESP", "Block ESP", "Spawner Finder", "Player ESP", "Player Detector",
             "Staff List", "Anti Vanish", "Media Base Finder", "Auto Tool", "Region Map HUD", "Staff List HUD", "Notifications HUD"};
 
     /** Turns on exactly these tour modules (the rest of TOUR off). */
@@ -811,6 +812,10 @@ final class StellaSmokeTest {
                     String me = mc.player.getGameProfile().name();
                     if (T == 1040) {
                         for (String c : new String[]{"time set noon", "weather clear", "gamerule sendCommandFeedback false", "gamerule doDaylightCycle false"}) serverCmd(mc, c);
+                        dev.stella.client.data.Waypoints.all().removeIf(w -> w.name().toLowerCase(java.util.Locale.ROOT).contains("death"));
+                        dev.stella.client.data.Waypoints.save();
+                        setting("Spawner Finder", "Chat Message", false);
+                        ModuleManager.get(dev.stella.client.modules.combat.SusChunkFinder.class).setEnabled(true);
                         for (String n : new String[]{"Death Coordinates", "Light Level Overlay"})
                             ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> m.setEnabled(false));
                         caption("Storage ESP + Block ESP", "Stash + kelp farm 30 blocks underground - every container and redstone part, with tracers");
@@ -820,7 +825,7 @@ final class StellaSmokeTest {
                     if (T == 1070) shot(mc, "tour-1-storage-block-esp");
                     if (T == 1074) {
                         caption("Sus Chunk Finder", "Flags chunks that hide a base underground - you just get a chat message");
-                        only("Sus Chunk Finder");
+                        only();
                         var sus = ModuleManager.get(dev.stella.client.modules.combat.SusChunkFinder.class);
                         sus.resetChatMessages();
                         double tx = bx + 6.5, tz = bz + 5.5, best = Double.MAX_VALUE;
@@ -844,7 +849,7 @@ final class StellaSmokeTest {
                     }
                     if (T == 1110) {
                         only("Spawner Finder");
-                        aerial(mc, bx + 26.5, oy, bz + 8.5, oy + 22, 28f);
+                        aerial(mc, bx + 26.5, oy, bz + 8.5, oy + 14, 22f);
                     }
                     if (T == 1116) { mc.player.setYaw(camYaw); mc.player.setPitch(camPitch); }
                     if (T == 1133 && holdForTerrain(mc, 900)) return;
@@ -869,7 +874,7 @@ final class StellaSmokeTest {
                     if (T == 1176) {
                         tourPlayers(mc, false, 0, 0, 0, 0, 0, 0);
                         caption("Staff List + Anti Vanish", "A staff member joins and goes /gmsp - Anti Vanish catches it");
-                        only("Staff List", "Anti Vanish", "Staff List HUD");
+                        only("Staff List", "Anti Vanish");
                         aerial(mc, bx + 6.5, oy, bz + 5.5, oy + 10, 12f);
                     }
                     if (T == 1180) { mc.player.setYaw(camYaw); mc.player.setPitch(camPitch); }
@@ -886,6 +891,7 @@ final class StellaSmokeTest {
                         only("Media Base Finder", "Region Map HUD");
                     }
                     if (T == 1210) mediaPlayer(mc, true);
+                    if (T == 1229) mc.inGameHud.getChatHud().clear(false);
                     if (T == 1230) shot(mc, "tour-6-media-region");
                     if (T == 1234) {
                         mediaPlayer(mc, false);
@@ -903,6 +909,7 @@ final class StellaSmokeTest {
                     }
                     if (T == 1240) { mc.player.setYaw(90f); mc.player.setPitch(10f); mc.player.getInventory().setSelectedSlot(0); }
                     if (T == 1243 && holdForTerrain(mc, 600)) return;
+                    if (T == 1244) mc.inGameHud.getChatHud().clear(false);
                     // look at deepslate (pickaxe) -> oak log (axe) -> dirt (shovel)
                     if (T >= 1246 && T < 1300) {
                         int seg = (T - 1246) / 18, k = (T - 1246) % 18;
@@ -916,16 +923,17 @@ final class StellaSmokeTest {
                             captionSub = "Mining " + new String[]{"deepslate", "an oak log", "dirt"}[seg] + "  ->  " + mc.player.getMainHandStack().getName().getString();
                             StellaClient.LOGGER.info("[smoke] tour auto tool: {} ({}) slot {}", captionSub, dev.stella.client.modules.misc.AutoTool.lastDecision, mc.player.getInventory().getSelectedSlot());
                         }
-                        if (k == 10) shot(mc, "tour-7-auto-tool-" + seg);
+                        if (k == 12) shot(mc, "tour-7-auto-tool-" + seg);
                     }
                     if (T == 1302) {
                         serverCmd(mc, "gamemode spectator " + me);
                         caption("Everything together", "ESP, tracers, spawner beams and Sus Chunk Finder over the stash");
-                        only("Storage ESP", "Block ESP", "Spawner Finder", "Sus Chunk Finder");
+                        only("Storage ESP", "Block ESP", "Spawner Finder");
                         aerial(mc, bx + 16.5, oy, bz + 8.5, oy + 30, 40f);
                     }
                     if (T == 1308) { mc.player.setYaw(camYaw); mc.player.setPitch(camPitch); }
                     if (T == 1321 && holdForTerrain(mc, 600)) return;
+                    if (T == 1312 || T == 1329) mc.inGameHud.getChatHud().clear(false);
                     if (T == 1330) shot(mc, "tour-8-everything");
                     if (T == 1340) caption = null;
                     if (inStage() == 1350) {
