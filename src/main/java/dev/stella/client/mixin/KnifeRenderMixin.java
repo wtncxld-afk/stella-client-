@@ -22,7 +22,7 @@ public abstract class KnifeRenderMixin {
         KnifeSkins k = ctx.isFirstPerson() ? KnifeSkins.active(stack) : null;
         if (k == null) { original.call(self, entity, stack, ctx, matrices, queue, light); return; }
         try {
-            k.renderFirstPerson(matrices, queue, ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND);
+            k.renderFirstPerson(matrices, queue, ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND, light, stack);
         } catch (Throwable t) {
             dev.stella.client.StellaClient.reportError("Knife Skins", t);
             original.call(self, entity, stack, ctx, matrices, queue, light);

@@ -906,7 +906,11 @@ final class StellaSmokeTest {
                         only("Auto Tool");
                         serverCmd(mc, "gamemode survival " + me);
                         serverCmd(mc, "clear " + me);
-                        serverCmd(mc, "item replace entity " + me + " hotbar.0 with minecraft:diamond_sword");
+                        serverCmd(mc, "item replace entity " + me + " hotbar.0 with minecraft:netherite_sword[enchantments={sharpness:5}]");
+                        serverCmd(mc, "item replace entity " + me + " hotbar.1 with minecraft:diamond_pickaxe[enchantments={efficiency:5}]");
+                        serverCmd(mc, "item replace entity " + me + " hotbar.2 with minecraft:enchanted_book");
+                        serverCmd(mc, "item replace entity " + me + " armor.chest with minecraft:netherite_chestplate[enchantments={protection:4}]");
+                        ModuleManager.get(dev.stella.client.modules.cosmetics.CustomGlint.class).setEnabled(true);
                         serverCmd(mc, "item replace entity " + me + " hotbar.2 with minecraft:netherite_pickaxe");
                         serverCmd(mc, "item replace entity " + me + " hotbar.4 with minecraft:netherite_axe");
                         serverCmd(mc, "item replace entity " + me + " hotbar.6 with minecraft:netherite_shovel");
@@ -997,7 +1001,7 @@ final class StellaSmokeTest {
                         mc.player.setPitch(10f);
                         ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class).setEnabled(true);
                     }
-                    String[][] knives = {{"Karambit", "Nebula"}, {"Butterfly", "Ruby"}, {"Bayonet", "Sapphire"}, {"Stella Dagger", "Gold"}};
+                    String[][] knives = {{"Karambit", "Nebula"}, {"Butterfly", "Damascus"}, {"Bayonet", "Ember"}, {"Stella Dagger", "Sunset"}};
                     if (T >= 1414 && T < 1414 + knives.length * 12) {
                         int i = (T - 1414) / 12, k = (T - 1414) % 12;
                         var ks = ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class);
@@ -1007,15 +1011,34 @@ final class StellaSmokeTest {
                             caption("Cosmetics \u2022 Knife Skins", knives[i][0] + " | " + knives[i][1] + "  -  press Y to inspect");
                         }
                         if (k == 4) shot(mc, "knife-" + knives[i][0].toLowerCase().replace(' ', '-'));
-                        if (k == 6) dev.stella.client.modules.cosmetics.KnifeSkins.previewT = 0.42f;
-                        if (k == 9) shot(mc, "knife-" + knives[i][0].toLowerCase().replace(' ', '-') + "-inspect");
+                        if (k == 6) dev.stella.client.modules.cosmetics.KnifeSkins.previewT = 0.3f;
+                        if (k == 8) shot(mc, "knife-" + knives[i][0].toLowerCase().replace(' ', '-') + "-inspect");
+                        if (k == 9) dev.stella.client.modules.cosmetics.KnifeSkins.previewT = 0.66f;
+                        if (k == 11) shot(mc, "knife-" + knives[i][0].toLowerCase().replace(' ', '-') + "-trick");
                     }
                     if (T == 1414 + knives.length * 12) {
                         dev.stella.client.modules.cosmetics.KnifeSkins.previewT = -1f;
                         ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class).inspect();
                     }
-                    if (T == 1470) caption = null;
-                    if (inStage() == 1480) {
+                    // custom enchantment glint on armor + items (third person front)
+                    if (T == 1468) {
+                        ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class).setEnabled(false);
+                        mc.options.setPerspective(net.minecraft.client.option.Perspective.THIRD_PERSON_FRONT);
+                        mc.player.setPitch(5f);
+                        caption("Cosmetics \u2022 Custom Glint", "Stella sparkle glint in your theme colour");
+                    }
+                    if (T == 1474) shot(mc, "glint-stella");
+                    if (T == 1476) { setting("Custom Glint", "Style", "Waves"); setting("Custom Glint", "Color", "Rainbow"); caption("Cosmetics \u2022 Custom Glint", "Rainbow waves - pick style, colour, speed and strength"); }
+                    if (T == 1482) shot(mc, "glint-rainbow");
+                    if (T == 1484) {
+                        mc.options.setPerspective(net.minecraft.client.option.Perspective.FIRST_PERSON);
+                        ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class).setEnabled(true);
+                        setting("Custom Glint", "Style", "Stella"); setting("Custom Glint", "Color", "Theme");
+                        caption("Cosmetics \u2022 Enchanted Knife", "Enchanted swords shimmer in your glint colour");
+                    }
+                    if (T == 1490) shot(mc, "knife-enchanted");
+                    if (T == 1494) caption = null;
+                    if (inStage() == 1500) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {

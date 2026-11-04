@@ -71,8 +71,6 @@ public class SusChunkFinder extends Module {
     private final BoolSetting flatAtPlayer = add(new BoolSetting("Flat At Player Y", "Put the flat square at your feet instead of Flat Y", false)).visibleWhen(() -> boxMode.is("Flat"));
     private final ColorSetting color = add(new ColorSetting("Color", "Chunk colour", 0xFFFF4A33));
     private final NumberSetting opacity = add(new NumberSetting("Opacity", "How see-through the red chunk squares are (0 = invisible, 1 = solid)", 0.7, 0.05, 1, 0.05));
-    private final ModeSetting style = add(new ModeSetting("Style", "Animated: pulsing glow, corner brackets, scan line and grid. Classic: plain square",
-            "Animated", "Animated", "Classic")).visibleWhen(() -> boxMode.is("Flat"));
     private final BoolSetting outline = add(new BoolSetting("Outline", "Draw an outline around each chunk", false));
     private final BoolSetting confidenceFill = add(new BoolSetting("Confidence Opacity", "Fainter squares for lower confidence", false));
     private final BoolSetting showBlocks = add(new BoolSetting("Show Blocks", "Also outline the exact suspicious blocks", false));
@@ -346,11 +344,6 @@ public class SusChunkFinder extends Module {
         return out;
     }
 
-    private void drawAnimated(Render3D r, Box box, double a) {
-        r.chunkSquare(box.minX, box.minZ, box.maxX, box.maxZ, box.minY, color.argb(), a, outline.isOn());
-        r.setLineWidth(2.5f);
-    }
-
     private static int argb(int rgb, double alpha) {
         return ((int) (Math.max(0, Math.min(1, alpha)) * 255) << 24) | (rgb & 0xFFFFFF);
     }
@@ -390,9 +383,7 @@ public class SusChunkFinder extends Module {
             int outline = ColorUtil.withAlpha(color.argb(), (int) (255 * Math.min(1, Math.max(0.6, a + 0.2))));
             int fill = ColorUtil.withAlpha(color.argb(), (int) (255 * a));
             Box box = chunkBox(c);
-            if (boxMode.is("Flat") && style.is("Animated")) {
-                drawAnimated(r, box, a);
-            } else if (boxMode.is("Flat")) {
+            if (boxMode.is("Flat")) {
                 r.quadXZ(box.minX, box.minZ, box.maxX, box.maxZ, box.minY, fill);
                 if (this.outline.isOn()) r.boxOutline(new Box(box.minX, box.minY, box.minZ, box.maxX, box.minY, box.maxZ), outline);
             } else {

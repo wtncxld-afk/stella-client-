@@ -11,7 +11,6 @@ import dev.stella.client.setting.ModeSetting;
 import dev.stella.client.setting.NumberSetting;
 import dev.stella.client.util.ColorUtil;
 import dev.stella.client.util.Keys;
-import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
@@ -19,27 +18,31 @@ import net.minecraft.registry.Registries;
 import net.minecraft.util.math.RotationAxis;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * Replaces the first-person look of swords with a knife model (Karambit, Butterfly, Bayonet or the
- * Stella Dagger) in one of several finishes, with an inspect animation on a hotkey. Purely visual and
- * client-side: other players still see your normal sword.
+ * First-person knife models for swords: Karambit, Butterfly, Bayonet or the Stella Dagger, with
+ * patterned finishes, a ground edge, moving shine, glowing edges, enchantment shimmer, a draw
+ * flourish when you switch to it and an inspect animation on a hotkey. Visual and client-side only:
+ * other players still see your sword.
  */
 public class KnifeSkins extends Module {
     private final ModeSetting knife = add(new ModeSetting("Knife", "Knife model", "Karambit", "Karambit", "Butterfly", "Bayonet", "Stella Dagger"));
-    private final ModeSetting finish = add(new ModeSetting("Finish", "Blade finish", "Nebula", "Nebula", "Theme", "Ruby", "Emerald", "Sapphire", "Gold", "Midnight", "Rainbow"));
+    private final ModeSetting finish = add(new ModeSetting("Finish", "Blade finish", "Nebula",
+            "Nebula", "Damascus", "Sunset", "Ember", "Prism", "Ruby", "Sapphire", "Emerald", "Gold", "Midnight", "Theme"));
     private final KeySetting inspectKey = add(new KeySetting("Inspect Key", "Press to inspect your knife", GLFW.GLFW_KEY_Y));
-    private final NumberSetting inspectTime = add(new NumberSetting("Inspect Time", "Length of the inspect animation", 2.2, 1.0, 4.0, 0.1).suffix("s"));
+    private final NumberSetting inspectTime = add(new NumberSetting("Inspect Time", "Length of the inspect animation", 2.8, 1.5, 5.0, 0.1).suffix("s"));
+    private final BoolSetting drawAnim = add(new BoolSetting("Draw Animation", "Flourish when you switch to the knife", true));
+    private final BoolSetting edgeGlow = add(new BoolSetting("Edge Glow", "Neon glow along the cutting edge", true));
+    private final BoolSetting sparkles = add(new BoolSetting("Sparkles", "Twinkling sparkles on the blade", true));
+    private final BoolSetting sway = add(new BoolSetting("Idle Sway", "Gentle breathing movement", true));
     private final BoolSetting axes = add(new BoolSetting("Axes Too", "Also show the knife when holding an axe", false));
 
-    private long inspectStart = -1;
+    private long inspectStart = -1, drawStart = -1;
     private boolean keyWasDown;
+    private ItemStack lastStack = ItemStack.EMPTY;
     /** When >= 0, freezes the inspect animation at this progress (previews and the smoke test). */
     public static float previewT = -1f;
 
-    public KnifeSkins() { super("Knife Skins", "First-person knife models with an inspect animation (sword slot)", Category.COSMETICS, false); }
+    public KnifeSkins() { super("Knife Skins", "First-person knife models with finishes, draw and inspect animations (sword slot)", Category.COSMETICS, false); }
 
     public void setKnife(String k) { knife.set(k); }
     public void setFinish(String f) { finish.set(f); }
@@ -47,9 +50,13 @@ public class KnifeSkins extends Module {
 
     @Override
     public void onTick() {
+        if (mc.player == null) return;
+        ItemStack held = mc.player.getMainHandStack();
         boolean down = mc.currentScreen == null && inspectKey.isBound() && Keys.down(inspectKey.key());
-        if (down && !keyWasDown && mc.player != null && applies(mc.player.getMainHandStack())) inspect();
+        if (down && !keyWasDown && applies(held)) inspect();
         keyWasDown = down;
+        if (applies(held) && !ItemStack.areItemsEqual(held, lastStack) && drawAnim.isOn()) { drawStart = System.currentTimeMillis(); inspectStart = -1; }
+        lastStack = held.copy();
     }
 
     public static KnifeSkins active(ItemStack stack) {
@@ -63,7 +70,6 @@ public class KnifeSkins extends Module {
         return path.endsWith("_sword") || (axes.isOn() && path.endsWith("_axe"));
     }
 
-    /** Inspect progress 0..1, or -1 when not inspecting. */
     private float inspectProgress() {
         if (previewT >= 0) return previewT;
         if (inspectStart < 0) return -1;
@@ -72,239 +78,320 @@ public class KnifeSkins extends Module {
         return t;
     }
 
+    private float drawProgress() {
+        if (drawStart < 0 || previewT >= 0) return 1;
+        float t = (System.currentTimeMillis() - drawStart) / 550f;
+        if (t >= 1) { drawStart = -1; return 1; }
+        return t;
+    }
+
+    // ------------------------------------------------------------------ animation
+
     /** Called from the held-item mixin instead of drawing the sword in first person. */
-    public void renderFirstPerson(MatrixStack m, OrderedRenderCommandQueue queue, boolean leftHand) {
+    public void renderFirstPerson(MatrixStack m, OrderedRenderCommandQueue queue, boolean leftHand, int light, ItemStack stack) {
         m.push();
         float side = leftHand ? -1 : 1;
-        // base pose: blade up, leaning into the screen and toward the centre like a held sword
-        float t = inspectProgress();
+        double now = System.currentTimeMillis() / 1000.0;
+        float t = inspectProgress(), d = drawProgress();
         String k = knife.get();
-        float butterflyOpen = 0, mid = 0;
-        // pose = 0: held (blade up and forward, like a sword); pose = 1: inspect (blade flat towards you, across the screen)
-        float pose = 0;
+        float open = 0;
+
+        // inspect choreography: raise (0-.14), show face (.14-.36), roll to show the back (.36-.5),
+        // trick (.5-.84), return (.84-1)
+        float pose = 0, roll = 0, trick = 0;
         if (t >= 0) {
-            float in = smooth(Math.min(1, t / 0.2f)), out = smooth(Math.max(0, (t - 0.8f) / 0.2f));
-            pose = in * (1 - out);
-            mid = Math.max(0, Math.min(1, (t - 0.2f) / 0.6f));
+            pose = smooth(clamp(t / 0.14f)) * (1 - smooth(clamp((t - 0.84f) / 0.16f)));
+            roll = smooth(clamp((t - 0.36f) / 0.14f)) * (1 - smooth(clamp((t - 0.84f) / 0.16f)));
+            trick = clamp((t - 0.5f) / 0.34f);
         }
-        m.translate(lerp(0.0f, -0.16f, pose) * side, lerp(0.12f, 0.2f, pose), lerp(-0.06f, -0.05f, pose));
-        m.multiply(RotationAxis.POSITIVE_X.rotationDegrees(lerp(-68, -12, pose)));
-        m.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(lerp(16, 62, pose) * side));
-        m.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(lerp(0, -18, pose) * side));
-        float sc = lerp(1.25f, 1.1f, pose);
+        float breathe = sway.isOn() && t < 0 ? (float) Math.sin(now * 1.7) : 0;
+
+        // draw flourish: comes up from below while flipping once around the blade axis
+        float dIn = 1 - smooth(d);
+        m.translate(0.04f * side * dIn, -0.32f * dIn, 0.05f * dIn);
+
+        float tilt = t >= 0 ? (float) Math.sin(clamp((t - 0.14f) / 0.22f) * Math.PI) : 0;
+        m.translate(lerp(0.0f, -0.17f, pose) * side, lerp(0.13f, 0.21f, pose) + breathe * 0.006f, lerp(-0.06f, -0.04f, pose));
+        m.multiply(RotationAxis.POSITIVE_X.rotationDegrees(lerp(-68, -14, pose) + breathe * 0.8f));
+        m.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((lerp(16, 64, pose) + 20 * tilt) * side));
+        m.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((lerp(0, -16, pose) + 180 * roll) * side - 360 * dIn * side));
+        float sc = lerp(1.28f, 1.12f, pose);
         m.scale(sc, sc, sc);
-        if (t >= 0) {
-            float sm = smooth(mid);
+        if (t >= 0 && trick > 0) {
+            float sm = smooth(trick);
             switch (k) {
-                case "Karambit" -> {
-                    // twirl around the finger ring twice
-                    m.translate(0, -0.05f, 0);
+                case "Karambit" -> { // twirl twice around the finger ring
+                    m.translate(0, -0.06f, 0);
                     m.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(-720 * side * sm));
-                    m.translate(0, 0.05f, 0);
+                    m.translate(0, 0.06f, 0);
                 }
-                case "Butterfly" -> {
-                    // handles flip open and shut while the knife rolls
-                    butterflyOpen = (float) Math.abs(Math.sin(mid * Math.PI * 2));
+                case "Butterfly" -> { // handles flip open and shut twice
+                    open = (float) Math.abs(Math.sin(trick * Math.PI * 2));
                     m.translate(0, 0.24f, 0);
-                    m.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(360 * sm));
+                    m.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180 * sm));
                     m.translate(0, -0.24f, 0);
                 }
-                case "Bayonet" -> {
-                    // flip over the blade axis, a small toss, and back
-                    m.translate(0, 0.06f * (float) Math.sin(mid * Math.PI), 0);
-                    m.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(360 * sm));
+                case "Bayonet" -> { // toss it up, full flip, catch
+                    float arc = (float) Math.sin(trick * Math.PI);
+                    m.translate(0, 0.12f * arc, 0.02f * arc);
+                    m.translate(0, 0.3f, 0);
+                    m.multiply(RotationAxis.POSITIVE_X.rotationDegrees(360 * sm));
+                    m.translate(0, -0.3f, 0);
                 }
-                default -> {
+                default -> { // spin around the blade
                     m.translate(0, 0.3f, 0);
                     m.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(540 * sm));
                     m.translate(0, -0.3f, 0);
                 }
             }
         }
-        List<float[]> quads = new ArrayList<>();
-        build(k, butterflyOpen, quads);
-        queue.submitCustom(m, StellaPipelines.SOLID, (entry, vc) -> emit(entry, vc, quads));
+
+        KnifeMesh mesh = new KnifeMesh();
+        int block = (light & 0xFFFF) >> 4, sky = (light >> 20) & 0xF;
+        mesh.light = 0.42f + 0.58f * Math.max(block, sky) / 15f;
+        float shine = (float) ((now * 0.45) % 1.6) - 0.3f;
+        build(mesh, k, open, shine, now);
+        if (stack != null && stack.hasGlint()) glint(mesh, now);
+        queue.submitCustom(m, StellaPipelines.SOLID, mesh::emitSolid);
+        queue.submitCustom(m, StellaPipelines.SKY_GLOW_Q, mesh::emitGlow);
         m.pop();
     }
 
     private static float smooth(float x) { return x * x * (3 - 2 * x); }
+    private static float clamp(float x) { return Math.max(0, Math.min(1, x)); }
     private static float lerp(float a, float b, float t) { return a + (b - a) * t; }
 
-    // ------------------------------------------------------------------ mesh
+    // ------------------------------------------------------------------ finishes
 
-    /** Each float[] is one quad: 4 x (x, y, z) + colour (as float bits). */
-    private static void emit(MatrixStack.Entry e, VertexConsumer vc, List<float[]> quads) {
-        for (float[] q : quads) {
-            int c = Float.floatToRawIntBits(q[12]);
-            for (int i = 0; i < 4; i++) vc.vertex(e, q[i * 3], q[i * 3 + 1], q[i * 3 + 2]).color(c);
-        }
-    }
+    private record Palette(int a, int b, int handle, int accent, int glow) {}
 
-    private int[] palette() {
-        double t = (System.currentTimeMillis() % 5000L) / 5000.0;
+    private Palette palette() {
         return switch (finish.get()) {
-            case "Theme" -> new int[]{ThemeManager.accentAt(0), ThemeManager.accentAt(0.5), 0xFF1A1622};
-            case "Ruby" -> new int[]{0xFF7A0718, 0xFFFF3B5C, 0xFF1C0A0E};
-            case "Emerald" -> new int[]{0xFF04563A, 0xFF33F2A0, 0xFF0B1A14};
-            case "Sapphire" -> new int[]{0xFF0A2A8C, 0xFF4FB6FF, 0xFF0B1022};
-            case "Gold" -> new int[]{0xFF9C6A12, 0xFFFFE07A, 0xFF231A0C};
-            case "Midnight" -> new int[]{0xFF14131A, 0xFF5C5A6E, 0xFF09090C};
-            case "Rainbow" -> new int[]{ColorUtil.fromHsb((float) t, 0.8f, 1f, 255), ColorUtil.fromHsb((float) ((t + 0.35) % 1), 0.8f, 1f, 255), 0xFF141218};
-            default -> new int[]{0xFF3A1A8C, 0xFFE070FF, 0xFF15101F}; // Nebula: deep violet into pink
+            case "Damascus" -> new Palette(0xFF4A4D57, 0xFFC9CDD8, 0xFF2B1D14, 0xFFB8BCC8, 0xFF9FD3FF);
+            case "Sunset" -> new Palette(0xFFFF4FA3, 0xFFFFD36B, 0xFF1F1420, 0xFFFFB3D9, 0xFFFF8FC8);
+            case "Ember" -> new Palette(0xFFFF7A1A, 0xFF1A0E08, 0xFF16100C, 0xFFFFB066, 0xFFFF6A1A);
+            case "Prism" -> new Palette(0xFF6AE3FF, 0xFFFF7BE5, 0xFF141320, 0xFFE8F6FF, 0xFFB6F0FF);
+            case "Ruby" -> new Palette(0xFF5A0414, 0xFFFF2E57, 0xFF1C0A0E, 0xFFFF8FA5, 0xFFFF3B5C);
+            case "Sapphire" -> new Palette(0xFF061E6E, 0xFF3FA9FF, 0xFF0B1022, 0xFF9FD6FF, 0xFF4FB6FF);
+            case "Emerald" -> new Palette(0xFF033D29, 0xFF2EF29A, 0xFF0B1A14, 0xFF9DFFD2, 0xFF33F2A0);
+            case "Gold" -> new Palette(0xFF8A5A0C, 0xFFFFE27A, 0xFF231A0C, 0xFFFFF0B3, 0xFFFFD45A);
+            case "Midnight" -> new Palette(0xFF0E0D14, 0xFF4B4860, 0xFF09090C, 0xFF8C88A8, 0xFF7C6CFF);
+            case "Theme" -> new Palette(ColorUtil.lerp(ThemeManager.get().accent(), 0xFF000000, 0.45), ThemeManager.accentAt(0.5), 0xFF15121C,
+                    ColorUtil.lerp(ThemeManager.get().accent(), 0xFFFFFFFF, 0.5), ThemeManager.get().accent());
+            default -> new Palette(0xFF26105E, 0xFFE070FF, 0xFF15101F, 0xFFD9B8FF, 0xFFC27CFF); // Nebula
         };
     }
 
-    private void build(String k, float open, List<float[]> out) {
-        int[] p = palette();
-        int bladeA = p[0], bladeB = p[1], handle = p[2];
-        int accent = ColorUtil.lerp(bladeB, 0xFFFFFFFF, 0.3);
+    /** Blade pattern for the chosen finish (across 0 = spine .. 1 = edge, along 0 = base .. 1 = tip). */
+    private KnifeMesh.Finish pattern(Palette p, double now) {
+        return switch (finish.get()) {
+            case "Damascus" -> (u, s, side) -> {
+                double w = Math.sin(s * 46 + Math.sin(u * 7 + s * 9) * 2.2);
+                return ColorUtil.lerp(p.a(), p.b(), 0.5 + 0.5 * w);
+            };
+            case "Ember" -> (u, s, side) -> {
+                double stripe = Math.sin(s * 30 + Math.sin(u * 5) * 1.8);
+                return stripe > 0.45 ? 0xFF1A0E08 : ColorUtil.lerp(0xFFFF4A0A, 0xFFFFB347, u * 0.7 + s * 0.3);
+            };
+            case "Sunset" -> (u, s, side) -> {
+                int c = s < 0.5 ? ColorUtil.lerp(0xFF7B3BFF, p.a(), s * 2) : ColorUtil.lerp(p.a(), p.b(), (s - 0.5) * 2);
+                return ColorUtil.lerp(c, 0xFFFFFFFF, u * 0.15);
+            };
+            case "Prism" -> (u, s, side) -> ColorUtil.fromHsb((float) ((s * 0.8 + u * 0.3 + now * 0.08 + (side > 0 ? 0 : 0.5)) % 1.0), 0.55f, 1f, 255);
+            case "Ruby", "Sapphire", "Emerald" -> (u, s, side) -> {
+                double n = Math.sin(s * 23 + u * 5) * Math.sin(s * 9 - u * 11 + 1.3) + 0.4 * Math.sin(s * 41 + u * 17);
+                return ColorUtil.lerp(p.a(), p.b(), Math.max(0, Math.min(1, 0.45 + n * 0.55)));
+            };
+            case "Nebula" -> (u, s, side) -> {
+                double cloud = 0.5 + 0.5 * Math.sin(s * 13 + Math.sin(u * 6 + s * 4) * 2.5);
+                int c = ColorUtil.lerp(p.a(), 0xFF3A6BFF, s * 0.5);
+                return ColorUtil.lerp(c, p.b(), cloud * 0.75);
+            };
+            default -> (u, s, side) -> ColorUtil.lerp(p.a(), p.b(), 0.25 + s * 0.6 + u * 0.15);
+        };
+    }
+
+    // ------------------------------------------------------------------ models
+
+    private void build(KnifeMesh mesh, String k, float open, float shine, double now) {
+        Palette p = palette();
+        KnifeMesh.Finish f = pattern(p, now);
+        int glow = edgeGlow.isOn() ? p.glow() : 0;
         switch (k) {
-            case "Karambit" -> {
-                ring(out, 0, -0.05f, 0.045f, 0.012f, accent);                // finger ring
-                box(out, -0.022f, -0.005f, -0.016f, 0.022f, 0.22f, 0.016f, handle); // grip
-                box(out, -0.025f, 0.05f, -0.018f, 0.025f, 0.07f, 0.018f, accent);
-                box(out, -0.025f, 0.15f, -0.018f, 0.025f, 0.17f, 0.018f, accent);
-                // hooked blade: arc curving forward, tapering to a point
-                int n = 14;
-                for (int i = 0; i < n; i++) {
-                    float a0 = i / (float) n, a1 = (i + 1) / (float) n;
-                    float[] c0 = arc(a0), c1 = arc(a1);
-                    float w0 = 0.048f * (1 - a0 * 0.92f), w1 = 0.048f * (1 - a1 * 0.92f);
-                    slab(out, c0[0] - w0 * c0[2], c0[1] + w0 * c0[3], c0[0], c0[1], c1[0], c1[1], c1[0] - w1 * c1[2], c1[1] + w1 * c1[3],
-                            0.007f, ColorUtil.lerp(bladeA, bladeB, (a0 + a1) / 2), ColorUtil.lerp(0xFFE8E8F0, bladeB, 0.3));
-                }
-            }
-            case "Butterfly" -> {
-                // blade
-                prismBlade(out, 0.24f, 0.62f, 0.032f, 0.008f, bladeA, bladeB, true);
-                // two handle halves hinged at the base of the blade; "open" swings them apart
-                float ang = open * 180f;
-                handleHalf(out, -1, ang, handle, accent);
-                handleHalf(out, 1, ang, handle, accent);
-            }
-            case "Bayonet" -> {
-                box(out, -0.02f, 0f, -0.02f, 0.02f, 0.24f, 0.02f, handle);
-                for (int i = 0; i < 5; i++) box(out, -0.022f, 0.03f + i * 0.042f, -0.022f, 0.022f, 0.04f + i * 0.042f, 0.022f, ColorUtil.lerp(handle, 0xFF3A3A44, 0.6));
-                box(out, -0.055f, 0.24f, -0.025f, 0.055f, 0.265f, 0.025f, accent);  // guard
-                box(out, -0.026f, -0.03f, -0.026f, 0.026f, 0f, 0.026f, accent);     // pommel
-                prismBlade(out, 0.265f, 0.78f, 0.036f, 0.009f, bladeA, bladeB, false);
-                box(out, -0.004f, 0.3f, -0.0095f, 0.004f, 0.62f, 0.0095f, ColorUtil.lerp(bladeA, 0xFF000000, 0.35)); // fuller
-            }
-            default -> { // Stella Dagger
-                box(out, -0.02f, 0f, -0.02f, 0.02f, 0.2f, 0.02f, handle);
-                star(out, 0, 0.215f, 0.085f, 0.035f, 0.02f, accent, bladeB);          // star crossguard
-                gem(out, 0, -0.03f, 0.03f, bladeB);                                   // pommel gem
-                prismBlade(out, 0.23f, 0.7f, 0.04f, 0.01f, bladeA, bladeB, false);
-            }
+            case "Karambit" -> karambit(mesh, p, f, shine, glow, now);
+            case "Butterfly" -> butterfly(mesh, p, f, shine, glow, open, now);
+            case "Bayonet" -> bayonet(mesh, p, f, shine, glow, now);
+            default -> dagger(mesh, p, f, shine, glow, now);
         }
     }
 
-    /** Karambit blade centre line: returns x, y and the outward normal (nx, ny). */
-    private static float[] arc(float t) {
-        double a = Math.toRadians(-10 + 95 * t);
-        float cx = 0.16f, cy = 0.22f, rr = 0.16f;
-        float x = (float) (cx - Math.cos(a) * rr), y = (float) (cy + Math.sin(a) * rr);
-        float nx = (float) -Math.cos(a), ny = (float) Math.sin(a);
-        return new float[]{x, y, nx, -ny};
-    }
-
-    private void handleHalf(List<float[]> out, int side, float ang, int handle, int accent) {
-        // half of the grip, hinged at the base of the blade (y=0.24)
-        float hx0 = side < 0 ? -0.024f : 0.004f, hx1 = side < 0 ? -0.004f : 0.024f;
-        double r = Math.toRadians(ang * side);
-        List<float[]> tmp = new ArrayList<>();
-        box(tmp, hx0, 0f, -0.016f, hx1, 0.24f, 0.016f, handle);
-        box(tmp, hx0 - 0.001f, 0.02f, -0.017f, hx1 + 0.001f, 0.05f, 0.017f, accent);
-        for (float[] q : tmp) {
-            for (int i = 0; i < 4; i++) {
-                // swing in the blade plane around the pivot at the top of the grip (z axis)
-                float x = q[i * 3], y = q[i * 3 + 1] - 0.24f;
-                q[i * 3] = (float) (x * Math.cos(r) - y * Math.sin(r));
-                q[i * 3 + 1] = (float) (x * Math.sin(r) + y * Math.cos(r)) + 0.24f;
-                q[i * 3 + 2] += side * 0.004f;
-            }
-            out.add(q);
+    private void karambit(KnifeMesh m, Palette p, KnifeMesh.Finish f, float shine, int glow, double now) {
+        m.ring(0, -0.06f, 0.042f, 0.014f, ColorUtil.lerp(0xFF9EA3B0, p.accent(), 0.3), ColorUtil.lerp(0xFFE9ECF3, p.accent(), 0.3));
+        m.metal(-0.026f, -0.022f, -0.019f, 0.026f, 0.005f, 0.019f, p.accent());
+        // slightly curved grip with alternating wrap bands
+        for (int i = 0; i < 9; i++) {
+            float y0 = 0.005f + i * 0.024f, y1 = y0 + 0.024f, cx = 0.004f * i;
+            boolean band = i % 2 == 0;
+            float w = band ? 0.025f : 0.023f;
+            m.box(cx - w, y0, -0.018f, cx + w, y1, 0.018f, band ? ColorUtil.lerp(p.handle(), p.accent(), 0.18f) : p.handle());
         }
-    }
-
-    // ------------------------------------------------------------------ primitives
-
-    private static int shade(int c, float f) {
-        int r = (int) (((c >> 16) & 0xFF) * f), g = (int) (((c >> 8) & 0xFF) * f), b = (int) ((c & 0xFF) * f);
-        return 0xFF000000 | (Math.min(255, r) << 16) | (Math.min(255, g) << 8) | Math.min(255, b);
-    }
-
-    private static void quad(List<float[]> out, float[] a, float[] b, float[] c, float[] d, int col) {
-        out.add(new float[]{a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2], Float.intBitsToFloat(col)});
-    }
-
-    private static void box(List<float[]> out, float x0, float y0, float z0, float x1, float y1, float z1, int c) {
-        float[] a = {x0, y0, z0}, b = {x1, y0, z0}, cc = {x1, y1, z0}, d = {x0, y1, z0};
-        float[] e = {x0, y0, z1}, f = {x1, y0, z1}, g = {x1, y1, z1}, h = {x0, y1, z1};
-        quad(out, a, b, cc, d, shade(c, 0.78f)); // back
-        quad(out, e, f, g, h, shade(c, 1.0f));   // front
-        quad(out, a, e, h, d, shade(c, 0.66f));  // left
-        quad(out, b, f, g, cc, shade(c, 0.86f)); // right
-        quad(out, d, cc, g, h, shade(c, 1.1f));  // top
-        quad(out, a, b, f, e, shade(c, 0.5f));   // bottom
-    }
-
-    /** Flat blade section (two faces + edges) from a 2D quad outline, thickness 2*th. */
-    private static void slab(List<float[]> out, float ax, float ay, float bx, float by, float cx, float cy, float dx, float dy, float th, int face, int edge) {
-        quad(out, new float[]{ax, ay, th}, new float[]{bx, by, th * 0.2f}, new float[]{cx, cy, th * 0.2f}, new float[]{dx, dy, th}, shade(face, 1.05f));
-        quad(out, new float[]{ax, ay, -th}, new float[]{bx, by, -th * 0.2f}, new float[]{cx, cy, -th * 0.2f}, new float[]{dx, dy, -th}, shade(face, 0.8f));
-        quad(out, new float[]{bx, by, th * 0.2f}, new float[]{bx, by, -th * 0.2f}, new float[]{cx, cy, -th * 0.2f}, new float[]{cx, cy, th * 0.2f}, edge); // sharp edge
-        quad(out, new float[]{ax, ay, th}, new float[]{ax, ay, -th}, new float[]{dx, dy, -th}, new float[]{dx, dy, th}, shade(face, 0.6f));    // spine
-    }
-
-    /** Straight blade from y0 to y1 (half width w, half thickness th) with a point; gradient along its length. */
-    private static void prismBlade(List<float[]> out, float y0, float y1, float w, float th, int ca, int cb, boolean clip) {
-        int n = 8;
-        float tipStart = y1 - (y1 - y0) * 0.22f;
+        for (float y : new float[]{0.05f, 0.17f}) { // screws
+            float cx = 0.004f * (y / 0.024f);
+            m.metal(cx - 0.006f, y - 0.006f, 0.0185f, cx + 0.006f, y + 0.006f, 0.0215f, 0xFFFFFFFF);
+            m.metal(cx - 0.006f, y - 0.006f, -0.0215f, cx + 0.006f, y + 0.006f, -0.0185f, 0xFFFFFFFF);
+        }
+        m.metal(0.012f, 0.215f, -0.021f, 0.06f, 0.235f, 0.021f, p.accent()); // guard
+        // hooked blade: the sharp edge is on the inside of the curve
+        int n = 22;
+        float[][] sp = new float[n][], ed = new float[n][];
         for (int i = 0; i < n; i++) {
-            float t0 = i / (float) n, t1 = (i + 1) / (float) n;
-            float ya = y0 + (tipStart - y0) * t0, yb = y0 + (tipStart - y0) * t1;
-            int col = ColorUtil.lerp(ca, cb, (t0 + t1) / 2 * 0.8f);
-            slab(out, -w, ya, w, ya, w, yb, -w, yb, th, col, ColorUtil.lerp(0xFFF2F2FA, cb, 0.25));
+            float s = i / (float) (n - 1);
+            double a = Math.toRadians(-8 + 100 * s);
+            float cx = 0.2f, cy = 0.22f, r = 0.17f;
+            float x = (float) (cx - Math.cos(a) * r), y = (float) (cy + Math.sin(a) * r);
+            float nx = (float) Math.cos(a), ny = (float) -Math.sin(a);
+            float w = 0.056f * (1 - (float) Math.pow(s, 1.25) * 0.97f);
+            sp[i] = new float[]{x - nx * w * 0.5f, y - ny * w * 0.5f};
+            ed[i] = new float[]{x + nx * w * 0.5f, y + ny * w * 0.5f};
         }
-        // point: spine side goes straight (or clipped), edge side sweeps to the tip
-        float tipX = clip ? -w * 0.6f : 0;
-        slab(out, -w, tipStart, w, tipStart, tipX + 0.001f, y1, clip ? -w * 0.9f : -0.001f, clip ? y1 - (y1 - tipStart) * 0.35f : y1, th, cb, ColorUtil.lerp(0xFFFFFFFF, cb, 0.2));
+        m.blade(sp, ed, 0.0085f, false, f, shine, glow);
+        if (sparkles.isOn()) bladeSparkles(m, sp, ed, p.glow(), now, 5);
     }
 
-    private static void ring(List<float[]> out, float cx, float cy, float r, float tube, int c) {
-        int n = 12;
+    private void butterfly(KnifeMesh m, Palette p, KnifeMesh.Finish f, float shine, int glow, float open, double now) {
+        int n = 16;
+        float y0 = 0.25f, y1 = 0.66f;
+        float[][] sp = new float[n][], ed = new float[n][];
         for (int i = 0; i < n; i++) {
-            double a0 = i * Math.PI * 2 / n, a1 = (i + 1) * Math.PI * 2 / n;
-            float x0 = cx + (float) Math.cos(a0) * r, y0 = cy + (float) Math.sin(a0) * r, x1 = cx + (float) Math.cos(a1) * r, y1 = cy + (float) Math.sin(a1) * r;
-            float ox0 = cx + (float) Math.cos(a0) * (r + tube), oy0 = cy + (float) Math.sin(a0) * (r + tube), ox1 = cx + (float) Math.cos(a1) * (r + tube), oy1 = cy + (float) Math.sin(a1) * (r + tube);
-            quad(out, new float[]{x0, y0, tube}, new float[]{ox0, oy0, tube}, new float[]{ox1, oy1, tube}, new float[]{x1, y1, tube}, shade(c, 1f));
-            quad(out, new float[]{x0, y0, -tube}, new float[]{ox0, oy0, -tube}, new float[]{ox1, oy1, -tube}, new float[]{x1, y1, -tube}, shade(c, 0.75f));
-            quad(out, new float[]{ox0, oy0, tube}, new float[]{ox0, oy0, -tube}, new float[]{ox1, oy1, -tube}, new float[]{ox1, oy1, tube}, shade(c, 0.9f));
-            quad(out, new float[]{x0, y0, tube}, new float[]{x0, y0, -tube}, new float[]{x1, y1, -tube}, new float[]{x1, y1, tube}, shade(c, 0.6f));
+            float s = i / (float) (n - 1), y = y0 + (y1 - y0) * s;
+            float spineX = s < 0.68f ? -0.03f : -0.03f + (s - 0.68f) / 0.32f * 0.03f; // clip point
+            float edgeX = s < 0.75f ? 0.032f : 0.032f * (1 - (float) Math.pow((s - 0.75f) / 0.25f, 1.4f));
+            float spineY = s < 0.68f ? y : y + (s - 0.68f) * 0.04f;
+            sp[i] = new float[]{spineX, spineY};
+            ed[i] = new float[]{Math.max(edgeX, spineX + 0.0015f), y};
         }
+        m.blade(sp, ed, 0.0075f, false, f, shine, glow);
+        m.metal(-0.034f, 0.235f, -0.012f, 0.034f, 0.255f, 0.012f, p.accent()); // tang and pivot pins
+        float ang = open * 180f;
+        handleHalf(m, -1, ang, p);
+        handleHalf(m, 1, ang, p);
+        if (sparkles.isOn()) bladeSparkles(m, sp, ed, p.glow(), now, 4);
     }
 
-    /** Five-point star prism in the XY plane (the Stella logo) used as a crossguard. */
-    private static void star(List<float[]> out, float cx, float cy, float outer, float inner, float th, int c, int glow) {
-        for (int i = 0; i < 10; i++) {
-            double a0 = i * Math.PI / 5 + Math.PI / 2, a1 = (i + 1) * Math.PI / 5 + Math.PI / 2;
-            float r0 = i % 2 == 0 ? outer : inner, r1 = i % 2 == 0 ? inner : outer;
-            float x0 = cx + (float) Math.cos(a0) * r0, y0 = cy + (float) Math.sin(a0) * r0 * 0.6f, x1 = cx + (float) Math.cos(a1) * r1, y1 = cy + (float) Math.sin(a1) * r1 * 0.6f;
-            int col = ColorUtil.lerp(c, glow, i / 10f);
-            quad(out, new float[]{cx, cy, th}, new float[]{x0, y0, th}, new float[]{x1, y1, th}, new float[]{x1, y1, th}, shade(col, 1.1f));
-            quad(out, new float[]{cx, cy, -th}, new float[]{x0, y0, -th}, new float[]{x1, y1, -th}, new float[]{x1, y1, -th}, shade(col, 0.8f));
-            quad(out, new float[]{x0, y0, th}, new float[]{x0, y0, -th}, new float[]{x1, y1, -th}, new float[]{x1, y1, th}, shade(col, 0.7f));
-        }
-    }
-
-    private static void gem(List<float[]> out, float cx, float cy, float r, int c) {
-        float[] top = {cx, cy - r, 0}, bot = {cx, cy + r * 0.3f, 0};
+    private void handleHalf(KnifeMesh dst, int side, float ang, Palette p) {
+        KnifeMesh tmp = new KnifeMesh();
+        tmp.light = dst.light;
+        float x0 = side < 0 ? -0.028f : 0.002f, x1 = side < 0 ? -0.002f : 0.028f, zo = side * 0.0045f;
+        // frame rails and end caps, darker inset with cut-out windows
+        tmp.metal(x0, 0f, -0.016f + zo, x1, 0.012f, 0.016f + zo, p.accent());
+        tmp.metal(x0, 0.226f, -0.016f + zo, x1, 0.238f, 0.016f + zo, p.accent());
+        int rail = ColorUtil.lerp(0xFF4A4E5A, p.accent(), 0.3);
+        tmp.box(x0, 0.012f, -0.016f + zo, x0 + 0.006f, 0.226f, 0.016f + zo, rail);
+        tmp.box(x1 - 0.006f, 0.012f, -0.016f + zo, x1, 0.226f, 0.016f + zo, rail);
         for (int i = 0; i < 6; i++) {
-            double a0 = i * Math.PI / 3, a1 = (i + 1) * Math.PI / 3;
-            float[] p0 = {cx + (float) Math.cos(a0) * r, cy, (float) Math.sin(a0) * r}, p1 = {cx + (float) Math.cos(a1) * r, cy, (float) Math.sin(a1) * r};
-            quad(out, top, p0, p1, p1, shade(c, 0.7f + 0.08f * i));
-            quad(out, bot, p0, p1, p1, shade(c, 1.15f - 0.05f * i));
+            float yy = 0.016f + i * 0.035f;
+            tmp.box(x0 + 0.006f, yy, -0.012f + zo, x1 - 0.006f, yy + 0.022f, 0.012f + zo, i % 2 == 0 ? p.handle() : ColorUtil.lerp(p.handle(), p.glow(), 0.35));
         }
+        if (side > 0) tmp.metal(x0 - 0.004f, -0.018f, -0.006f + zo, x1, 0.002f, 0.006f + zo, 0xFFFFFFFF); // latch
+        double r = Math.toRadians(ang * side);
+        for (KnifeMesh.Quad q : tmp.solid) {
+            for (int i = 0; i < 4; i++) {
+                float x = q.p()[i * 3], y = q.p()[i * 3 + 1] - 0.245f;
+                q.p()[i * 3] = (float) (x * Math.cos(r) - y * Math.sin(r));
+                q.p()[i * 3 + 1] = (float) (x * Math.sin(r) + y * Math.cos(r)) + 0.245f;
+            }
+            dst.solid.add(q);
+        }
+    }
+
+    private void bayonet(KnifeMesh m, Palette p, KnifeMesh.Finish f, float shine, int glow, double now) {
+        // pommel with release button, ribbed grip, crossguard with muzzle ring
+        m.metal(-0.027f, -0.034f, -0.025f, 0.027f, 0.0f, 0.025f, p.accent());
+        m.metal(-0.03f, -0.02f, 0.025f, -0.012f, -0.008f, 0.03f, 0xFFFFFFFF);
+        for (int i = 0; i < 9; i++) {
+            float y0 = i * 0.027f;
+            m.box(-0.024f, y0, -0.022f, 0.024f, y0 + 0.016f, 0.022f, p.handle());
+            m.box(-0.021f, y0 + 0.016f, -0.019f, 0.021f, y0 + 0.027f, 0.019f, ColorUtil.lerp(p.handle(), 0xFF000000, 0.35));
+        }
+        m.metal(-0.06f, 0.243f, -0.026f, 0.06f, 0.268f, 0.026f, p.accent());
+        m.ring(-0.072f, 0.255f, 0.018f, 0.008f, ColorUtil.lerp(0xFF9EA3B0, p.accent(), 0.3), ColorUtil.lerp(0xFFE9ECF3, p.accent(), 0.3));
+        int n = 20;
+        float y0 = 0.268f, y1 = 0.8f;
+        float[][] sp = new float[n][], ed = new float[n][];
+        for (int i = 0; i < n; i++) {
+            float s = i / (float) (n - 1), y = y0 + (y1 - y0) * s;
+            float spineX = s < 0.8f ? -0.036f : -0.036f + (s - 0.8f) / 0.2f * 0.034f;
+            float edgeX = s < 0.72f ? 0.04f : 0.04f * (1 - (float) Math.pow((s - 0.72f) / 0.28f, 1.6f));
+            sp[i] = new float[]{spineX, y};
+            ed[i] = new float[]{Math.max(edgeX, spineX + 0.0015f), y + (s > 0.72f ? (s - 0.72f) * 0.03f : 0)};
+        }
+        m.blade(sp, ed, 0.0095f, false, f, shine, glow);
+        // fuller groove and saw-back teeth on the spine
+        m.box(-0.026f, 0.3f, -0.0105f, -0.016f, 0.62f, 0.0105f, ColorUtil.lerp(p.a(), 0xFF000000, 0.45));
+        for (int i = 0; i < 9; i++) {
+            float y = 0.3f + i * 0.026f;
+            m.quad(KnifeMesh.v(-0.036f, y, 0.006f), KnifeMesh.v(-0.048f, y + 0.013f, 0f), KnifeMesh.v(-0.036f, y + 0.026f, 0.006f), KnifeMesh.v(-0.036f, y + 0.026f, 0.006f), m.lit(0xFFD8DCE6, 1f));
+            m.quad(KnifeMesh.v(-0.036f, y, -0.006f), KnifeMesh.v(-0.048f, y + 0.013f, 0f), KnifeMesh.v(-0.036f, y + 0.026f, -0.006f), KnifeMesh.v(-0.036f, y + 0.026f, -0.006f), m.lit(0xFFD8DCE6, 0.7f));
+        }
+        if (sparkles.isOn()) bladeSparkles(m, sp, ed, p.glow(), now, 5);
+    }
+
+    private void dagger(KnifeMesh m, Palette p, KnifeMesh.Finish f, float shine, int glow, double now) {
+        m.gem(0, -0.04f, 0.026f, p.glow());
+        m.metal(-0.022f, -0.012f, -0.022f, 0.022f, 0.004f, 0.022f, p.accent());
+        for (int i = 0; i < 8; i++) { // wrapped grip
+            float y0 = 0.004f + i * 0.025f;
+            m.box(-0.02f, y0, -0.02f, 0.02f, y0 + 0.025f, 0.02f, i % 2 == 0 ? p.handle() : ColorUtil.lerp(p.handle(), p.accent(), 0.3), ColorUtil.lerp(p.handle(), p.glow(), 0.15));
+        }
+        m.metal(-0.026f, 0.2f, -0.024f, 0.026f, 0.212f, 0.024f, p.accent());
+        m.star(0, 0.226f, 0.1f, 0.04f, 0.62f, 0.022f, ColorUtil.lerp(p.accent(), 0xFFFFFFFF, 0.3), p.glow(), true);
+        // double-edged diamond blade
+        int n = 18;
+        float y0 = 0.24f, y1 = 0.74f;
+        float[][] sp = new float[n][], ed = new float[n][];
+        for (int i = 0; i < n; i++) {
+            float s = i / (float) (n - 1), y = y0 + (y1 - y0) * s;
+            float w = s < 0.08f ? 0.03f + s * 0.25f : 0.05f * (1 - (float) Math.pow((s - 0.08f) / 0.92f, 1.15f)) + 0.0015f;
+            sp[i] = new float[]{-w, y};
+            ed[i] = new float[]{w, y};
+        }
+        m.blade(sp, ed, 0.011f, true, f, shine, glow);
+        if (sparkles.isOn()) bladeSparkles(m, sp, ed, p.glow(), now, 6);
+        double a = now * 2.2; // orbiting sparkle around the star guard
+        m.sparkle((float) Math.cos(a) * 0.11f, 0.226f + (float) Math.sin(a) * 0.05f, 0.03f, 0.03f, p.glow());
+    }
+
+    /** Twinkling four-point sparkles scattered on both faces of the blade. */
+    private void bladeSparkles(KnifeMesh m, float[][] sp, float[][] ed, int c, double now, int count) {
+        java.util.Random rnd = new java.util.Random(31);
+        for (int i = 0; i < count; i++) {
+            float s = 0.1f + rnd.nextFloat() * 0.75f, u = 0.15f + rnd.nextFloat() * 0.4f;
+            double tw = Math.sin(now * (2.5 + rnd.nextFloat() * 2) + i * 1.7);
+            if (tw < 0.2) continue;
+            int idx = Math.min(sp.length - 1, (int) (s * (sp.length - 1)));
+            float x = sp[idx][0] + (ed[idx][0] - sp[idx][0]) * u, y = sp[idx][1] + (ed[idx][1] - sp[idx][1]) * u;
+            float r = 0.012f + 0.014f * (float) tw;
+            m.sparkle(x, y, 0.012f, r, c);
+            m.sparkle(x, y, -0.012f, r, c);
+        }
+    }
+
+    /** Enchanted sword: glint bands sweep over the whole knife in the glint colour. */
+    private void glint(KnifeMesh m, double now) {
+        CustomGlint cg = ModuleManager.get(CustomGlint.class);
+        int c = cg != null && cg.isEnabled() ? cg.previewColor() : 0xFF8F4BFF;
+        java.util.List<KnifeMesh.Quad> extra = new java.util.ArrayList<>();
+        for (KnifeMesh.Quad q : m.solid) {
+            int[] cols = new int[4];
+            for (int i = 0; i < 4; i++) {
+                float x = q.p()[i * 3], y = q.p()[i * 3 + 1];
+                double band = Math.sin((y * 9 - x * 4 - now * 2.4) * Math.PI);
+                cols[i] = ColorUtil.withAlpha(c, (int) (Math.max(0, band) * 110));
+            }
+            float[] pts = q.p().clone();
+            for (int i = 0; i < 4; i++) pts[i * 3 + 2] *= 1.04f; // just above the surface
+            extra.add(new KnifeMesh.Quad(pts, cols));
+        }
+        m.glow.addAll(extra);
     }
 }
