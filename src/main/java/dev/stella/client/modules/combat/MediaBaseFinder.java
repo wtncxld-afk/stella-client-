@@ -56,7 +56,7 @@ public class MediaBaseFinder extends HudElement {
 
     public MediaBaseFinder() {
         super("Media Base Finder", "Lists media / content creators in your region with their heads", Category.DONUTSMP,
-                4, 260, false, "Scale", 4.0);
+                170, 340, false, "Scale", 4.0);
     }
 
     private void reloadNow() {

@@ -95,7 +95,7 @@ public class PlayerDetector extends HudElement {
 
     public PlayerDetector() {
         super("Player Detector", "Finds players you can't see (behind walls / out of view): blue chunks, distance, direction and a dropdown",
-                Category.DONUTSMP, -4, 140, false, "Scale", 4.0);
+                Category.DONUTSMP, 170, 262, false, "Scale", 4.0);
     }
 
     public List<Seen> current() { return current; }

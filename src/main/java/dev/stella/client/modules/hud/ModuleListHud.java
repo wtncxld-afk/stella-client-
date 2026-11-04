@@ -36,11 +36,13 @@ public class ModuleListHud extends HudElement {
 
     public ModuleListHud() { super("Module List HUD", "List of enabled modules down the top-right corner", -4, 26, true); }
 
+    @Override protected double defaultScale() { return 0.62; }
+
     /** Height of the list as drawn (scaled), for elements stacked below it. */
     public float scaledListHeight() { return listHeight * scale.getFloat(); }
 
     private boolean listed(Module m) {
-        if (m == this) return false;
+        if (m == this || m.getName().equals("Test Environment")) return false;
         Category c = m.getCategory();
         if (hideHud.isOn() && (c == Category.HUD || m instanceof HudElement && c != Category.DONUTSMP)) return false;
         return !hideClient.isOn() || (c != Category.CLIENT && c != Category.SETTINGS);

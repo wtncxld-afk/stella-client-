@@ -9,7 +9,7 @@ public class FpsHud extends TextHud {
     private int idx;
     private long lastSample;
 
-    public FpsHud() { super("FPS HUD", "Shows the current frames per second", 4, 300, true); }
+    public FpsHud() { super("FPS HUD", "Shows the current frames per second", 133, 4, true); }
 
     @Override protected String label() { return "FPS"; }
 

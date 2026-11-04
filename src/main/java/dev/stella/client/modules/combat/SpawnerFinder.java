@@ -101,7 +101,7 @@ public class SpawnerFinder extends HudElement {
 
     public SpawnerFinder() {
         super("Spawner Finder", "Beam into the sky above every spawner, plus a dropdown of their mob types", Category.DONUTSMP,
-                4, 200, false, "Scale", 4.0);
+                170, 140, false, "Scale", 4.0);
         target = BlockScanner.register(new ScanTarget("Spawner Finder", s -> s.isOf(Blocks.SPAWNER), this::isEnabled));
     }
 

@@ -7,7 +7,7 @@ public class TpsHud extends TextHud {
     private final dev.stella.client.setting.BoolSetting stallWarning = add(new dev.stella.client.setting.BoolSetting("Stall Warning", "Show how long since the server last sent a time update", true));
 
     public TpsHud() {
-        super("TPS HUD", "Estimated server TPS from world-time packets (shows '...' until enough samples exist)", 4, 370, false);
+        super("TPS HUD", "Estimated server TPS from world-time packets (shows '...' until enough samples exist)", 133, 76, false);
     }
 
     @Override protected String label() { return "TPS"; }
