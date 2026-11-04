@@ -949,6 +949,7 @@ final class StellaSmokeTest {
                         for (String n : new String[]{"Sus Chunk Finder", "Radar HUD", "Notifications HUD"})
                             ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> m.setEnabled(false));
                         serverCmd(mc, "gamemode creative " + me);
+                        serverCmd(mc, "kill @e[type=item]");
                         serverCmd(mc, "fill " + (ox - 6) + " " + (oy - 1) + " " + (oz - 6) + " " + (ox + 6) + " " + (oy - 1) + " " + (oz + 6) + " minecraft:smooth_quartz");
                         serverCmd(mc, "fill " + (ox - 6) + " " + oy + " " + (oz - 6) + " " + (ox + 6) + " " + (oy + 6) + " " + (oz + 6) + " minecraft:air");
                         serverCmd(mc, "tp " + me + " " + (ox + 0.5) + " " + oy + " " + (oz + 0.5) + " 180 15");
@@ -958,7 +959,8 @@ final class StellaSmokeTest {
                         mc.options.setPerspective(net.minecraft.client.option.Perspective.THIRD_PERSON_BACK);
                         caption("Cosmetics \u2022 Wings + Chinese Hat", "Angel wings and a glowing hat - only you see them (third person)");
                     }
-                    if (T == 1350) { mc.player.setYaw(180f); mc.player.setPitch(15f); mc.player.bodyYaw = 180f; mc.player.lastBodyYaw = 180f; }
+                    if (T == 1350) { mc.player.getAbilities().flying = false; mc.player.sendAbilitiesUpdate(); mc.inGameHud.getChatHud().clear(false); }
+                    if (T == 1351) { mc.player.setYaw(180f); mc.player.setPitch(15f); mc.player.bodyYaw = 180f; mc.player.lastBodyYaw = 180f; }
                     if (T == 1353 && holdForTerrain(mc, 400)) return;
                     if (T == 1356) shot(mc, "cosmetics-wings-back");
                     if (T == 1358) { mc.options.setPerspective(net.minecraft.client.option.Perspective.THIRD_PERSON_FRONT); setting("Wings", "Style", "Demon"); caption("Cosmetics \u2022 Demon Wings", "Three wing styles: Angel, Demon and Crystal"); }
@@ -969,7 +971,7 @@ final class StellaSmokeTest {
                     if (T == 1374) {
                         setting("Wings", "Style", "Angel"); setting("Chinese Hat", "Color", "Theme");
                         caption("Cosmetics \u2022 Jump Circles", "A ring when you jump - the Stella star when you land");
-                        mc.player.setPitch(55f);
+                        mc.player.setPitch(72f);
                     }
                     if (T == 1376) mc.player.jump();
                     if (T > 1376 && T < 1400 && mc.player.isOnGround() && T > 1380 && !jumpLogged) {
@@ -978,6 +980,7 @@ final class StellaSmokeTest {
                         if (ModuleManager.get(dev.stella.client.modules.cosmetics.JumpCircles.class).activeEffects() < 1) fail("Jump Circles: no landing star after a jump");
                         landedAt = T;
                     }
+                    if (T == 1400 && !jumpLogged) StellaClient.LOGGER.warn("[smoke] jump circles: player never landed (onGround={}, flying={})", mc.player.isOnGround(), mc.player.getAbilities().flying);
                     if (landedAt > 0 && T == landedAt + 3) shot(mc, "cosmetics-landing-star");
                     if (T == 1404) {
                         // a fresh star to catch it fully bloomed

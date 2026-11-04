@@ -77,40 +77,50 @@ public class KnifeSkins extends Module {
         m.push();
         float side = leftHand ? -1 : 1;
         // base pose: blade up, leaning into the screen and toward the centre like a held sword
-        m.translate(0.0f * side, -0.02f, -0.02f);
         float t = inspectProgress();
         String k = knife.get();
-        float butterflyOpen = 0;
+        float butterflyOpen = 0, mid = 0;
+        // pose = 0: held (blade up and forward, like a sword); pose = 1: inspect (blade flat towards you, across the screen)
+        float pose = 0;
         if (t >= 0) {
-            float in = smooth(Math.min(1, t / 0.22f)), out = smooth(Math.max(0, (t - 0.78f) / 0.22f));
-            float pose = in * (1 - out);
-            // bring the knife across and tilt the blade flat towards the camera
-            m.translate(-0.16f * side * pose, 0.06f * pose, 0.08f * pose);
-            m.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(-55 * side * pose));
-            m.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(-40 * side * pose));
-            float mid = Math.max(0, Math.min(1, (t - 0.22f) / 0.56f));
+            float in = smooth(Math.min(1, t / 0.2f)), out = smooth(Math.max(0, (t - 0.8f) / 0.2f));
+            pose = in * (1 - out);
+            mid = Math.max(0, Math.min(1, (t - 0.2f) / 0.6f));
+        }
+        m.translate(lerp(0.0f, -0.16f, pose) * side, lerp(0.12f, 0.2f, pose), lerp(-0.06f, -0.05f, pose));
+        m.multiply(RotationAxis.POSITIVE_X.rotationDegrees(lerp(-68, -12, pose)));
+        m.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(lerp(16, 62, pose) * side));
+        m.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(lerp(0, -18, pose) * side));
+        float sc = lerp(1.25f, 1.1f, pose);
+        m.scale(sc, sc, sc);
+        if (t >= 0) {
+            float sm = smooth(mid);
             switch (k) {
                 case "Karambit" -> {
-                    // spin around the finger ring twice
-                    m.translate(0, 0.03f, 0);
-                    m.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(-720 * side * smooth(mid)));
-                    m.translate(0, -0.03f, 0);
+                    // twirl around the finger ring twice
+                    m.translate(0, -0.05f, 0);
+                    m.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(-720 * side * sm));
+                    m.translate(0, 0.05f, 0);
                 }
                 case "Butterfly" -> {
-                    butterflyOpen = (float) Math.sin(mid * Math.PI * 3) * 0.5f + 0.5f;
-                    m.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(360 * smooth(mid)));
+                    // handles flip open and shut while the knife rolls
+                    butterflyOpen = (float) Math.abs(Math.sin(mid * Math.PI * 2));
+                    m.translate(0, 0.24f, 0);
+                    m.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(360 * sm));
+                    m.translate(0, -0.24f, 0);
                 }
                 case "Bayonet" -> {
-                    // flip over the blade axis and back, with a little toss
-                    m.translate(0, 0.08f * (float) Math.sin(mid * Math.PI), 0);
-                    m.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180 * smooth(Math.min(1, mid * 2)) + 180 * smooth(Math.max(0, mid * 2 - 1))));
+                    // flip over the blade axis, a small toss, and back
+                    m.translate(0, 0.06f * (float) Math.sin(mid * Math.PI), 0);
+                    m.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(360 * sm));
                 }
-                default -> m.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(540 * smooth(mid)));
+                default -> {
+                    m.translate(0, 0.3f, 0);
+                    m.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(540 * sm));
+                    m.translate(0, -0.3f, 0);
+                }
             }
         }
-        m.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-62));
-        m.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(14 * side));
-        m.scale(1.05f, 1.05f, 1.05f);
         List<float[]> quads = new ArrayList<>();
         build(k, butterflyOpen, quads);
         queue.submitCustom(m, StellaPipelines.SOLID, (entry, vc) -> emit(entry, vc, quads));
@@ -118,6 +128,7 @@ public class KnifeSkins extends Module {
     }
 
     private static float smooth(float x) { return x * x * (3 - 2 * x); }
+    private static float lerp(float a, float b, float t) { return a + (b - a) * t; }
 
     // ------------------------------------------------------------------ mesh
 

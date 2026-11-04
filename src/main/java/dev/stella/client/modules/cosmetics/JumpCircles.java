@@ -100,7 +100,7 @@ public class JumpCircles extends Module {
         Vec3d c = e.pos;
         double grow = t < 0.35 ? backOut(t / 0.35) : 1;
         double fade = t < 0.55 ? 1 : 1 - (t - 0.55) / 0.45;
-        double outer = 0.75 * size.get() * grow, inner = outer * 0.42;
+        double outer = 1.05 * size.get() * grow, inner = outer * 0.42;
         double spin = e.spin + t * 0.9;
         double y = c.y + 0.04;
         Vec3d center = new Vec3d(c.x, y, c.z);
