@@ -25,7 +25,7 @@ public class MoneyTrackerHud extends HudElement {
     private double money = Double.NaN, shards = Double.NaN;
     private Object lastWorld;
 
-    public MoneyTrackerHud() { super("Money Tracker HUD", "Money and shards from the sidebar, earnings per hour and a graph", 4, 340, false); }
+    public MoneyTrackerHud() { super("Money Tracker HUD", "Money and shards from the sidebar, earnings per hour and a graph", 4, 345, false); }
 
     @Override
     public void onTick() {

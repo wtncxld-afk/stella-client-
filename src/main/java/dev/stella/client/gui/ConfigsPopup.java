@@ -51,7 +51,7 @@ public class ConfigsPopup {
         ph = 20 + profiles.size() * 12 + 18 + 15 * 3 + 4;
         px = sw / 2 - W / 2;
         py = by - 6 - ph + (int) ((1 - a) * 10);
-        if (dev.stella.client.render.Glass.active()) dev.stella.client.render.Glass.panel(ctx, px, py, W, ph, 7, 16, a);
+        if (dev.stella.client.render.Glass.active()) dev.stella.client.render.Glass.panel(ctx, px, py, W, ph, 7, 16, a, true);
         else {
             Render2D.shadow(ctx, px, py, W, ph, 6, 5, ColorUtil.mulAlpha(0x90000000, a));
             Render2D.roundRect(ctx, px, py, W, ph, 6, ColorUtil.mulAlpha(t.background(), a));

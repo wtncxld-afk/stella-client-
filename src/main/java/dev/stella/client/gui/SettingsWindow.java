@@ -98,7 +98,7 @@ public class SettingsWindow {
         ctx.getMatrices().translate(x + WIDTH / 2f, y);
         ctx.getMatrices().scale(popScale, popScale);
         ctx.getMatrices().translate(-(x + WIDTH / 2f), -y);
-        if (dev.stella.client.render.Glass.active()) dev.stella.client.render.Glass.panel(ctx, x, y, WIDTH, HEADER + h, 6, HEADER, Math.min(1, a + 0.1));
+        if (dev.stella.client.render.Glass.active()) dev.stella.client.render.Glass.panel(ctx, x, y, WIDTH, HEADER + h, 6, HEADER, Math.min(1, a + 0.1), true);
         else {
             Render2D.shadow(ctx, x, y, WIDTH, HEADER + h, 5, 5, ColorUtil.mulAlpha(0x90000000, a));
             Render2D.roundRect(ctx, x - 0.5f, y - 0.5f, WIDTH + 1, HEADER + h + 1, 5.5f, ColorUtil.mulAlpha(t.outline(), a));

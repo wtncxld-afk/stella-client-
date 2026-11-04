@@ -15,7 +15,7 @@ public class CpsGraphHud extends HudElement {
     private int head;
     private long last;
 
-    public CpsGraphHud() { super("CPS Graph HUD", "Graph of your left / right CPS over 15 seconds", 4, 175, false); }
+    public CpsGraphHud() { super("CPS Graph HUD", "Graph of your left / right CPS over 15 seconds", 4, 282, false); }
 
     @Override
     public void render(DrawContext ctx, float td, boolean editor) {

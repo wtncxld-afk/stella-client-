@@ -1000,8 +1000,8 @@ public final class StellaSmokeTest {
                         ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class).setEnabled(true);
                     }
                     String[][] knives = {{"Karambit", "Nebula"}, {"Butterfly", "Damascus"}, {"Bayonet", "Ember"}, {"Stella Dagger", "Sunset"}, {"Kunai", "Galaxy"}, {"Tanto", "Chrome"}};
-                    if (T >= 1414 && T < 1414 + knives.length * 8) {
-                        int i = (T - 1414) / 8, k = (T - 1414) % 8;
+                    if (T >= 1418 && T < 1418 + knives.length * 8) {
+                        int i = (T - 1418) / 8, k = (T - 1418) % 8;
                         var ks = ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class);
                         String slug = "knife-" + knives[i][0].toLowerCase().replace(' ', '-');
                         if (k == 0) {
@@ -1016,7 +1016,7 @@ public final class StellaSmokeTest {
                         if (k == 6) dev.stella.client.modules.cosmetics.KnifeSkins.previewT = 0.66f;
                         if (k == 7) shot(mc, slug + "-trick");
                     }
-                    if (T == 1414 + knives.length * 8) {
+                    if (T == 1418 + knives.length * 8) {
                         dev.stella.client.modules.cosmetics.KnifeSkins.previewT = -1f;
                         var ks = ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class);
                         ks.setKnife("Karambit"); ks.setFinish("Nebula"); ks.setWear(0.0);
@@ -1232,13 +1232,11 @@ public final class StellaSmokeTest {
             mc.interactionManager.interactBlock(mc.player, net.minecraft.util.Hand.MAIN_HAND,
                     new net.minecraft.util.hit.BlockHitResult(net.minecraft.util.math.Vec3d.ofCenter(pos), net.minecraft.util.math.Direction.UP, pos, false));
         }
-        if (T == 1968) {
-            StellaClient.LOGGER.info("[smoke] new: auction screen = {}", mc.currentScreen == null ? "none" : mc.currentScreen.getTitle().getString());
-            shot(mc, "new-auction-helper");
-        }
-        if (T == 1970) { if (mc.currentScreen != null) mc.currentScreen.close(); caption = null; }
+        if (T == 1968) StellaClient.LOGGER.info("[smoke] new: auction screen = {}", mc.currentScreen == null ? "none" : mc.currentScreen.getTitle().getString());
+        if (T == 1971) shot(mc, "new-auction-helper");
+        if (T == 1973) { if (mc.currentScreen != null) mc.currentScreen.close(); caption = null; }
         // tools: gallery, share code, base saver, spawner export, region number
-        if (T == 1974) mc.setScreen(new dev.stella.client.gui.ScreenshotGallery());
+        if (T == 1975) mc.setScreen(new dev.stella.client.gui.ScreenshotGallery());
         if (T == 1980) shot(mc, "new-screenshot-gallery");
         if (T == 1982) {
             if (mc.currentScreen != null) mc.currentScreen.close();

@@ -16,6 +16,11 @@ public final class Glass {
 
     /** A glass panel; {@code header} > 0 adds a slightly brighter header strip of that height. */
     public static void panel(DrawContext ctx, float x, float y, float w, float h, float r, float header, double alpha) {
+        panel(ctx, x, y, w, h, r, header, alpha, false);
+    }
+
+    /** {@code dense}: more frosted body for windows that sit on top of other panels (settings, popups). */
+    public static void panel(DrawContext ctx, float x, float y, float w, float h, float r, float header, double alpha, boolean dense) {
         int a = (int) (255 * Math.max(0, Math.min(1, alpha)));
         if (a <= 2) return;
         // soft shadow under the glass
@@ -23,7 +28,7 @@ public final class Glass {
         // rim: a hair larger, bright and cool
         Render2D.roundRect(ctx, x - 0.75f, y - 0.75f, w + 1.5f, h + 1.5f, r + 0.75f, mul(0x66F2F8FF, a));
         // frosted body: cool translucent tint, a little darker toward the bottom for depth
-        Render2D.roundRect(ctx, x, y, w, h, r, mul(0x58222C3E, a));
+        Render2D.roundRect(ctx, x, y, w, h, r, mul(dense ? 0xD81C2434 : 0x58222C3E, a));
         verticalFade(ctx, x + 0.5f, y + h * 0.45f, w - 1, h * 0.55f - r * 0.6f, 0x00000000, mul(0x30060A14, a));
         // top sheen (the "liquid" highlight)
         verticalFade(ctx, x + r * 0.6f, y + 1, w - r * 1.2f, Math.min(h * 0.5f, 26), mul(0x2EFFFFFF, a), 0x00FFFFFF);
