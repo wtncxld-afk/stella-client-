@@ -230,7 +230,17 @@ final class StellaSmokeTest {
                 }
                 case 2 -> {
                     if (inStage() == 30) shot(mc, "hudeditor");
-                    if (inStage() == 40) {
+                    // Music HUD close-ups (example song data; CI has no media player)
+                    if (inStage() == 32) {
+                        var music = ModuleManager.get(dev.stella.client.modules.hud.MusicHud.class);
+                        music.setEnabled(true);
+                        music.setPos(250, 120);
+                    }
+                    if (inStage() == 46) shot(mc, "music-hud");
+                    if (inStage() == 48) setting("Music HUD", "Style", "Compact");
+                    if (inStage() == 58) shot(mc, "music-hud-compact");
+                    if (inStage() == 60) { setting("Music HUD", "Style", "Card"); ModuleManager.get(dev.stella.client.modules.hud.MusicHud.class).setEnabled(false); }
+                    if (inStage() == 62) {
                         mc.setScreen(null);
                         CreateWorldScreen.show(mc, null);
                         next();
