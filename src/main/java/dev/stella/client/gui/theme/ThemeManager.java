@@ -19,6 +19,9 @@ public final class ThemeManager {
 
     public static String name() { return name; }
 
+    /** True while the Liquid Glass theme is selected (GUI panels and HUD cards draw as glass). */
+    public static boolean isGlass() { return Theme.GLASS.equalsIgnoreCase(name); }
+
     public static Theme get() {
         long now = System.currentTimeMillis();
         if (Theme.RAINBOW.equalsIgnoreCase(name)) {

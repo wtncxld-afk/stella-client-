@@ -98,11 +98,14 @@ public class SettingsWindow {
         ctx.getMatrices().translate(x + WIDTH / 2f, y);
         ctx.getMatrices().scale(popScale, popScale);
         ctx.getMatrices().translate(-(x + WIDTH / 2f), -y);
-        Render2D.shadow(ctx, x, y, WIDTH, HEADER + h, 5, 5, ColorUtil.mulAlpha(0x90000000, a));
-        Render2D.roundRect(ctx, x - 0.5f, y - 0.5f, WIDTH + 1, HEADER + h + 1, 5.5f, ColorUtil.mulAlpha(t.outline(), a));
-        Render2D.roundRect(ctx, x, y, WIDTH, HEADER + h, 5, ColorUtil.mulAlpha(t.background(), Math.min(1, a + 0.05)));
-        Render2D.roundRect(ctx, x, y, WIDTH, HEADER, 5, ColorUtil.mulAlpha(t.header(), a));
-        ctx.fill(x, y + HEADER - 4, x + WIDTH, y + HEADER, ColorUtil.mulAlpha(t.header(), a));
+        if (dev.stella.client.render.Glass.active()) dev.stella.client.render.Glass.panel(ctx, x, y, WIDTH, HEADER + h, 6, HEADER, Math.min(1, a + 0.1));
+        else {
+            Render2D.shadow(ctx, x, y, WIDTH, HEADER + h, 5, 5, ColorUtil.mulAlpha(0x90000000, a));
+            Render2D.roundRect(ctx, x - 0.5f, y - 0.5f, WIDTH + 1, HEADER + h + 1, 5.5f, ColorUtil.mulAlpha(t.outline(), a));
+            Render2D.roundRect(ctx, x, y, WIDTH, HEADER + h, 5, ColorUtil.mulAlpha(t.background(), Math.min(1, a + 0.05)));
+            Render2D.roundRect(ctx, x, y, WIDTH, HEADER, 5, ColorUtil.mulAlpha(t.header(), a));
+            ctx.fill(x, y + HEADER - 4, x + WIDTH, y + HEADER, ColorUtil.mulAlpha(t.header(), a));
+        }
         GuiDraw.text(ctx, "⚙", x + 6, y + 4, ColorUtil.mulAlpha(t.accent(), a));
         GuiDraw.small(ctx, GuiDraw.trimSmall(module.getName().toUpperCase(java.util.Locale.ROOT), WIDTH - 40, 0.85f), x + 16, y + 5.5f, 0.85f, ColorUtil.mulAlpha(t.text(), a));
         boolean closeHover = GuiDraw.in(mx, my - slide, x + WIDTH - 13, y + 2, 11, 12);

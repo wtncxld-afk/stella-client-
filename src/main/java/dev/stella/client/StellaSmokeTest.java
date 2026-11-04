@@ -1067,7 +1067,24 @@ public final class StellaSmokeTest {
                     // ================= Free Look: orbit around a closed room, walls on / off =================
                     if (T >= 1832 && T < 1912) freeLookDemo(mc, T, me);
                     if (T >= 1914 && T < 2000) newFeaturesDemo(mc, T, me);
-                    if (inStage() == 2004) {
+                    // ================= Liquid Glass theme =================
+                    if (T == 2000) {
+                        setting("ClickGUI", "Theme", "Liquid Glass");
+                        mc.options.setPerspective(net.minecraft.client.option.Perspective.FIRST_PERSON);
+                        mc.player.setPitch(-8f);
+                        on("Radar HUD", "Clock HUD", "CPS Graph HUD", "Money Tracker HUD", "Armor HUD", "Coordinates HUD", "FPS HUD", "Combat Timer HUD", "Notifications HUD");
+                        ModuleManager.get(dev.stella.client.modules.hud.CombatTimerHud.class).tag();
+                        dev.stella.client.notification.NotificationManager.post("Liquid Glass", "Theme applied to the GUI and every HUD card",
+                                dev.stella.client.notification.Notification.Type.SUCCESS, 8000);
+                        caption = null;
+                    }
+                    if (T == 2006) shot(mc, "glass-hud");
+                    if (T == 2008) mc.setScreen(new ClickGuiScreen());
+                    if (T == 2016) shot(mc, "glass-gui");
+                    if (T == 2018 && mc.currentScreen instanceof ClickGuiScreen gui) gui.openSettingsFor("Knife Skins");
+                    if (T == 2024) shot(mc, "glass-settings");
+                    if (T == 2026) { mc.setScreen(null); setting("ClickGUI", "Theme", "Stella"); }
+                    if (inStage() == 2034) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {

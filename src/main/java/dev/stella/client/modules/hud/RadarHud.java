@@ -50,7 +50,8 @@ public class RadarHud extends HudElement {
         int accent = ThemeManager.get().accent();
 
         // --- disc: dark glass with an accent tint, filled with horizontal strips ---
-        int bg = col(ColorUtil.withAlpha(ColorUtil.lerp(0xFF0C0814, accent, 0.18), 0xB4));
+        boolean glass = dev.stella.client.render.Glass.active();
+        int bg = glass ? col(0x5A222C3E) : col(ColorUtil.withAlpha(ColorUtil.lerp(0xFF0C0814, accent, 0.18), 0xB4));
         for (int y = -r; y <= r; y++) {
             double hw = Math.sqrt(r * r - y * y);
             Render2D.rect(ctx, (float) (cx - hw), cy + y, (float) (hw * 2), 1, bg);
@@ -58,7 +59,20 @@ public class RadarHud extends HudElement {
         // inner glow towards the rim
         for (int i = 0; i < 4; i++) ring(ctx, cx, cy, r - i, 1f, col(ColorUtil.withAlpha(accent, 0x30 - i * 0x0A)));
         ring(ctx, cx, cy, r * 0.5, 0.6f, col(0x26FFFFFF));
-        ring(ctx, cx, cy, r, 1.4f, col(ColorUtil.withAlpha(accent, 0xE0)));
+        ring(ctx, cx, cy, r, 1.4f, col(ColorUtil.withAlpha(glass ? 0xFFF2F8FF : accent, glass ? 0x90 : 0xE0)));
+        if (glass) {
+            // liquid-glass sheen on the upper half and a bright specular arc at the top-left
+            for (int yy = -r + 2; yy < 0; yy++) {
+                double hw = Math.sqrt(r * r - yy * yy) - 2;
+                int alpha = (int) (0x26 * (1 - (yy + r) / (double) r));
+                Render2D.rect(ctx, (float) (cx - hw), cy + yy, (float) (hw * 2), 1, col(ColorUtil.withAlpha(0xFFFFFFFF, Math.max(0, alpha))));
+            }
+            for (int i = 0; i < 14; i++) {
+                double a0 = Math.toRadians(200 + i * 5), a1 = Math.toRadians(205 + i * 5);
+                Render2D.line(ctx, cx + Math.cos(a0) * (r - 1), cy + Math.sin(a0) * (r - 1), cx + Math.cos(a1) * (r - 1), cy + Math.sin(a1) * (r - 1), 1.2f,
+                        col(ColorUtil.withAlpha(0xFFFFFFFF, 0xD0 - i * 10)));
+            }
+        }
         Render2D.line(ctx, cx - r + 3, cy, cx + r - 3, cy, 0.6f, col(0x18FFFFFF));
         Render2D.line(ctx, cx, cy - r + 3, cx, cy + r - 3, 0.6f, col(0x18FFFFFF));
 

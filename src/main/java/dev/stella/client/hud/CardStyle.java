@@ -35,6 +35,14 @@ public final class CardStyle {
     public void draw(DrawContext ctx, HudElement e, int w, int h) {
         if (style.is("Minimal")) return;
         int tw = w + padLeft() + pad(), th = h + pad() * 2;
+        if (dev.stella.client.render.Glass.active()) {
+            dev.stella.client.render.Glass.panel(ctx, 0, 0, tw, th, 5, 0, e.opacity.get());
+            if (style.is("Modern") && accentBar.isOn()) {
+                int top = ThemeManager.accentAt(0);
+                Render2D.roundRect(ctx, 2, 3, 2, th - 6, 1, e.col(ColorUtil.withAlpha(top, 0xC0)));
+            }
+            return;
+        }
         if (style.is("Classic")) {
             ctx.fill(0, 0, tw, th, e.col(background.argb()));
             return;

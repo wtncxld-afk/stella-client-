@@ -40,10 +40,13 @@ public class ThemesPanel {
         actions.clear();
         int x = x(sw), y = 6;
         int h = Math.min(sh - 40, contentHeight + 20);
-        Render2D.shadow(ctx, x, y, WIDTH, h, 5, 4, ColorUtil.mulAlpha(0x80000000, a));
-        Render2D.roundRect(ctx, x, y, WIDTH, h, 5, ColorUtil.mulAlpha(t.background(), a));
-        Render2D.roundRect(ctx, x, y, WIDTH, 16, 5, ColorUtil.mulAlpha(t.header(), a));
-        ctx.fill(x, y + 12, x + WIDTH, y + 16, ColorUtil.mulAlpha(t.header(), a));
+        if (dev.stella.client.render.Glass.active()) dev.stella.client.render.Glass.panel(ctx, x, y, WIDTH, h, 6, 16, a);
+        else {
+            Render2D.shadow(ctx, x, y, WIDTH, h, 5, 4, ColorUtil.mulAlpha(0x80000000, a));
+            Render2D.roundRect(ctx, x, y, WIDTH, h, 5, ColorUtil.mulAlpha(t.background(), a));
+            Render2D.roundRect(ctx, x, y, WIDTH, 16, 5, ColorUtil.mulAlpha(t.header(), a));
+            ctx.fill(x, y + 12, x + WIDTH, y + 16, ColorUtil.mulAlpha(t.header(), a));
+        }
         GuiDraw.text(ctx, "◐", x + 6, y + 4, ColorUtil.mulAlpha(t.accent(), a));
         GuiDraw.small(ctx, "THEMES", x + 16, y + 5.5f, 0.85f, ColorUtil.mulAlpha(t.text(), a));
 

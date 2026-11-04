@@ -51,10 +51,13 @@ public class ConfigsPopup {
         ph = 20 + profiles.size() * 12 + 18 + 15 * 3 + 4;
         px = sw / 2 - W / 2;
         py = by - 6 - ph + (int) ((1 - a) * 10);
-        Render2D.shadow(ctx, px, py, W, ph, 6, 5, ColorUtil.mulAlpha(0x90000000, a));
-        Render2D.roundRect(ctx, px, py, W, ph, 6, ColorUtil.mulAlpha(t.background(), a));
-        Render2D.roundRect(ctx, px, py, W, 16, 6, ColorUtil.mulAlpha(t.header(), a));
-        ctx.fill(px, py + 12, px + W, py + 16, ColorUtil.mulAlpha(t.header(), a));
+        if (dev.stella.client.render.Glass.active()) dev.stella.client.render.Glass.panel(ctx, px, py, W, ph, 7, 16, a);
+        else {
+            Render2D.shadow(ctx, px, py, W, ph, 6, 5, ColorUtil.mulAlpha(0x90000000, a));
+            Render2D.roundRect(ctx, px, py, W, ph, 6, ColorUtil.mulAlpha(t.background(), a));
+            Render2D.roundRect(ctx, px, py, W, 16, 6, ColorUtil.mulAlpha(t.header(), a));
+            ctx.fill(px, py + 12, px + W, py + 16, ColorUtil.mulAlpha(t.header(), a));
+        }
         GuiDraw.small(ctx, "CONFIGS", px + 8, py + 5.5f, 0.85f, ColorUtil.mulAlpha(t.text(), a));
         String act = "ACTIVE: " + ConfigManager.activeProfile().toUpperCase(Locale.ROOT);
         GuiDraw.small(ctx, act, px + W - 8 - GuiDraw.smallWidth(act, 0.65f), py + 6, 0.65f, ColorUtil.mulAlpha(t.accentSoft(), a));

@@ -89,10 +89,13 @@ public class CategoryPanel {
         int total = HEADER + bh;
 
         // card + shadow
-        Render2D.shadow(ctx, x, y, WIDTH, total, 5, 4, ColorUtil.mulAlpha(0x80000000, a));
-        Render2D.roundRect(ctx, x, y, WIDTH, total, 5, ColorUtil.mulAlpha(t.background(), a));
-        Render2D.roundRect(ctx, x, y, WIDTH, HEADER, 5, ColorUtil.mulAlpha(t.header(), a));
-        if (bh > 0) ctx.fill(x, y + HEADER - 4, x + WIDTH, y + HEADER, ColorUtil.mulAlpha(t.header(), a));
+        if (dev.stella.client.render.Glass.active()) dev.stella.client.render.Glass.panel(ctx, x, y, WIDTH, total, 6, HEADER, a);
+        else {
+            Render2D.shadow(ctx, x, y, WIDTH, total, 5, 4, ColorUtil.mulAlpha(0x80000000, a));
+            Render2D.roundRect(ctx, x, y, WIDTH, total, 5, ColorUtil.mulAlpha(t.background(), a));
+            Render2D.roundRect(ctx, x, y, WIDTH, HEADER, 5, ColorUtil.mulAlpha(t.header(), a));
+            if (bh > 0) ctx.fill(x, y + HEADER - 4, x + WIDTH, y + HEADER, ColorUtil.mulAlpha(t.header(), a));
+        }
         // header: icon + uppercase title
         String icon = GuiDraw.icon(category);
         GuiDraw.text(ctx, icon, x + 6, y + 4, ColorUtil.mulAlpha(t.accent(), a));
