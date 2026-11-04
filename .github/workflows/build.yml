@@ -129,7 +129,7 @@ jobs:
       - name: Print video
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
-          ffmpeg -loglevel error -i vid/preview-raw.mp4 -vf "scale=1280:-2,fps=30" -c:v libx264 -preset slow -crf 25 -an -movflags +faststart preview.mp4
+          ffmpeg -loglevel error -i vid/preview-raw.mp4 -vf "scale=1280:-2,fps=30" -c:v libx264 -preset slow -crf 21 -an -movflags +faststart preview.mp4
           ls -la preview.mp4
           echo "VID_SHA256 $(sha256sum preview.mp4 | cut -d' ' -f1)"
           base64 -w 4000 preview.mp4 | sed 's/^/VID /'

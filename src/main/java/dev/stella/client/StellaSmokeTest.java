@@ -44,6 +44,7 @@ final class StellaSmokeTest {
 
     private static void caption(String title, String sub) {
         caption = title; captionSub = sub; captionAt = System.currentTimeMillis();
+        mc().inGameHud.getChatHud().clear(false);
         StellaClient.LOGGER.info("[smoke] tour: {} - {}", title, sub);
     }
 
@@ -87,14 +88,13 @@ final class StellaSmokeTest {
         serverCmd(mc, "tp " + mc.player.getGameProfile().name() + " " + tx + " " + camY + " " + (tz - back) + " 0 " + pitch);
     }
 
-    private static void tourPlayers(MinecraftClient mc, boolean build, int hx, int hy, int hz, int px, int pz) {
+    private static void tourPlayers(MinecraftClient mc, boolean build, int hx, int hy, int hz, int px, int py, int pz) {
         var server = mc.getServer();
         if (server == null) return;
         server.execute(() -> {
             var world = server.getOverworld();
             var pm = server.getPlayerManager();
             if (build) {
-                int py = world.getTopY(net.minecraft.world.Heightmap.Type.MOTION_BLOCKING, px, pz);
                 Object[][] spec = {{"HiddenPlayer", HIDDEN_UUID, hx, hy, hz}, {"OpenPlayer", OPEN_UUID, px, py, pz}};
                 for (Object[] o : spec) {
                     var fp = net.fabricmc.fabric.api.entity.FakePlayer.get(world, new com.mojang.authlib.GameProfile((java.util.UUID) o[1], (String) o[0]));
@@ -810,17 +810,26 @@ final class StellaSmokeTest {
                     int T = inStage(), bx = stashX, bz = stashZ, by = -30;
                     String me = mc.player.getGameProfile().name();
                     if (T == 1040) {
-                        caption("Storage ESP + Block ESP", "Chests, shulkers, barrels + observers, pistons, dispensers, hoppers - with tracers");
+                        for (String c : new String[]{"time set noon", "weather clear", "gamerule sendCommandFeedback false", "gamerule doDaylightCycle false"}) serverCmd(mc, c);
+                        for (String n : new String[]{"Death Coordinates", "Light Level Overlay"})
+                            ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> m.setEnabled(false));
+                        caption("Storage ESP + Block ESP", "Stash + kelp farm 30 blocks underground - every container and redstone part, with tracers");
                         only("Storage ESP", "Block ESP");
                     }
                     if (T > 1040 && T < 1070) mc.player.setYaw(-135f + (T - 1040) * 2.5f);
                     if (T == 1070) shot(mc, "tour-1-storage-block-esp");
                     if (T == 1074) {
-                        caption("Sus Chunk Finder", "Flags chunks with hidden-base signs underground (only a chat message, no on-screen text)");
+                        caption("Sus Chunk Finder", "Flags chunks that hide a base underground - you just get a chat message");
                         only("Sus Chunk Finder");
-                        ModuleManager.get(dev.stella.client.modules.combat.SusChunkFinder.class).resetChatMessages();
-                        mc.inGameHud.getChatHud().clear(false);
-                        aerial(mc, bx + 6.5, by + 2, bz + 5.5, oy + 18, 62f);
+                        var sus = ModuleManager.get(dev.stella.client.modules.combat.SusChunkFinder.class);
+                        sus.resetChatMessages();
+                        double tx = bx + 6.5, tz = bz + 5.5, best = Double.MAX_VALUE;
+                        for (var c : sus.suspectChunks()) {
+                            double cx = c.cx() * 16 + 8, cz = c.cz() * 16 + 8, d = (cx - mc.player.getX()) * (cx - mc.player.getX()) + (cz - mc.player.getZ()) * (cz - mc.player.getZ());
+                            if (d < best) { best = d; tx = cx; tz = cz; }
+                        }
+                        StellaClient.LOGGER.info("[smoke] tour sus camera on {} {} ({} flagged)", tx, tz, sus.suspectChunks().size());
+                        aerial(mc, tx, oy, tz, oy + 34, 52f);
                     }
                     if (T == 1080) { mc.player.setYaw(camYaw); mc.player.setPitch(camPitch); }
                     if (T == 1093 && holdForTerrain(mc, 900)) return;
@@ -835,7 +844,7 @@ final class StellaSmokeTest {
                     }
                     if (T == 1110) {
                         only("Spawner Finder");
-                        aerial(mc, bx + 26.5, -40, bz + 8.5, oy + 14, 58f);
+                        aerial(mc, bx + 26.5, oy, bz + 8.5, oy + 22, 28f);
                     }
                     if (T == 1116) { mc.player.setYaw(camYaw); mc.player.setPitch(camPitch); }
                     if (T == 1133 && holdForTerrain(mc, 900)) return;
@@ -846,25 +855,30 @@ final class StellaSmokeTest {
                         caption("Player Detector + Player ESP", "Blue chunk + list for players the client knows about but you can't see");
                         only("Player Detector", "Player ESP");
                         setting("Player ESP", "Tracers", true);
-                        tourPlayers(mc, true, bx + 6, by, bz + 5, bx + 6, bz - 6);
-                        aerial(mc, bx + 6.5, by + 2, bz + 2.5, oy + 14, 55f);
+                        serverCmd(mc, "fill " + (bx + 15) + " " + by + " " + (bz + 3) + " " + (bx + 17) + " " + (by + 2) + " " + (bz + 5) + " minecraft:air");
+                        serverCmd(mc, "setblock " + (bx + 16) + " " + (by + 2) + " " + (bz + 3) + " minecraft:lantern[hanging=true]");
+                        tourPlayers(mc, true, bx + 16, by, bz + 4, bx + 6, by, bz + 8);
+                        camYaw = -112f; camPitch = 6f;
+                        serverCmd(mc, "tp " + me + " " + (bx + 2.5) + " " + by + " " + (bz + 2.5) + " -112 6");
                     }
                     if (T == 1150) { mc.player.setYaw(camYaw); mc.player.setPitch(camPitch); }
                     if (T == 1163 && holdForTerrain(mc, 600)) return;
+                    if (T > 1163 && T < 1172) { mc.player.setYaw(-112f + (T - 1163) * 1.5f); }
                     if (T == 1168) logDetectorTour();
                     if (T == 1172) shot(mc, "tour-4-player-detector");
                     if (T == 1176) {
-                        tourPlayers(mc, false, 0, 0, 0, 0, 0);
-                        caption("Staff List + Anti Vanish", "Staff from staff.json join alert, then /gmsp spectator is caught by Anti Vanish");
+                        tourPlayers(mc, false, 0, 0, 0, 0, 0, 0);
+                        caption("Staff List + Anti Vanish", "A staff member joins and goes /gmsp - Anti Vanish catches it");
                         only("Staff List", "Anti Vanish", "Staff List HUD");
-                        mc.player.setPitch(15f);
+                        aerial(mc, bx + 6.5, oy, bz + 5.5, oy + 10, 12f);
                     }
+                    if (T == 1180) { mc.player.setYaw(camYaw); mc.player.setPitch(camPitch); }
                     if (T == 1182) staffTest(mc, 1);
                     if (T == 1196) logAntiVanish("tour");
                     if (T == 1200) shot(mc, "tour-5-staff-anti-vanish");
                     if (T == 1204) {
                         staffTest(mc, 3);
-                        caption("Media Base Finder + Region Map", "Media / content creators in your region, and which region you're in");
+                        caption("Media Base Finder + Region Map", "Shows media players in your region and which region you're in");
                         try {
                             java.nio.file.Files.writeString(dev.stella.client.data.MediaDatabase.file(), "{\"media\": [\"MediaStreamer\"]}");
                         } catch (Exception ex) { StellaClient.LOGGER.warn("[smoke] media.json", ex); }
@@ -899,8 +913,8 @@ final class StellaSmokeTest {
                         if (k >= 2 && k < 14) at.update(true); else at.update(false);
                         if (k == 2) mc.player.getInventory().setSelectedSlot(0);
                         if (k == 8) {
-                            captionSub = "Mining " + new String[]{"deepslate", "an oak log", "dirt"}[seg] + " -> " + dev.stella.client.modules.misc.AutoTool.lastDecision;
-                            StellaClient.LOGGER.info("[smoke] tour auto tool: {} slot {}", captionSub, mc.player.getInventory().getSelectedSlot());
+                            captionSub = "Mining " + new String[]{"deepslate", "an oak log", "dirt"}[seg] + "  ->  " + mc.player.getMainHandStack().getName().getString();
+                            StellaClient.LOGGER.info("[smoke] tour auto tool: {} ({}) slot {}", captionSub, dev.stella.client.modules.misc.AutoTool.lastDecision, mc.player.getInventory().getSelectedSlot());
                         }
                         if (k == 10) shot(mc, "tour-7-auto-tool-" + seg);
                     }
@@ -908,7 +922,7 @@ final class StellaSmokeTest {
                         serverCmd(mc, "gamemode spectator " + me);
                         caption("Everything together", "ESP, tracers, spawner beams and Sus Chunk Finder over the stash");
                         only("Storage ESP", "Block ESP", "Spawner Finder", "Sus Chunk Finder");
-                        aerial(mc, bx + 16.5, -34, bz + 8.5, oy + 16, 55f);
+                        aerial(mc, bx + 16.5, oy, bz + 8.5, oy + 30, 40f);
                     }
                     if (T == 1308) { mc.player.setYaw(camYaw); mc.player.setPitch(camPitch); }
                     if (T == 1321 && holdForTerrain(mc, 600)) return;
