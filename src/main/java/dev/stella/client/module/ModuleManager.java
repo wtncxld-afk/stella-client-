@@ -62,6 +62,7 @@ public final class ModuleManager {
         register(new dev.stella.client.modules.world.LightLevelOverlay());
         register(new dev.stella.client.modules.hud.ArmorHud());
         register(new dev.stella.client.modules.hud.RadarHud());
+        register(new dev.stella.client.modules.hud.ModuleListHud());
         register(new dev.stella.client.modules.cosmetics.Wings());
         register(new dev.stella.client.modules.cosmetics.ChineseHat());
         register(new dev.stella.client.modules.cosmetics.JumpCircles());

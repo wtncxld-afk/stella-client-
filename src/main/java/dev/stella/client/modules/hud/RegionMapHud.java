@@ -43,7 +43,7 @@ public class RegionMapHud extends HudElement {
 
     @Override protected double defaultScale() { return 0.6; }
 
-    public RegionMapHud() { super("Region Map HUD", "Numbered region grid with position, region, legend and staff", 2, 2, false, "Map Scale", 6.0); }
+    public RegionMapHud() { super("Region Map HUD", "Numbered region grid with position, region, legend and staff", 4, 134, true, "Map Scale", 6.0); }
 
     private void reloadNow() {
         if (reload.isOn()) {

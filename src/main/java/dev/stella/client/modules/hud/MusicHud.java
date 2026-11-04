@@ -53,13 +53,24 @@ public class MusicHud extends HudElement {
     private final boolean[] keyDown = new boolean[3];
     private int btnY, btnX0;
 
-    public MusicHud() { super("Music HUD", "Spotify / now-playing card with cover, duration and controls (no account linking)", 4, -110, false); }
+    private final dev.stella.client.setting.BoolSetting belowList = add(new dev.stella.client.setting.BoolSetting("Below Module List",
+            "Sit right under the Module List in the top-right corner (turn off to place it yourself)", true));
+
+    private void followModuleList() {
+        ModuleListHud ml = dev.stella.client.module.ModuleManager.get(ModuleListHud.class);
+        if (!belowList.isOn() || ml == null || !ml.isEnabled() || !ml.isSized() || !isSized() || ml.x() < 0) return;
+        posX.set((double) (ml.x() + ml.scaledWidth() - scaledWidth()));
+        posY.set((double) (ml.y() + ml.scaledListHeight() + 4));
+    }
+
+    public MusicHud() { super("Music HUD", "Spotify / now-playing card with cover, duration and controls (no account linking)", -4, 120, true); }
 
     @Override protected void onEnable() { MusicService.configure(spotifyOnly.isOn(), pollRate.getInt()); MusicService.start(); }
     @Override protected void onDisable() { MusicService.stop(); }
 
     @Override
     public void onTick() {
+        followModuleList();
         MusicService.configure(spotifyOnly.isOn(), pollRate.getInt());
         if (mc.currentScreen != null) return;
         long h = mc.getWindow().getHandle();

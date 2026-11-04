@@ -34,7 +34,7 @@ import java.util.stream.Stream;
  */
 public final class ConfigManager {
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-    private static final int VERSION = 2;
+    private static final int VERSION = 3;
 
     private static String activeProfile = "default";
     private static int ticksSinceSave;
@@ -210,8 +210,8 @@ public final class ConfigManager {
             }
             GuiLayout.fromJson(root.has("gui") ? root.getAsJsonObject("gui") : null);
             int version = root.has("version") ? root.get("version").getAsInt() : 1;
-            if (version < 2) {
-                // v2: compact HUD (smaller elements and Region Map); move everything to the new default layout once
+            if (version < 3) {
+                // v3: radar + region map top-left, module list + music top-right; move everything to the new layout once
                 for (Module m : ModuleManager.all()) if (m instanceof dev.stella.client.hud.HudElement h) h.resetLayout();
                 StellaClient.LOGGER.info("Profile {}: HUD moved to the compact v2 layout", name);
             }

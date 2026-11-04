@@ -19,7 +19,7 @@ public class CoordinatesHud extends HudElement {
     private final ColorSetting labelColor = add(new ColorSetting("Label Color", "Axis label colour (when Theme Colors is off)", 0xFFC084FC));
     private final ColorSetting valueColor = add(new ColorSetting("Value Color", "Number colour", 0xFFF3F0F7));
 
-    public CoordinatesHud() { super("Coordinates HUD", "Shows X / Y / Z and facing", -4, 83, true); }
+    public CoordinatesHud() { super("Coordinates HUD", "Shows X / Y / Z and facing", 4, 336, true); }
 
     @Override
     public void render(DrawContext ctx, float tickDelta, boolean editor) {

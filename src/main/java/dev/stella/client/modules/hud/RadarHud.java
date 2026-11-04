@@ -37,7 +37,7 @@ public class RadarHud extends HudElement {
     private final BoolSetting sweep = add(new BoolSetting("Sweep", "Animated radar sweep", true));
     private final BoolSetting compass = add(new BoolSetting("Compass", "N / E / S / W on the rim", true));
 
-    public RadarHud() { super("Radar HUD", "Circle radar with player heads at their exact positions", 4, 150, false); }
+    public RadarHud() { super("Radar HUD", "Circle radar with player heads at their exact positions", 4, 4, true); }
 
     private record Blip(double sx, double sy, double dist, double dy, boolean out, Entity e) {}
 

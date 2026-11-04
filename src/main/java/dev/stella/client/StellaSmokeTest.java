@@ -1108,7 +1108,24 @@ public final class StellaSmokeTest {
                     if (T == 2111) { setting("ClickGUI", "Layout", "Panels"); mc.setScreen(new ClickGuiScreen()); }
                     if (T == 2119) shot(mc, "gui-dropdown-view");
                     if (T == 2121) { if (mc.currentScreen != null) mc.currentScreen.close(); setting("ClickGUI", "Layout", "Window"); }
-                    if (inStage() == 2128) {
+                    // default HUD layout: radar + region map top-left, module list + music top-right
+                    if (T == 2123) {
+                        serverCmd(mc, "gamemode creative " + me);
+                        serverCmd(mc, "time set noon");
+                        serverCmd(mc, "tp " + me + " " + (ox + 0.5) + " " + (oy + 1) + " " + (oz + 0.5) + " 30 -5");
+                        mc.options.hudHidden = false;
+                        mc.inGameHud.getChatHud().clear(false);
+                        for (Module m : ModuleManager.all()) if (m instanceof dev.stella.client.hud.HudElement) m.setEnabled(false);
+                        for (String n : new String[]{"Radar HUD", "Region Map HUD", "Module List HUD", "Music HUD", "FPS HUD", "Ping HUD", "Coordinates HUD",
+                                "Stella Branding HUD", "Notifications HUD", "Player ESP", "Storage ESP", "Spawner Finder", "Sus Chunk Finder", "Auto Totem",
+                                "Toggle Sprint", "Free Look", "Fullbright", "Knife Skins", "Wings", "Trajectories", "Friends", "Block Outline"})
+                            ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> {
+                                m.setEnabled(true);
+                                if (m instanceof dev.stella.client.hud.HudElement h) h.resetLayout();
+                            });
+                    }
+                    if (T == 2126) shot(mc, "hud-layout");
+                    if (inStage() == 2132) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {
