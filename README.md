@@ -111,7 +111,7 @@ Notifications HUD settings.
 
 ## Player Detector
 
-Finds players near you that you **can't currently see** and shows where they are.
+Shows **every player loaded on your client** (every player the server has sent you) and where they are.
 
 **How it works:** the server sends your client every player inside its entity-tracking range
 (on most servers 48–128 blocks; the server decides). Five times a second Stella checks each of those players:
@@ -120,7 +120,7 @@ Finds players near you that you **can't currently see** and shows where they are
 * **Out of view:** nothing in the way, but they are off your screen (behind you, far to the side);
 * **Visible:** you can see them.
 
-Detected players get an animated **blue square over their chunk**, a hitbox outline through walls, their
+Each player is tagged with one of those states. Detected players get an animated **blue square over their chunk**, a hitbox outline through walls, their
 **distance**, a **direction arrow** (relative to where you look), a compass direction and height difference,
 and a **dropdown** slides in listing them with their heads. A chat line (only you see it) announces each new one.
 
@@ -134,7 +134,7 @@ server does not send (e.g. fully vanished staff), and it sends nothing to the se
 
 | Setting | Default | What it does |
 |---|---|---|
-| Detect | Hidden Only | *Hidden Only* lists players you can't see; *All Players* lists every tracked player |
+| Detect | All Players | *All Players* lists every loaded player; *Hidden Only* lists only players you can't see |
 | Out Of View Counts As Hidden | on | Players behind you / off-screen also count as hidden |
 | Range | 128 | Maximum distance (the server limits what it sends) |
 | Ignore Invisible / Ignore Names | off / empty | Skip invisible players / a comma-separated friends list |

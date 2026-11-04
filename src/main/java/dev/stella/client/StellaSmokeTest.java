@@ -533,17 +533,17 @@ final class StellaSmokeTest {
                         for (String n : new String[]{"Player ESP", "Glow Outline", "Anti Vanish", "Totem Pop Counter"})
                             ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> m.setEnabled(false));
                         var pd = ModuleManager.get(dev.stella.client.modules.combat.PlayerDetector.class);
-                        setting("Player Detector", "Detect", "Hidden Only");
-                        pd.setEnabled(true);
+                        pd.setEnabled(true); // default mode: every loaded player
                         mc.inGameHud.getChatHud().clear(false);
                         mc.player.setYaw(-90f);
                         mc.player.setPitch(10f);
                         detectorScene(mc, true);
                     }
-                    if (inStage() == 692) logDetector("hidden only");
+                    if (inStage() == 692) logDetector("all players");
                     if (inStage() == 694) shot(mc, "player-detector");
-                    if (inStage() == 696) setting("Player Detector", "Detect", "All Players");
-                    if (inStage() == 704) logDetector("all players");
+                    if (inStage() == 696) setting("Player Detector", "Detect", "Hidden Only");
+                    if (inStage() == 704) logDetector("hidden only");
+                    if (inStage() == 705) setting("Player Detector", "Detect", "All Players");
                     if (inStage() == 706) detectorScene(mc, false);
                     if (inStage() == 710) {
                         int errors = StellaClient.errorCount();
