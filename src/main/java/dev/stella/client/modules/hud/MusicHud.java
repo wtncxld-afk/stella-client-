@@ -56,6 +56,9 @@ public class MusicHud extends HudElement {
     private final dev.stella.client.setting.BoolSetting belowList = add(new dev.stella.client.setting.BoolSetting("Below Module List",
             "Sit right under the Module List in the top-right corner (turn off to place it yourself)", true));
 
+    /** True when this card sits under the Module List (so the list leaves room for it). */
+    public boolean followsList() { return isEnabled() && belowList.isOn() && isSized(); }
+
     private void followModuleList() {
         ModuleListHud ml = dev.stella.client.module.ModuleManager.get(ModuleListHud.class);
         if (!belowList.isOn() || ml == null || !ml.isEnabled() || !ml.isSized() || !isSized() || ml.x() < 0) return;

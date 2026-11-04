@@ -67,9 +67,23 @@ public class ModuleListHud extends HudElement {
         }
         if (shown.isEmpty() && editor) for (Module m : ModuleManager.all()) if (listed(m) && shown.size() < 5) { shown.add(m); anim.put(m, 1f); }
         shown.sort((x, y) -> Integer.compare(StellaFont.width(name(y)), StellaFont.width(name(x))));
+        int rowH = 11, y = 0;
+        // leave room for the music card below (and the screen edge): extra names fold into "+N more"
+        int hidden = 0;
+        if (mc.getWindow() != null && y() >= 0) {
+            float avail = mc.getWindow().getScaledHeight() - y() - 6;
+            MusicHud music = ModuleManager.get(MusicHud.class);
+            if (music != null && music.followsList()) avail -= music.scaledHeight() + 4;
+            int maxRows = Math.max(3, (int) (avail / (rowH * scale.getFloat())));
+            if (shown.size() > maxRows) {
+                hidden = shown.size() - (maxRows - 1);
+                shown = new ArrayList<>(shown.subList(0, maxRows - 1));
+            }
+        }
+        String more = hidden > 0 ? "+" + hidden + " more" : null;
         int maxW = 40;
         for (Module m : shown) maxW = Math.max(maxW, StellaFont.width(name(m)) + 8);
-        int rowH = 11, y = 0;
+        if (more != null) maxW = Math.max(maxW, StellaFont.width(more) + 8);
         boolean glass = Glass.active();
         for (int i = 0; i < shown.size(); i++) {
             Module m = shown.get(i);
@@ -87,6 +101,12 @@ public class ModuleListHud extends HudElement {
             if (bar.isOn()) Render2D.rect(ctx, maxW, y, 1.5f, rowH * e, col(ColorUtil.withAlpha(c, (int) (255 * e))));
             if (e > 0.3f) StellaFont.draw(ctx, n, (int) (x + 4), y + 2, col(ColorUtil.withAlpha(c, (int) (255 * e))), true);
             y += Math.round(rowH * e);
+        }
+        if (more != null) {
+            int w = StellaFont.width(more) + 8;
+            if (background.isOn()) Render2D.rect(ctx, maxW - w, y, w, rowH, col(ColorUtil.withAlpha(glass ? 0x2A3448 : 0x0E0C12, glass ? 0x70 : 0xA8)));
+            StellaFont.draw(ctx, more, maxW - w + 4, y + 2, col(0xFF9A93A8), true);
+            y += rowH;
         }
         listHeight = Math.max(1, y);
         float oldRight = x() + scaledWidth();
