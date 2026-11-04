@@ -33,7 +33,9 @@ public class PerformanceHud extends HudElement {
     @Override
     public void render(DrawContext ctx, float td, boolean editor) {
         long now = System.nanoTime();
-        if (last != 0) { frames[head] = (now - last) / 1_000_000f; head = (head + 1) % frames.length; }
+        float dt = last == 0 ? 0 : (now - last) / 1_000_000f;
+        // ignore the gap while the HUD was hidden / the game was paused (it is not a real frame)
+        if (dt > 0 && dt < 2000) { frames[head] = dt; head = (head + 1) % frames.length; }
         last = now;
         if (System.currentTimeMillis() - statsAt > 500 || avgFps <= 0) {
             statsAt = System.currentTimeMillis();

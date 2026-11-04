@@ -1079,7 +1079,7 @@ public final class StellaSmokeTest {
                         caption = null;
                     }
                     if (T == 2005) mc.inGameHud.getChatHud().clear(false);
-                    if (T == 2006) shot(mc, "glass-hud");
+                    if (T == 2006) { mc.inGameHud.getChatHud().clear(false); shot(mc, "glass-hud"); }
                     if (T == 2008) mc.setScreen(new ClickGuiScreen());
                     if (T == 2016) shot(mc, "glass-gui");
                     if (T == 2018 && mc.currentScreen instanceof ClickGuiScreen gui) gui.openSettingsFor("Knife Skins");
