@@ -304,8 +304,9 @@ public final class StellaSmokeTest {
                                 mc.currentScreen == null ? "none" : mc.currentScreen.getClass().getSimpleName());
                         menuShownAt = tick;
                     }
+                    if (tick - menuShownAt == 14) shot(mc, "main-menu-intro");
                     if (tick - menuShownAt == 70) shot(mc, "main-menu");
-                    if (tick - menuShownAt < 76) return;
+                    if (tick - menuShownAt < 136) return; // long enough for the recording to show the intro and idle effects
                     mc.setScreen(new ClickGuiScreen());
                     next();
                 }
@@ -551,6 +552,7 @@ public final class StellaSmokeTest {
                         for (Module m : ModuleManager.all()) if (m.isDefaultEnabled()) m.setEnabled(true);
                     }
                     if (inStage() == 440) mc.setScreen(new net.minecraft.client.gui.screen.GameMenuScreen(true));
+                    if (inStage() == 443) shot(mc, "pause-menu-open");
                     if (inStage() == 462) shot(mc, "pause-menu");
                     if (inStage() == 466) mc.setScreen(null);
                     if (inStage() == 468) {

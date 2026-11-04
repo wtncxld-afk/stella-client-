@@ -17,6 +17,12 @@ public class MenusModule extends Module {
     public final BoolSetting loadingScreens = add(new BoolSetting("Stella Loading Screens", "Animated Stella startup, connecting and world-loading screens", true));
     public final BoolSetting pauseStars = add(new BoolSetting("Pause Menu Stars", "Animated stars over the blurred game in the pause menu", true));
 
+    public final BoolSetting petals = add(new BoolSetting("Petals", "Sakura petals drifting across the menus and loading screens", true));
+    public final BoolSetting lightning = add(new BoolSetting("Lightning", "Small crackling lightning bolts around the logo", true));
+    public final BoolSetting sparkles = add(new BoolSetting("Sparkles", "Twinkling sparkles and click bursts", true));
+    public final NumberSetting particleAmount = add(new NumberSetting("Particle Amount", "How many menu particles", 1.0, 0.0, 2.0, 0.1));
+    public final BoolSetting parallax = add(new BoolSetting("Mouse Parallax", "Background layers follow the mouse on the main menu", true));
+
     public MenusModule() { super("Menus", "Stella-styled main menu and pause menu", Category.CLIENT, true); }
 
     @Override protected boolean showTogglePopup() { return true; }

@@ -34,6 +34,13 @@ public class StellaMainMenu extends dev.stella.client.gui.StellaScreen {
     private final List<MenuButton> buttons = new ArrayList<>();
     private int logoTop;
     private CosmicBackground bg;
+    private final MenuFx fx = new MenuFx();
+    private static final String[] TAGLINES = {"Built for DonutSMP", "Now with knives!", "Shiny since day one", "Petals included",
+            "Find every spawner", "Liquid glass, anywhere", "Stella says hi", "Faster than your FPS", "Star-powered"};
+    private final String tagline = TAGLINES[(int) (Math.random() * TAGLINES.length)];
+    private boolean introBurst;
+    private double nextArc = 2.0;
+    private long lastFrame;
     private final long openedAt = System.currentTimeMillis();
     private final Animation fade = new Animation(0, 5).target(1);
 
@@ -87,7 +94,10 @@ public class StellaMainMenu extends dev.stella.client.gui.StellaScreen {
     @Override
     public void render(DrawContext ctx, int rawX, int rawY, float delta) {
         double a = fade.get();
-        bg.render(ctx, width, height, 1, true);
+        MenusModule cfg = ModuleManager.get(MenusModule.class);
+        float pxm = 0, pym = 0;
+        if (cfg.parallax.isOn() && width > 0 && height > 0) { pxm = rawX / (float) width * 2 - 1; pym = rawY / (float) height * 2 - 1; }
+        bg.render(ctx, width, height, 1, true, pxm, pym, true);
         ctx.getMatrices().pushMatrix();
         ctx.getMatrices().scale((float) (ui), (float) (ui));
         int mx = (int) (rawX / ui), my = (int) (rawY / ui);
@@ -96,15 +106,49 @@ public class StellaMainMenu extends dev.stella.client.gui.StellaScreen {
         double t = age / 1000.0;
         var theme = ThemeManager.get();
 
+        // ---- particles (behind the logo and buttons), lightning crackles around the logo
+        float logoCx = width / 2f, logoCy = logoTop + 28;
+        fx.focus(logoCx, logoCy, 34).render(ctx, width, height, a);
+        long nowMs = System.currentTimeMillis();
+        float dtf = lastFrame == 0 ? 0.016f : Math.min(0.05f, (nowMs - lastFrame) / 1000f);
+        lastFrame = nowMs;
+        nextArc -= dtf;
+        if (nextArc <= 0 && age > 900) { // arc from the logo to a letter of STELLA
+            double ang = Math.random() * Math.PI * 2;
+            fx.boltBetween(logoCx + (float) Math.cos(ang) * 16, logoCy + (float) Math.sin(ang) * 16,
+                    logoCx + (float) Math.cos(ang) * 46, logoCy + (float) Math.sin(ang) * 30, ColorUtil.lerp(theme.accent(), 0xFFFFFFFF, 0.4));
+            nextArc = 2.5 + Math.random() * 3.5;
+        }
+        // intro: logo pops in with a shockwave and a spark burst
+        double pop = dev.stella.client.util.Animation.easeOutBack(Math.min(1, age / 650.0));
+        if (!introBurst && age > 380) { introBurst = true; fx.burst(logoCx, logoCy, 36, theme.accent()); }
+        if (age < 1400) {
+            double k = Math.min(1, age / 1400.0);
+            float rr = (float) (10 + k * 110);
+            int segs = 64;
+            for (int i = 0; i < segs; i++) {
+                double a1 = i * Math.PI * 2 / segs, a2 = (i + 1) * Math.PI * 2 / segs;
+                dev.stella.client.render.Render2D.line(ctx, logoCx + Math.cos(a1) * rr, logoCy + Math.sin(a1) * rr * 0.8,
+                        logoCx + Math.cos(a2) * rr, logoCy + Math.sin(a2) * rr * 0.8, (float) (2.5 * (1 - k)) + 0.3f,
+                        ColorUtil.withAlpha(ColorUtil.lerp(theme.accent(), 0xFFFFFFFF, 0.5), (int) (200 * (1 - k))));
+            }
+        }
+
         // ---- logo
         int logoY = logoTop;
         float bob = (float) Math.sin(t * 1.4) * 2;
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate(logoCx, logoCy);
+        ctx.getMatrices().scale((float) pop, (float) pop);
+        ctx.getMatrices().rotate((float) ((1 - Math.min(1, age / 650.0)) * -0.6));
+        ctx.getMatrices().translate(-logoCx, -logoCy);
         int glowA = (int) (150 + 80 * Math.sin(t * 2));
         int gs = 72;
         ctx.drawTexture(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, BrandingHud.GLOW, width / 2 - gs / 2, (int) (logoY - 8 + bob), 0f, 0f, gs, gs, gs, gs,
                 ColorUtil.mulAlpha((glowA << 24) | (theme.accent() & 0xFFFFFF), a));
         ctx.drawTexture(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, BrandingHud.LOGO, width / 2 - 20, (int) (logoY + 8 + bob), 0f, 0f, 40, 40, 40, 40,
                 ColorUtil.mulAlpha(0xFFFFFFFF, a));
+        ctx.getMatrices().popMatrix();
         // big STELLA with shimmering gradient
         String title = "STELLA";
         float sc = 3.2f;
@@ -119,12 +163,28 @@ public class StellaMainMenu extends dev.stella.client.gui.StellaScreen {
             double tri = p < 0.5 ? p * 2 : (1 - p) * 2;
             int c = ColorUtil.lerp(ThemeManager.accentAt(0), 0xFFF5E8FF, tri);
             String ch = String.valueOf(title.charAt(i));
-            StellaFont.draw(ctx, ch, cx, 0, ColorUtil.mulAlpha(c, a), true);
+            double le = Math.max(0, Math.min(1, (age - 300 - i * 70) / 380.0));
+            float drop = (float) ((1 - dev.stella.client.util.Animation.easeOutBack(le)) * -6);
+            float wave = (float) Math.sin(t * 2.2 - i * 0.6) * 0.6f;
+            StellaFont.draw(ctx, ch, cx, (int) (drop + wave), ColorUtil.mulAlpha(c, a * le), true);
             cx += StellaFont.width(ch) + 2;
         }
         ctx.getMatrices().popMatrix();
         String sub = "C L I E N T";
-        StellaFont.draw(ctx, sub, width / 2 - StellaFont.width(sub) / 2, logoY + 86, ColorUtil.mulAlpha(theme.accentSoft(), a), false);
+        double subIn = Math.max(0, Math.min(1, (age - 750) / 400.0));
+        StellaFont.draw(ctx, sub, width / 2 - StellaFont.width(sub) / 2, logoY + 86, ColorUtil.mulAlpha(theme.accentSoft(), a * subIn), false);
+        // tagline: tilted, pulsing, typed out
+        int typed = (int) Math.max(0, Math.min(tagline.length(), (age - 1100) / 45));
+        if (typed > 0) {
+            String tg = tagline.substring(0, typed);
+            float ps = (float) (0.85 + 0.06 * Math.sin(t * 5));
+            ctx.getMatrices().pushMatrix();
+            ctx.getMatrices().translate(width / 2f + tw * sc / 2f - 6, logoY + 58);
+            ctx.getMatrices().rotate(-0.33f);
+            ctx.getMatrices().scale(ps, ps);
+            StellaFont.draw(ctx, tg, -StellaFont.width(tg) / 2, 0, ColorUtil.mulAlpha(0xFFFDE68A, a), true);
+            ctx.getMatrices().popMatrix();
+        }
 
         // ---- buttons (staggered entrance)
         for (int i = 0; i < buttons.size(); i++) {
@@ -154,6 +214,7 @@ public class StellaMainMenu extends dev.stella.client.gui.StellaScreen {
         for (MenuButton b : buttons) {
             if (b.over(mx, my) && button == 0) {
                 Sounds.menuClick();
+                fx.burst((float) mx, (float) my, 18, ThemeManager.get().accent());
                 b.action.run();
                 return true;
             }

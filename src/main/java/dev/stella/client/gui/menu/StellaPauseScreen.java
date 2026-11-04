@@ -31,6 +31,7 @@ import java.util.List;
 public class StellaPauseScreen extends dev.stella.client.gui.StellaScreen {
     private final List<MenuButton> buttons = new ArrayList<>();
     private CosmicBackground stars;
+    private final MenuFx fx = new MenuFx().density(0.6f);
     private final long openedAt = System.currentTimeMillis();
     private final Animation fade = new Animation(0, 9).target(1);
 
@@ -67,7 +68,9 @@ public class StellaPauseScreen extends dev.stella.client.gui.StellaScreen {
         if (client.world != null) applyBlur(ctx);
         double a = fade.get();
         ctx.fillGradient(0, 0, width, height, ColorUtil.mulAlpha(0xB0070410, a), ColorUtil.mulAlpha(0xD0120A22, a));
-        if (ModuleManager.get(MenusModule.class).pauseStars.isOn()) stars.render(ctx, width, height, a * 0.8, false);
+        if (ModuleManager.get(MenusModule.class).pauseStars.isOn()) stars.render(ctx, width, height, a * 0.8, false, 0, 0, true);
+        if (!buttons.isEmpty()) fx.focus(width / 2f, buttons.get(0).y - 33, 22);
+        fx.render(ctx, width, height, a);
     }
 
     @Override
@@ -76,15 +79,38 @@ public class StellaPauseScreen extends dev.stella.client.gui.StellaScreen {
         double a = fade.get();
         long age = System.currentTimeMillis() - openedAt;
         var theme = ThemeManager.get();
-        // header
+        // the whole panel zooms in slightly as it opens
+        double z = Animation.easeOutCubic(Math.min(1, age / 320.0));
+        float zs = (float) (0.94 + 0.06 * z);
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate(width / 2f, height / 2f);
+        ctx.getMatrices().scale(zs, zs);
+        ctx.getMatrices().translate(-width / 2f, -height / 2f);
+        // glass card behind the buttons
+        if (!buttons.isEmpty()) {
+            MenuButton f = buttons.get(0), l = buttons.get(buttons.size() - 1);
+            float px = f.x - 10, py = f.y - 50, pw = f.w + 20, ph = l.y + l.h - py + 10;
+            Render2D.shadow(ctx, px, py, pw, ph, 10, 8, ColorUtil.mulAlpha(0x60000000, a));
+            Render2D.roundRect(ctx, px, py, pw, ph, 10, ColorUtil.mulAlpha(0x70120E1C, a));
+            Render2D.hGradient(ctx, px + 10, py, pw - 20, 1, ColorUtil.mulAlpha(ColorUtil.withAlpha(theme.accent(), 0), a), ColorUtil.mulAlpha(theme.accent(), a));
+        }
+        // header: logo with a glow pulse, shimmering PAUSED
         int top = buttons.isEmpty() ? height / 2 : buttons.get(0).y - 42;
+        double tsec = age / 1000.0;
+        int glowA = (int) (120 + 70 * Math.sin(tsec * 2.2));
+        ctx.drawTexture(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, BrandingHud.GLOW, width / 2 - 18, top - 9, 0f, 0f, 36, 36, 36, 36,
+                ColorUtil.mulAlpha((glowA << 24) | (theme.accent() & 0xFFFFFF), a));
         ctx.drawTexture(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, BrandingHud.LOGO, width / 2 - 9, top, 0f, 0f, 18, 18, 18, 18, ColorUtil.mulAlpha(0xFFFFFFFF, a));
         String title = "PAUSED";
-        ctx.getMatrices().pushMatrix();
-        ctx.getMatrices().translate((float) (width / 2f - StellaFont.width(title) * 1.6f / 2f), (float) (top + 21));
-        ctx.getMatrices().scale(1.6f, 1.6f);
-        StellaFont.draw(ctx, title, 0, 0, ColorUtil.mulAlpha(ThemeManager.accentAt(0), a), true);
-        ctx.getMatrices().popMatrix();
+        float ts = 1.6f;
+        float tx = width / 2f - StellaFont.width(title) * ts / 2f;
+        for (int i = 0; i < title.length(); i++) {
+            String ch = String.valueOf(title.charAt(i));
+            double p = i / (double) (title.length() - 1);
+            double sh = Math.max(0, 1 - Math.abs(p - ((age % 2600) / 2600.0 * 1.6 - 0.3)) * 4);
+            Render2D.textScaled(ctx, ch, tx, top + 21, ts, ColorUtil.mulAlpha(ColorUtil.lerp(ThemeManager.accentAt(p * 0.4), 0xFFFFFFFF, sh * 0.8), a), true);
+            tx += StellaFont.width(ch) * ts;
+        }
         // info card on the left of the buttons
         List<String> info = new ArrayList<>();
         if (client.isInSingleplayer()) info.add("SINGLEPLAYER");
@@ -97,6 +123,7 @@ public class StellaPauseScreen extends dev.stella.client.gui.StellaScreen {
             }
         }
         if (client.player != null) info.add("XYZ " + client.player.getBlockX() + " " + client.player.getBlockY() + " " + client.player.getBlockZ());
+        info.add(java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")));
         int cw = 0;
         for (String s : info) cw = Math.max(cw, StellaFont.width(s));
         int cx = buttons.isEmpty() ? 10 : buttons.get(0).x + buttons.get(0).w + 14, cy = buttons.isEmpty() ? 10 : buttons.get(0).y;
@@ -110,12 +137,13 @@ public class StellaPauseScreen extends dev.stella.client.gui.StellaScreen {
             double e = Math.max(0, Math.min(1, (age - i * 45) / 260.0));
             buttons.get(i).render(ctx, mx, my, a, Animation.easeOutCubic(e));
         }
+        ctx.getMatrices().popMatrix();
     }
 
     @Override
     protected boolean onMouseClicked(double mx, double my, int button) {
         for (MenuButton b : buttons) {
-            if (b.over(mx, my) && button == 0) { Sounds.menuClick(); b.action.run(); return true; }
+            if (b.over(mx, my) && button == 0) { Sounds.menuClick(); fx.burst((float) mx, (float) my, 16, ThemeManager.get().accent()); b.action.run(); return true; }
         }
         return super.onMouseClicked(mx, my, button);
     }

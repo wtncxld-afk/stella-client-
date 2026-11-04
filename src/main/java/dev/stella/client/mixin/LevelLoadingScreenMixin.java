@@ -18,8 +18,7 @@ public abstract class LevelLoadingScreenMixin {
     private void stella$loading(DrawContext ctx, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         if (!LoadingDesign.enabled()) return;
         ctx.createNewRootLayer();
-        int pct = Math.round(Math.max(0, Math.min(1, loadProgress)) * 100);
         LoadingDesign.full(ctx, ctx.getScaledWindowWidth(), ctx.getScaledWindowHeight(), 1.0, loadProgress,
-                "LOADING WORLD", "Preparing terrain  " + pct + "%", true);
+                "LOADING WORLD", "Preparing terrain", true);
     }
 }

@@ -43,6 +43,20 @@ public class MenuButton {
         if (primary) Render2D.roundRect(ctx, bx, y, w, h, 6, ColorUtil.mulAlpha(ColorUtil.withAlpha(fill, 0x55), a));
         if (fw > 1) Render2D.roundRect(ctx, bx, y, fw, h, 6, ColorUtil.mulAlpha(ColorUtil.withAlpha(fill, 0xD8), a));
         Render2D.roundRect(ctx, bx + 0.5f, y + 0.5f, w - 1, 1, 0.5f, ColorUtil.mulAlpha(0x22FFFFFF, a));
+        // light sweep across the button while hovered, and a soft pulsing edge on the primary one
+        if (hv > 0.05) {
+            double k = (System.currentTimeMillis() % 1600) / 1600.0;
+            float sx = (float) (bx - 20 + k * (w + 40));
+            for (int i = 0; i < 6; i++) {
+                float lx = sx + i * 1.5f;
+                if (lx > bx + 3 && lx < bx + w - 3)
+                    Render2D.line(ctx, lx + 3, y + 1, lx - 3, y + h - 1, 1.5f, ColorUtil.mulAlpha(0x1CFFFFFF, a * hv * Math.sin(Math.PI * i / 5.0)));
+            }
+        }
+        if (primary) {
+            double p = 0.5 + 0.5 * Math.sin(System.currentTimeMillis() / 500.0);
+            Render2D.roundRect(ctx, bx + w * 0.15f, y + h - 1, w * 0.7f, 1, 0.5f, ColorUtil.mulAlpha(ColorUtil.withAlpha(0xFFFFFFFF, (int) (40 + 60 * p)), a));
+        }
         int tc = ColorUtil.lerp(primary ? 0xFFFFFFFF : t.text(), 0xFFFFFFFF, hv);
         int textX = (int) (bx + 10 + hv * 3);
         if (!icon.isEmpty()) {
