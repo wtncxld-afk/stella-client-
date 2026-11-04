@@ -1066,7 +1066,8 @@ public final class StellaSmokeTest {
                     if (T >= 1516 && T < 1830) acoDemo(mc, T, me);
                     // ================= Free Look: orbit around a closed room, walls on / off =================
                     if (T >= 1832 && T < 1912) freeLookDemo(mc, T, me);
-                    if (inStage() == 1920) {
+                    if (T >= 1914 && T < 2000) newFeaturesDemo(mc, T, me);
+                    if (inStage() == 2004) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {
@@ -1093,6 +1094,155 @@ public final class StellaSmokeTest {
         StellaClient.LOGGER.info("[smoke] terrain ready after {} ticks", held);
         held = 0;
         return false;
+    }
+
+    private static final java.util.UUID ENEMY_UUID = java.util.UUID.fromString("5e1a5a11-0000-4000-8000-0000000000f1");
+    private static final java.util.UUID BUDDY_UUID = java.util.UUID.fromString("5e1a5a11-0000-4000-8000-0000000000f2");
+
+    private static net.minecraft.entity.player.PlayerEntity clientPlayer(MinecraftClient mc, String name) {
+        for (var p : mc.world.getPlayers()) if (p.getGameProfile().name().equals(name)) return p;
+        return null;
+    }
+
+    private static void on(String... names) {
+        for (String n : names) ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> m.setEnabled(true));
+    }
+
+    /** Target HUD, Combat Timer, Hit Effects, Friends, Armor Break Alerts, cosmetics, visuals, Auction Helper, tools. */
+    private static void newFeaturesDemo(MinecraftClient mc, int T, String me) {
+        int x = ox + 40, y = oy, z = oz;
+        mc.getToastManager().clear();
+        var server = mc.getServer();
+        if (T == 1914) {
+            dev.stella.client.modules.misc.FreeLook.forceHeld = false;
+            mc.options.setPerspective(net.minecraft.client.option.Perspective.FIRST_PERSON);
+            for (String c : new String[]{"gamemode creative " + me, "time set noon",
+                    "fill " + (x - 8) + " " + (y - 1) + " " + (z - 8) + " " + (x + 8) + " " + (y - 1) + " " + (z + 12) + " minecraft:smooth_stone",
+                    "fill " + (x - 8) + " " + y + " " + (z - 8) + " " + (x + 8) + " " + (y + 8) + " " + (z + 12) + " minecraft:air",
+                    "tp " + me + " " + (x + 0.5) + " " + y + " " + (z + 0.5) + " 0 8",
+                    "item replace entity " + me + " hotbar.0 with minecraft:netherite_sword",
+                    "scoreboard objectives add stella dummy \"DonutSMP\"", "scoreboard objectives setdisplay sidebar stella",
+                    "scoreboard players set Money:$1.25M stella 3", "scoreboard players set Shards:4,210 stella 2", "scoreboard players set Kills:42 stella 1"})
+                serverCmd(mc, c);
+            mc.player.getInventory().setSelectedSlot(0);
+            if (!dev.stella.client.data.Friends.isFriend("Buddy")) dev.stella.client.data.Friends.toggle("Buddy");
+            if (server != null) server.execute(() -> {
+                var world = server.getOverworld();
+                var pm = server.getPlayerManager();
+                Object[][] spec = {{"Enemy", ENEMY_UUID, x + 0.5, z + 4.5}, {"Buddy", BUDDY_UUID, x + 3.5, z + 6.5}};
+                for (Object[] o : spec) {
+                    var fp = net.fabricmc.fabric.api.entity.FakePlayer.get(world, new com.mojang.authlib.GameProfile((java.util.UUID) o[1], (String) o[0]));
+                    fp.refreshPositionAndAngles((double) o[2], y, (double) o[3], 180f, 0f);
+                    if (o[0].equals("Enemy")) {
+                        var chest = new net.minecraft.item.ItemStack(net.minecraft.item.Items.DIAMOND_CHESTPLATE);
+                        chest.setDamage((int) (chest.getMaxDamage() * 0.92));
+                        fp.equipStack(net.minecraft.entity.EquipmentSlot.CHEST, chest);
+                        fp.equipStack(net.minecraft.entity.EquipmentSlot.HEAD, new net.minecraft.item.ItemStack(net.minecraft.item.Items.NETHERITE_HELMET));
+                        fp.equipStack(net.minecraft.entity.EquipmentSlot.MAINHAND, new net.minecraft.item.ItemStack(net.minecraft.item.Items.DIAMOND_SWORD));
+                        fp.equipStack(net.minecraft.entity.EquipmentSlot.OFFHAND, new net.minecraft.item.ItemStack(net.minecraft.item.Items.TOTEM_OF_UNDYING));
+                    }
+                    pm.sendToAll(net.minecraft.network.packet.s2c.play.PlayerListS2CPacket.entryFromPlayer(java.util.List.of(fp)));
+                    world.onPlayerConnected(fp);
+                    scenePlayers.add(fp);
+                }
+            });
+            on("Target HUD", "Combat Timer HUD", "Hit Effects", "Friends", "Armor Break Alerts", "Player ESP", "Radar HUD", "Notifications HUD", "Totem Pop Counter");
+            setting("Radar HUD", "Range", 16.0);
+            caption("New \u2022 Target HUD + Combat Timer", "Health, armor, pops and who's winning - friends show green");
+        }
+        if (T == 1920 || T == 1924) {
+            var enemy = clientPlayer(mc, "Enemy");
+            if (enemy != null) { mc.interactionManager.attackEntity(mc.player, enemy); mc.player.swingHand(net.minecraft.util.Hand.MAIN_HAND); }
+            StellaClient.LOGGER.info("[smoke] new: attacked enemy = {}", enemy != null);
+        }
+        if (T == 1930) shot(mc, "new-target-hud");
+        // cosmetics
+        if (T == 1932) {
+            mc.options.setPerspective(net.minecraft.client.option.Perspective.THIRD_PERSON_BACK);
+            setting("Cape", "Style", "Galaxy");
+            setting("Accessories", "Horns", false);
+            on("Cape", "Accessories", "Trails");
+            var tr = ModuleManager.get(dev.stella.client.modules.cosmetics.Trails.class);
+            for (int i = 30; i >= 0; i--) tr.push(new net.minecraft.util.math.Vec3d(x + 0.5 + Math.sin(i * 0.25) * 2.5, y + 0.9, z - 5 + i * 0.18));
+            caption("New \u2022 Cape + Halo + Star Pet + Trails", "Galaxy cape, glowing halo, a star pet and a rainbow trail");
+        }
+        if (T == 1936) { mc.player.setYaw(0f); mc.player.setPitch(12f); mc.player.bodyYaw = 0f; mc.player.lastBodyYaw = 0f; }
+        if (T == 1940) shot(mc, "new-cape-halo-trail");
+        if (T == 1942) {
+            var enemy = clientPlayer(mc, "Enemy");
+            setting("Kill Effects", "Effect", "Stella Burst");
+            on("Kill Effects");
+            if (enemy != null) ModuleManager.get(dev.stella.client.modules.cosmetics.KillEffects.class).play(enemy.getEntityPos());
+            caption("New \u2022 Kill Effects", "A Stella star burst where a player dies (also Lightning or Confetti)");
+        }
+        if (T == 1945) shot(mc, "new-kill-effect");
+        // visuals + HUDs
+        if (T == 1948) {
+            for (String n : new String[]{"Cape", "Accessories", "Trails", "Target HUD", "Radar HUD"})
+                ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> m.setEnabled(false));
+            mc.options.setPerspective(net.minecraft.client.option.Perspective.FIRST_PERSON);
+            serverCmd(mc, "gamemode survival " + me);
+            serverCmd(mc, "effect give " + me + " minecraft:resistance 120 4 true");
+            serverCmd(mc, "item replace entity " + me + " hotbar.1 with minecraft:ender_pearl 16");
+            serverCmd(mc, "setblock " + x + " " + y + " " + (z + 2) + " minecraft:amethyst_block");
+            mc.player.getInventory().setSelectedSlot(1);
+            setting("Scoreboard", "Scale", 0.8);
+            on("Block Outline", "Trajectories", "Saturation Overlay", "Scoreboard", "Clock HUD", "CPS Graph HUD", "Money Tracker HUD");
+            var mt = ModuleManager.get(dev.stella.client.modules.hud.MoneyTrackerHud.class);
+            long now = System.currentTimeMillis();
+            for (int i = 0; i < 24; i++) mt.addSample(now - (24 - i) * 75_000L, 1_000_000 + i * 11_000 + (i % 3) * 4000, 4000 + i * 9);
+            caption("New \u2022 Visuals + HUDs", "Block outline, pearl trajectory, saturation, clock, CPS graph, money tracker");
+        }
+        if (T == 1952) { mc.player.setYaw(0f); mc.player.setPitch(28f); }
+        if (T == 1958) {
+            StellaClient.LOGGER.info("[smoke] new: money tracker sidebar lines = {}", dev.stella.client.util.ScoreboardUtil.lines());
+            shot(mc, "new-visuals-huds");
+        }
+        // Auction Helper: a chest named like the auction menu with priced listings
+        if (T == 1960) {
+            int cx = x, cy = y, cz = z + 2;
+            serverCmd(mc, "gamemode creative " + me);
+            serverCmd(mc, "setblock " + cx + " " + cy + " " + cz + " minecraft:chest{CustomName:\"Auction House\"}");
+            String[] items = {"minecraft:diamond[lore=[\"Price: $900\"]] 16", "minecraft:diamond[lore=[\"Price: $640\"]] 8",
+                    "minecraft:spawner[lore=[\"Price: $1.5m\"]] 1", "minecraft:elytra[lore=[\"Price: $650k\"]] 1",
+                    "minecraft:totem_of_undying[lore=[\"Price: $9k\"]] 1", "minecraft:netherite_ingot[lore=[\"Price: $12.5k\"]] 4",
+                    "minecraft:golden_apple[lore=[\"Price: $2,400\"]] 12", "minecraft:totem_of_undying[lore=[\"Price: $7.2k\"]] 1"};
+            for (int i = 0; i < items.length; i++) serverCmd(mc, "item replace block " + cx + " " + cy + " " + cz + " container." + (10 + i) + " with " + items[i]);
+            caption("New \u2022 Auction Helper", "Price per item, cheapest in green, your watchlist in gold");
+        }
+        if (T == 1964) {
+            var pos = new net.minecraft.util.math.BlockPos(x, y, z + 2);
+            mc.interactionManager.interactBlock(mc.player, net.minecraft.util.Hand.MAIN_HAND,
+                    new net.minecraft.util.hit.BlockHitResult(net.minecraft.util.math.Vec3d.ofCenter(pos), net.minecraft.util.math.Direction.UP, pos, false));
+        }
+        if (T == 1968) {
+            StellaClient.LOGGER.info("[smoke] new: auction screen = {}", mc.currentScreen == null ? "none" : mc.currentScreen.getTitle().getString());
+            shot(mc, "new-auction-helper");
+        }
+        if (T == 1970) { if (mc.currentScreen != null) mc.currentScreen.close(); caption = null; }
+        // tools: gallery, share code, base saver, spawner export, region number
+        if (T == 1974) mc.setScreen(new dev.stella.client.gui.ScreenshotGallery());
+        if (T == 1980) shot(mc, "new-screenshot-gallery");
+        if (T == 1982) {
+            if (mc.currentScreen != null) mc.currentScreen.close();
+            try {
+                String code = dev.stella.client.modules.client.ClientTools.shareCode();
+                StellaClient.LOGGER.info("[smoke] new: share code length {} prefix {}", code.length(), code.substring(0, 8));
+            } catch (Exception e) { fail("share code: " + e); }
+            var bs = ModuleManager.get(dev.stella.client.modules.combat.BaseSaver.class);
+            StellaClient.LOGGER.info("[smoke] new: base saver wrote {}", bs.saveNowForced());
+            StellaClient.LOGGER.info("[smoke] new: region here = {}", dev.stella.client.modules.combat.RegionAlerts.number(
+                    dev.stella.client.data.RegionConfig.colOf(mc.player.getX()), dev.stella.client.data.RegionConfig.rowOf(mc.player.getZ())));
+        }
+        if (T == 1990) {
+            if (server != null) server.execute(() -> {
+                var world = server.getOverworld();
+                for (var fp : scenePlayers) world.removePlayer(fp, net.minecraft.entity.Entity.RemovalReason.DISCARDED);
+                server.getPlayerManager().sendToAll(new net.minecraft.network.packet.s2c.play.PlayerRemoveS2CPacket(java.util.List.of(ENEMY_UUID, BUDDY_UUID)));
+                scenePlayers.clear();
+            });
+            serverCmd(mc, "scoreboard objectives remove stella");
+        }
     }
 
     private static void freeLookDemo(MinecraftClient mc, int T, String me) {
