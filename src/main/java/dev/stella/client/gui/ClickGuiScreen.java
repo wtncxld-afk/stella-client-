@@ -38,6 +38,33 @@ public class ClickGuiScreen extends dev.stella.client.gui.StellaScreen {
 
     private boolean themesVisible() { return !windowMode() || win.showThemes; }
 
+    /** Bottom pill next to Configs: flips between the window layout and the classic dropdown panels. */
+    private int[] layoutPill() {
+        String label = layoutLabel();
+        int cw = GuiDraw.smallWidth("\u2699 CONFIGS", 0.8f) + 16;
+        int bw = GuiDraw.smallWidth(label, 0.8f) + 16;
+        return new int[]{vw / 2 + cw / 2 + 6, vh - 18, bw, 13};
+    }
+
+    private String layoutLabel() { return windowMode() ? "\u2630 DROPDOWN VIEW" : "\u25A3 WINDOW VIEW"; }
+
+    private void renderLayoutPill(DrawContext ctx, int mx, int my, double a) {
+        Theme t = ThemeManager.get();
+        int[] r = layoutPill();
+        boolean h = GuiDraw.in(mx, my, r[0], r[1], r[2], r[3]);
+        dev.stella.client.render.Render2D.shadow(ctx, r[0], r[1], r[2], r[3], 6.5f, 3, ColorUtil.mulAlpha(0x80000000, a));
+        dev.stella.client.render.Render2D.roundRect(ctx, r[0], r[1], r[2], r[3], 6.5f, ColorUtil.mulAlpha(h ? t.accent() : t.header(), a));
+        GuiDraw.small(ctx, layoutLabel(), r[0] + 8, r[1] + 3.5f, 0.8f, ColorUtil.mulAlpha(h ? 0xFFFFFFFF : t.text(), a));
+    }
+
+    private void switchLayout() {
+        ClickGuiModule g = ModuleManager.get(ClickGuiModule.class);
+        g.layout.set(windowMode() ? "Panels" : "Window");
+        windows.clear();
+        SettingsDirty.mark();
+        dev.stella.client.util.Sounds.click();
+    }
+
     void clearSearch() { search.set(""); panels.forEach(p -> p.filter("")); }
 
     private int searchX(int sw) {
@@ -207,6 +234,7 @@ public class ClickGuiScreen extends dev.stella.client.gui.StellaScreen {
         ctx.createNewRootLayer();
         if (themesVisible()) side.render(ctx, mx, my, vw, vh, a, this);
         configs.render(ctx, mx, my, vw, vh, a);
+        renderLayoutPill(ctx, mx, my, a);
         windows.removeIf(SettingsWindow::isClosed);
         for (SettingsWindow w : windows) w.render(ctx, mx, my, vw, vh);
 
@@ -243,6 +271,8 @@ public class ClickGuiScreen extends dev.stella.client.gui.StellaScreen {
             }
         }
         TextInput.unfocusAll();
+        int[] lp = layoutPill();
+        if (GuiDraw.in(mx, my, lp[0], lp[1], lp[2], lp[3])) { switchLayout(); return true; }
         if (configs.mouseClicked(mx, my)) return true;
         if (themesVisible() && side.mouseClicked(mx, my, vw, vh)) return true;
         int sw = 140, sx = searchX(sw);

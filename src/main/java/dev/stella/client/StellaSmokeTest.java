@@ -1104,7 +1104,11 @@ public final class StellaSmokeTest {
                         if (k == 6) shot(mc, "sky-theme-" + skyThemes[i].toLowerCase(java.util.Locale.ROOT).replace(' ', '-'));
                     }
                     if (T == 2030 + skyThemes.length * 8) { mc.options.hudHidden = false; setting("ClickGUI", "Theme", "Stella"); }
-                    if (inStage() == 2120) {
+                    // dropdown view (Layout: Panels) via the bottom switch
+                    if (T == 2111) { setting("ClickGUI", "Layout", "Panels"); mc.setScreen(new ClickGuiScreen()); }
+                    if (T == 2119) shot(mc, "gui-dropdown-view");
+                    if (T == 2121) { if (mc.currentScreen != null) mc.currentScreen.close(); setting("ClickGUI", "Layout", "Window"); }
+                    if (inStage() == 2128) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {
