@@ -13,14 +13,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(SplashOverlay.class)
 public abstract class SplashOverlayMixin {
     @Shadow private float progress;
-    @Shadow private long reloadCompleteTime;
 
     @Inject(method = "render", at = @At("TAIL"))
     private void stella$splash(DrawContext ctx, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         if (!LoadingDesign.enabled()) return;
+        // stay fully opaque until Minecraft removes the overlay; fading ourselves let the red Mojang screen show through
         float alpha = 1f;
-        if (reloadCompleteTime > -1L) alpha = 1f - Math.min(1f, (System.currentTimeMillis() - reloadCompleteTime) / 1000f);
-        if (alpha <= 0.01f) return;
         ctx.createNewRootLayer();
         // no text here: fonts may still be loading during the first reload
         LoadingDesign.full(ctx, ctx.getScaledWindowWidth(), ctx.getScaledWindowHeight(), alpha, progress, null, null, false);

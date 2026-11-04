@@ -28,6 +28,7 @@
     "LevelLoadingScreenMixin",
     "LoadingBackgroundMixin",
     "MenuRedirectMixin",
+    "MessageScreenMixin",
     "MouseMixin",
     "OverlayTextureMixin",
     "SimpleOptionMixin",
