@@ -132,13 +132,15 @@ final class StellaSmokeTest {
     private static void detectorScene(MinecraftClient mc, boolean build) {
         var server = mc.getServer();
         if (server == null) return;
-        int x = mc.player.getBlockX(), y = mc.player.getBlockY(), z = mc.player.getBlockZ();
+        // fixed spot (not wherever the player happens to be after the respawn earlier in the test)
+        int x = ox, y = oy, z = oz;
         server.execute(() -> {
             var world = server.getOverworld();
             var pm = server.getPlayerManager();
             if (build) {
                 var cm = server.getCommandManager();
                 var src = server.getCommandSource().withSilent();
+                cm.parseAndExecute(src, "tp " + mc.player.getGameProfile().name() + " " + (x + 0.5) + " " + y + " " + (z + 0.5) + " -90 10");
                 // flat, clear test area so only the wall can block the view
                 cm.parseAndExecute(src, "fill " + (x + 1) + " " + y + " " + (z - 11) + " " + (x + 13) + " " + (y + 6) + " " + (z + 5) + " minecraft:air");
                 cm.parseAndExecute(src, "fill " + (x + 1) + " " + (y - 1) + " " + (z - 11) + " " + (x + 13) + " " + (y - 1) + " " + (z + 5) + " minecraft:smooth_stone");
@@ -555,11 +557,11 @@ final class StellaSmokeTest {
                         mc.player.setPitch(10f);
                         detectorScene(mc, true);
                     }
-                    if (inStage() == 692) logDetector("hidden only");
-                    if (inStage() == 694) shot(mc, "player-detector");
-                    if (inStage() == 696) setting("Player Detector", "Detect", "All Players");
-                    if (inStage() == 704) logDetector("all players");
-                    if (inStage() == 706) detectorScene(mc, false);
+                    if (inStage() == 696) logDetector("hidden only");
+                    if (inStage() == 698) shot(mc, "player-detector");
+                    if (inStage() == 700) setting("Player Detector", "Detect", "All Players");
+                    if (inStage() == 707) logDetector("all players");
+                    if (inStage() == 709) detectorScene(mc, false);
                     if (inStage() == 712) {
                         // Light Level Overlay + Auto Tool: a pitch-dark stone room, sword in hand, pickaxe in the hotbar
                         int x = mc.player.getBlockX(), y = mc.player.getBlockY(), z = mc.player.getBlockZ();
