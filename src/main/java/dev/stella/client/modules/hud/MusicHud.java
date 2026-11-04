@@ -310,6 +310,5 @@ public class MusicHud extends HudElement {
         pressedAt = System.currentTimeMillis();
         MusicService.command(btn == 0 ? "prev" : btn == 1 ? "toggle" : "next");
         return true;
-        return false;
     }
 }
