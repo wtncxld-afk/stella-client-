@@ -20,6 +20,7 @@
     "GameRendererMixin",
     "GlowOutlineMixin",
     "HeldItemRendererMixin",
+    "KnifeRenderMixin",
     "InGameHudMixin",
     "HandledScreenAccessor",
     "ItemEntityRendererMixin",

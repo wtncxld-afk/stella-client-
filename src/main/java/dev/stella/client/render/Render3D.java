@@ -324,8 +324,26 @@ public final class Render3D {
     }
 
     /** Draws everything written this frame. */
+    /**
+     * Depth-tested translucent (or additive when {@code glow}) quad in world space: hidden behind blocks
+     * like real geometry. Used by cosmetics (wings, hat, jump circles). Pass a == b for a triangle.
+     */
+    public void quadWorld(Vec3d a, Vec3d b, Vec3d c, Vec3d d, int ca, int cb, int cc, int cd, boolean glow) {
+        Matrix4f m = matrices.peek().getPositionMatrix();
+        VertexConsumer f = consumers.getBuffer(glow ? StellaPipelines.SKY_GLOW_Q : StellaPipelines.SKY);
+        f.vertex(m, (float) (a.x - cam.x), (float) (a.y - cam.y), (float) (a.z - cam.z)).color(ca);
+        f.vertex(m, (float) (b.x - cam.x), (float) (b.y - cam.y), (float) (b.z - cam.z)).color(cb);
+        f.vertex(m, (float) (c.x - cam.x), (float) (c.y - cam.y), (float) (c.z - cam.z)).color(cc);
+        f.vertex(m, (float) (d.x - cam.x), (float) (d.y - cam.y), (float) (d.z - cam.z)).color(cd);
+    }
+
+    public void triWorld(Vec3d a, Vec3d b, Vec3d c, int ca, int cb, int cc, boolean glow) {
+        quadWorld(a, b, c, c, ca, cb, cc, cc, glow);
+    }
+
     public void flush() {
-        consumers.draw(StellaPipelines.SKY); // depth-tested fills (light overlay)
+        consumers.draw(StellaPipelines.SKY); // depth-tested fills (light overlay, cosmetics)
+        consumers.draw(StellaPipelines.SKY_GLOW_Q);
         consumers.draw(StellaPipelines.FILLS);
         consumers.draw(StellaPipelines.FILLS_GLOW);
         consumers.draw(StellaPipelines.LINES);

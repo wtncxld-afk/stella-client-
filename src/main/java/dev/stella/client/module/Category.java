@@ -9,6 +9,7 @@ public enum Category {
     CLIENT("Client"),
     WORLD("World"),
     HUD("HUD"),
+    COSMETICS("Cosmetics"),
     SETTINGS("Settings");
 
     public final String displayName;

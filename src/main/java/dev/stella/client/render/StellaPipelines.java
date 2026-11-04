@@ -84,6 +84,17 @@ public final class StellaPipelines {
             .withCull(false)
             .build();
 
+    /** Opaque, depth-tested and depth-writing coloured quads: solid little models (cosmetic knives). */
+    public static final RenderPipeline SOLID_QUADS = RenderPipeline.builder(RenderPipelines.POSITION_COLOR_SNIPPET)
+            .withLocation(id("solid_quads"))
+            .withVertexFormat(VertexFormats.POSITION_COLOR, VertexFormat.DrawMode.QUADS)
+            .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
+            .withDepthWrite(true)
+            .withCull(false)
+            .build();
+
+    public static final RenderLayer SOLID = RenderLayer.of("stella_solid", RenderSetup.builder(SOLID_QUADS).expectedBufferSize(1 << 15).build());
+
     public static final RenderLayer LINES = RenderLayer.of("stella_lines", RenderSetup.builder(LINES_SEE_THROUGH).expectedBufferSize(1 << 16).build());
     public static final RenderLayer GLOW = RenderLayer.of("stella_glow", RenderSetup.builder(LINES_GLOW_SEE_THROUGH).expectedBufferSize(1 << 16).build());
     public static final RenderLayer FILLS_GLOW = RenderLayer.of("stella_fills_glow", RenderSetup.builder(QUADS_GLOW_SEE_THROUGH).translucent().expectedBufferSize(1 << 17).build());

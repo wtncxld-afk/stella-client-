@@ -104,6 +104,11 @@ Region Map (with its own *Map Scale* slider up to 6×), Music HUD (cover, title,
 ⏮ ⏯ ⏭ controls), Notifications, Staff List, Block Notifier list,
 Player Detector list, Armor (durability), Potions (time left), Item Counter (totems, crystals, pearls...), Radar (circle with each loaded player's head at their exact position, rotating N/E/S/W, sweep, optional mob dots). Each element has its
 own toggle, position, scale, opacity and colours, and moving or disabling one never affects another.
+**Cosmetics (client-side, only you see them):** Wings (Angel / Demon / Crystal, flapping faster in the air),
+Chinese Hat (theme / rainbow / custom colour, glowing rim), Jump Circles (a ring when you jump and the Stella star
+blooming where you land), Knife Skins (swords look like a Karambit, Butterfly, Bayonet or Stella Dagger in first
+person, in Nebula / Theme / Ruby / Emerald / Sapphire / Gold / Midnight / Rainbow finishes; press **Y** to inspect,
+rebindable). Other players still see your normal sword and no wings - nothing is sent to the server.
 Turning any module on or off shows a small popup; switch this off with *Module Toggle Popups* in the
 Notifications HUD settings.
 

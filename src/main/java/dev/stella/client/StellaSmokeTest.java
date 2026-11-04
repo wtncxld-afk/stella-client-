@@ -81,6 +81,8 @@ final class StellaSmokeTest {
     }
 
     private static float camYaw, camPitch;
+    private static boolean jumpLogged;
+    private static int landedAt = -1;
 
     /** Spectator camera that looks at (tx,ty,tz) from height camY, pitched down by {@code pitch} degrees, from the north. */
     private static void aerial(MinecraftClient mc, double tx, double ty, double tz, double camY, float pitch) {
@@ -941,7 +943,76 @@ final class StellaSmokeTest {
                     if (T == 1312 || T == 1329) mc.inGameHud.getChatHud().clear(false);
                     if (T == 1330) shot(mc, "tour-8-everything");
                     if (T == 1340) caption = null;
-                    if (inStage() == 1350) {
+                    // ================= Cosmetics: wings, Chinese hat, jump circles / landing star, knife skins =================
+                    if (T == 1344) {
+                        only();
+                        for (String n : new String[]{"Sus Chunk Finder", "Radar HUD", "Notifications HUD"})
+                            ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> m.setEnabled(false));
+                        serverCmd(mc, "gamemode creative " + me);
+                        serverCmd(mc, "fill " + (ox - 6) + " " + (oy - 1) + " " + (oz - 6) + " " + (ox + 6) + " " + (oy - 1) + " " + (oz + 6) + " minecraft:smooth_quartz");
+                        serverCmd(mc, "fill " + (ox - 6) + " " + oy + " " + (oz - 6) + " " + (ox + 6) + " " + (oy + 6) + " " + (oz + 6) + " minecraft:air");
+                        serverCmd(mc, "tp " + me + " " + (ox + 0.5) + " " + oy + " " + (oz + 0.5) + " 180 15");
+                        setting("Wings", "Style", "Angel");
+                        for (String n : new String[]{"Wings", "Chinese Hat", "Jump Circles"})
+                            ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> m.setEnabled(true));
+                        mc.options.setPerspective(net.minecraft.client.option.Perspective.THIRD_PERSON_BACK);
+                        caption("Cosmetics \u2022 Wings + Chinese Hat", "Angel wings and a glowing hat - only you see them (third person)");
+                    }
+                    if (T == 1350) { mc.player.setYaw(180f); mc.player.setPitch(15f); mc.player.bodyYaw = 180f; mc.player.lastBodyYaw = 180f; }
+                    if (T == 1353 && holdForTerrain(mc, 400)) return;
+                    if (T == 1356) shot(mc, "cosmetics-wings-back");
+                    if (T == 1358) { mc.options.setPerspective(net.minecraft.client.option.Perspective.THIRD_PERSON_FRONT); setting("Wings", "Style", "Demon"); caption("Cosmetics \u2022 Demon Wings", "Three wing styles: Angel, Demon and Crystal"); }
+                    if (T == 1364) shot(mc, "cosmetics-demon-front");
+                    if (T == 1366) { mc.options.setPerspective(net.minecraft.client.option.Perspective.THIRD_PERSON_BACK); setting("Wings", "Style", "Crystal"); setting("Chinese Hat", "Color", "Rainbow"); caption("Cosmetics \u2022 Crystal Wings", "Rainbow hat, shimmering crystal wings"); }
+                    if (T == 1372) shot(mc, "cosmetics-crystal");
+                    // jump circles: a real jump (ring on take-off, Stella star on landing)
+                    if (T == 1374) {
+                        setting("Wings", "Style", "Angel"); setting("Chinese Hat", "Color", "Theme");
+                        caption("Cosmetics \u2022 Jump Circles", "A ring when you jump - the Stella star when you land");
+                        mc.player.setPitch(55f);
+                    }
+                    if (T == 1376) mc.player.jump();
+                    if (T > 1376 && T < 1400 && mc.player.isOnGround() && T > 1380 && !jumpLogged) {
+                        jumpLogged = true;
+                        StellaClient.LOGGER.info("[smoke] jump circles: effects after landing {}", ModuleManager.get(dev.stella.client.modules.cosmetics.JumpCircles.class).activeEffects());
+                        if (ModuleManager.get(dev.stella.client.modules.cosmetics.JumpCircles.class).activeEffects() < 1) fail("Jump Circles: no landing star after a jump");
+                        landedAt = T;
+                    }
+                    if (landedAt > 0 && T == landedAt + 3) shot(mc, "cosmetics-landing-star");
+                    if (T == 1404) {
+                        // a fresh star to catch it fully bloomed
+                        ModuleManager.get(dev.stella.client.modules.cosmetics.JumpCircles.class).spawnStar();
+                    }
+                    if (T == 1407) shot(mc, "cosmetics-landing-star-2");
+                    // knife skins (first person) + inspect
+                    if (T == 1410) {
+                        for (String n : new String[]{"Wings", "Chinese Hat", "Jump Circles"})
+                            ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> m.setEnabled(false));
+                        mc.options.setPerspective(net.minecraft.client.option.Perspective.FIRST_PERSON);
+                        serverCmd(mc, "item replace entity " + me + " hotbar.0 with minecraft:diamond_sword");
+                        mc.player.getInventory().setSelectedSlot(0);
+                        mc.player.setPitch(10f);
+                        ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class).setEnabled(true);
+                    }
+                    String[][] knives = {{"Karambit", "Nebula"}, {"Butterfly", "Ruby"}, {"Bayonet", "Sapphire"}, {"Stella Dagger", "Gold"}};
+                    if (T >= 1414 && T < 1414 + knives.length * 12) {
+                        int i = (T - 1414) / 12, k = (T - 1414) % 12;
+                        var ks = ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class);
+                        if (k == 0) {
+                            ks.setKnife(knives[i][0]); ks.setFinish(knives[i][1]);
+                            dev.stella.client.modules.cosmetics.KnifeSkins.previewT = -1f;
+                            caption("Cosmetics \u2022 Knife Skins", knives[i][0] + " | " + knives[i][1] + "  -  press Y to inspect");
+                        }
+                        if (k == 4) shot(mc, "knife-" + knives[i][0].toLowerCase().replace(' ', '-'));
+                        if (k == 6) dev.stella.client.modules.cosmetics.KnifeSkins.previewT = 0.42f;
+                        if (k == 9) shot(mc, "knife-" + knives[i][0].toLowerCase().replace(' ', '-') + "-inspect");
+                    }
+                    if (T == 1414 + knives.length * 12) {
+                        dev.stella.client.modules.cosmetics.KnifeSkins.previewT = -1f;
+                        ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class).inspect();
+                    }
+                    if (T == 1470) caption = null;
+                    if (inStage() == 1480) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {
