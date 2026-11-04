@@ -40,23 +40,39 @@ def resolveYarn = { String v ->
 }
 def yarnVersion = resolveYarn(project.yarn_mappings)
 
+// "latest" in gradle.properties means the newest stable Fabric Loader (so the dev/test client runs the
+// same loader current mods such as ImmediatelyFast need). Falls back to loader_min if offline.
+def resolveLoader = { String v ->
+    if (v != 'latest') return v
+    try {
+        def json = new groovy.json.JsonSlurper().parse(new URL("https://meta.fabricmc.net/v2/versions/loader"))
+        def stable = json.find { it.stable }?.version
+        logger.lifecycle("Using Fabric Loader ${stable}")
+        return stable ?: project.loader_min
+    } catch (Exception e) {
+        logger.warn("Could not reach Fabric meta, using loader ${project.loader_min}")
+        return project.loader_min
+    }
+}
+def loaderVersion = resolveLoader(project.loader_version)
+
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.fabricmc:yarn:${yarnVersion}:v2"
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc:fabric-loader:${loaderVersion}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 }
 
 processResources {
     inputs.property 'version', project.version
     inputs.property 'minecraft_version', project.minecraft_version
-    inputs.property 'loader_version', project.loader_version
+    inputs.property 'loader_min', project.loader_min
     filteringCharset 'UTF-8'
 
     filesMatching('fabric.mod.json') {
         expand 'version': project.version,
                'minecraft_version': project.minecraft_version,
-               'loader_version': project.loader_version
+               'loader_version': project.loader_min
     }
 }
 
