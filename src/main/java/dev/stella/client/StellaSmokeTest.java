@@ -588,6 +588,8 @@ final class StellaSmokeTest {
                         if (mc.world.getBlockState(breakPos).isAir()) breakPos = null;
                         else mc.interactionManager.updateBlockBreakingProgress(breakPos, breakSide);
                         if (mc.player.getInventory().getSelectedSlot() == 3) autoToolPicked = true;
+                        StellaClient.LOGGER.info("[smoke] auto tool tick: {} | slot {}", dev.stella.client.modules.misc.AutoTool.lastDecision,
+                                mc.player.getInventory().getSelectedSlot());
                     }
                     if (inStage() > 727 && inStage() < 734 && mc.player.getInventory().getSelectedSlot() == 3) autoToolPicked = true;
                     if (inStage() == 734) {

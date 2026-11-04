@@ -23,19 +23,28 @@ public class AutoTool extends Module {
 
     public AutoTool() { super("Auto Tool", "Picks the best tool in your hotbar for the block you're mining", Category.MISC); }
 
+    /** Diagnostics: why the last tick did or didn't switch (read by the smoke test). */
+    public static volatile String lastDecision = "never ticked";
+
     @Override
     public void onTick() {
-        if (!inGame() || mc.currentScreen != null) return;
+        if (!inGame() || mc.currentScreen != null) { lastDecision = "screen open: " + mc.currentScreen; return; }
         // holding left-click on a block, or Minecraft is already breaking one
         boolean mining = (mc.options.attackKey.isPressed() || mc.interactionManager.isBreakingBlock())
                 && mc.crosshairTarget instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK;
-        if (!mining || (mc.player.isCreative() && !creative.isOn())) { restore(); return; }
+        if (!mining || (mc.player.isCreative() && !creative.isOn())) {
+            lastDecision = "not mining (key=" + mc.options.attackKey.isPressed() + " breaking=" + mc.interactionManager.isBreakingBlock()
+                    + " target=" + (mc.crosshairTarget == null ? null : mc.crosshairTarget.getType()) + " creative=" + mc.player.isCreative() + ")";
+            restore();
+            return;
+        }
         BlockState state = mc.world.getBlockState(((BlockHitResult) mc.crosshairTarget).getBlockPos());
         if (state.isAir()) return;
         int best = bestSlot(state);
         float bestScore = best < 0 ? 0 : score(mc.player.getInventory().getStack(best), state);
         // only switch when it is actually faster than what you hold
         float heldScore = score(mc.player.getMainHandStack(), state);
+        lastDecision = "best=" + best + " selected=" + InvUtil.selected() + " bestScore=" + bestScore + " heldScore=" + heldScore;
         if (best < 0 || best == InvUtil.selected() || bestScore <= heldScore || bestScore <= 1f) return;
         if (previous < 0) previous = InvUtil.selected();
         InvUtil.select(best);
