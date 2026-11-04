@@ -346,47 +346,8 @@ public class SusChunkFinder extends Module {
         return out;
     }
 
-    /** Animated flat chunk square: pulsing fill, glowing edges, corner brackets, sweeping scan line and grid. */
     private void drawAnimated(Render3D r, Box box, double a) {
-        double t = (System.currentTimeMillis() % 3_600_000L) / 1000.0;
-        int rgb = color.argb() & 0xFFFFFF;
-        double x1 = box.minX, z1 = box.minZ, x2 = box.maxX, z2 = box.maxZ, y = box.minY;
-        double pulse = 0.82 + 0.18 * Math.sin(t * 2.6);
-        // body: slightly stronger toward the edges (vignette) by layering a center fill and edge glow
-        r.quadXZ(x1, z1, x2, z2, y, argb(rgb, a * 0.55 * pulse));
-        double e = 1.6; // edge glow width in blocks
-        int in = argb(rgb, 0), out = argb(rgb, a * 0.75 * pulse);
-        r.quadXZ4(x1, z1, x2, z1 + e, y + 0.005, out, out, in, in, true);   // north edge
-        r.quadXZ4(x1, z2 - e, x2, z2, y + 0.005, in, in, out, out, true);   // south edge
-        r.quadXZ4(x1, z1, x1 + e, z2, y + 0.005, out, in, in, out, true);   // west edge
-        r.quadXZ4(x2 - e, z1, x2, z2, y + 0.005, in, out, out, in, true);   // east edge
-        // sweeping scan line (moves across the square every 2.4 s)
-        double sweep = (t % 2.4) / 2.4;
-        double sx = x1 + (x2 - x1) * sweep, sw = 1.2;
-        int lineC = argb(rgb, a * 0.9), clear = argb(rgb, 0);
-        r.quadXZ4(Math.max(x1, sx - sw), z1, sx, z2, y + 0.01, clear, lineC, lineC, clear, true);
-        r.quadXZ4(sx, z1, Math.min(x2, sx + 0.25), z2, y + 0.01, lineC, clear, clear, lineC, true);
-        // faint 4x4 grid
-        int grid = argb(rgb, a * 0.35);
-        r.setLineWidth(1f);
-        for (int i = 1; i < 4; i++) {
-            double gx = x1 + (x2 - x1) * i / 4, gz = z1 + (z2 - z1) * i / 4;
-            r.line(new Vec3d(gx, y + 0.02, z1), new Vec3d(gx, y + 0.02, z2), grid);
-            r.line(new Vec3d(x1, y + 0.02, gz), new Vec3d(x2, y + 0.02, gz), grid);
-        }
-        // bright corner brackets
-        int bracket = argb(0xFFFFFF & ColorUtil.lerp(color.argb(), 0xFFFFFFFF, 0.45), Math.min(1, a + 0.35));
-        double L = 3.5, yy = y + 0.03;
-        r.setLineWidth(3f);
-        double[][] corners = {{x1, z1, 1, 1}, {x2, z1, -1, 1}, {x2, z2, -1, -1}, {x1, z2, 1, -1}};
-        for (double[] c : corners) {
-            r.line(new Vec3d(c[0], yy, c[1]), new Vec3d(c[0] + c[2] * L, yy, c[1]), bracket);
-            r.line(new Vec3d(c[0], yy, c[1]), new Vec3d(c[0], yy, c[1] + c[3] * L), bracket);
-        }
-        if (this.outline.isOn()) {
-            r.setLineWidth(1.5f);
-            r.boxOutline(new Box(x1, y, z1, x2, y, z2), argb(rgb, Math.min(1, a + 0.2)));
-        }
+        r.chunkSquare(box.minX, box.minZ, box.maxX, box.maxZ, box.minY, color.argb(), a, outline.isOn());
         r.setLineWidth(2.5f);
     }
 

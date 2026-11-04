@@ -113,6 +113,52 @@ final class StellaSmokeTest {
 
     private static MinecraftClient mc() { return MinecraftClient.getInstance(); }
 
+    private static final java.util.UUID HIDDEN_UUID = java.util.UUID.fromString("5e1a5a11-0000-4000-8000-0000000000d1");
+    private static final java.util.UUID OPEN_UUID = java.util.UUID.fromString("5e1a5a11-0000-4000-8000-0000000000d2");
+    private static final java.util.List<net.fabricmc.fabric.api.entity.FakePlayer> scenePlayers = new java.util.ArrayList<>();
+
+    /** Builds (or removes) the Player Detector scene on the integrated server: a wall with a player behind it, and a player in the open. */
+    private static void detectorScene(MinecraftClient mc, boolean build) {
+        var server = mc.getServer();
+        if (server == null) return;
+        int x = mc.player.getBlockX(), y = mc.player.getBlockY(), z = mc.player.getBlockZ();
+        server.execute(() -> {
+            var world = server.getOverworld();
+            var pm = server.getPlayerManager();
+            if (build) {
+                var cm = server.getCommandManager();
+                var src = server.getCommandSource().withSilent();
+                // flat, clear test area so only the wall can block the view
+                cm.parseAndExecute(src, "fill " + (x + 1) + " " + y + " " + (z - 11) + " " + (x + 13) + " " + (y + 6) + " " + (z + 5) + " minecraft:air");
+                cm.parseAndExecute(src, "fill " + (x + 1) + " " + (y - 1) + " " + (z - 11) + " " + (x + 13) + " " + (y - 1) + " " + (z + 5) + " minecraft:smooth_stone");
+                cm.parseAndExecute(src, "fill " + (x + 5) + " " + y + " " + (z - 3) + " " + (x + 5) + " " + (y + 4) + " " + (z + 3) + " minecraft:stone");
+                Object[][] spec = {{"HiddenPlayer", HIDDEN_UUID, x + 9, z}, {"OpenPlayer", OPEN_UUID, x + 9, z - 8}};
+                for (Object[] o : spec) {
+                    var fp = net.fabricmc.fabric.api.entity.FakePlayer.get(world, new com.mojang.authlib.GameProfile((java.util.UUID) o[1], (String) o[0]));
+                    fp.refreshPositionAndAngles((int) o[2] + 0.5, y, (int) o[3] + 0.5, 90f, 0f);
+                    pm.sendToAll(net.minecraft.network.packet.s2c.play.PlayerListS2CPacket.entryFromPlayer(java.util.List.of(fp)));
+                    world.onPlayerConnected(fp);
+                    scenePlayers.add(fp);
+                }
+            } else {
+                for (var fp : scenePlayers) world.removePlayer(fp, net.minecraft.entity.Entity.RemovalReason.DISCARDED);
+                pm.sendToAll(new net.minecraft.network.packet.s2c.play.PlayerRemoveS2CPacket(java.util.List.of(HIDDEN_UUID, OPEN_UUID)));
+                scenePlayers.clear();
+            }
+        });
+    }
+
+    private static void logDetector(String when) {
+        var pd = ModuleManager.get(dev.stella.client.modules.combat.PlayerDetector.class);
+        StellaClient.LOGGER.info("[smoke] player detector ({}): {}", when, pd.current().stream()
+                .map(s -> s.name() + " " + (int) s.distance() + "m " + dev.stella.client.modules.combat.PlayerDetector.compass(s.dx(), s.dz()) + " " + s.status())
+                .collect(java.util.stream.Collectors.joining(", ")));
+        boolean hiddenFound = pd.current().stream().anyMatch(s -> s.name().equals("HiddenPlayer") && s.status() == dev.stella.client.modules.combat.PlayerDetector.Status.BEHIND_WALL);
+        boolean openListed = pd.current().stream().anyMatch(s -> s.name().equals("OpenPlayer"));
+        if (when.equals("hidden only") && (!hiddenFound || openListed)) fail("Player Detector hidden-only result wrong: hidden=" + hiddenFound + " open listed=" + openListed);
+        if (when.equals("all players") && (!hiddenFound || !openListed)) fail("Player Detector all-players result wrong");
+    }
+
     private static void logSus(String when) {
         var sus = ModuleManager.get(dev.stella.client.modules.combat.SusChunkFinder.class);
         StellaClient.LOGGER.info("[smoke] sus {}: base chunk {} {}, trial chamber chunk {} {}", when, (ox + 40) >> 4, (oz - 56) >> 4, (ox + 40) >> 4, (oz + 70) >> 4);
@@ -481,6 +527,25 @@ final class StellaSmokeTest {
                         mc.player.networkHandler.sendChatCommand("gamemode creative");
                     }
                     if (inStage() == 678) {
+                        // Player Detector: one player hidden behind a wall, one standing in the open
+                        for (Module m : ModuleManager.all())
+                            if (m.getCategory() == dev.stella.client.module.Category.HUD && !m.getName().equals("Stella Branding HUD")) m.setEnabled(false);
+                        for (String n : new String[]{"Player ESP", "Glow Outline", "Anti Vanish", "Totem Pop Counter"})
+                            ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> m.setEnabled(false));
+                        var pd = ModuleManager.get(dev.stella.client.modules.combat.PlayerDetector.class);
+                        setting("Player Detector", "Detect", "Hidden Only");
+                        pd.setEnabled(true);
+                        mc.inGameHud.getChatHud().clear(false);
+                        mc.player.setYaw(-90f);
+                        mc.player.setPitch(10f);
+                        detectorScene(mc, true);
+                    }
+                    if (inStage() == 692) logDetector("hidden only");
+                    if (inStage() == 694) shot(mc, "player-detector");
+                    if (inStage() == 696) setting("Player Detector", "Detect", "All Players");
+                    if (inStage() == 704) logDetector("all players");
+                    if (inStage() == 706) detectorScene(mc, false);
+                    if (inStage() == 710) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {

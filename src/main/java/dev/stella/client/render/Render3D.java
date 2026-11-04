@@ -167,6 +167,53 @@ public final class Render3D {
         }
     }
 
+    /**
+     * Animated flat chunk square (used by Sus Chunk Finder and Player Detector): pulsing fill, glowing
+     * edges, a sweeping scan line, a faint 4x4 grid and bright corner brackets. Drawn through walls.
+     */
+    public void chunkSquare(double x1, double z1, double x2, double z2, double y, int color, double a, boolean outline) {
+        double t = (System.currentTimeMillis() % 3_600_000L) / 1000.0;
+        int rgb = color & 0xFFFFFF;
+        double pulse = 0.82 + 0.18 * Math.sin(t * 2.6);
+        quadXZ(x1, z1, x2, z2, y, argbA(rgb, a * 0.55 * pulse));
+        double e = 1.6;
+        int in = argbA(rgb, 0), out = argbA(rgb, a * 0.75 * pulse);
+        quadXZ4(x1, z1, x2, z1 + e, y + 0.005, out, out, in, in, true);
+        quadXZ4(x1, z2 - e, x2, z2, y + 0.005, in, in, out, out, true);
+        quadXZ4(x1, z1, x1 + e, z2, y + 0.005, out, in, in, out, true);
+        quadXZ4(x2 - e, z1, x2, z2, y + 0.005, in, out, out, in, true);
+        double sweep = (t % 2.4) / 2.4;
+        double sx = x1 + (x2 - x1) * sweep, sw = 1.2;
+        int lineC = argbA(rgb, a * 0.9), clear = argbA(rgb, 0);
+        quadXZ4(Math.max(x1, sx - sw), z1, sx, z2, y + 0.01, clear, lineC, lineC, clear, true);
+        quadXZ4(sx, z1, Math.min(x2, sx + 0.25), z2, y + 0.01, lineC, clear, clear, lineC, true);
+        int grid = argbA(rgb, a * 0.35);
+        float prev = lineWidth;
+        setLineWidth(1f);
+        for (int i = 1; i < 4; i++) {
+            double gx = x1 + (x2 - x1) * i / 4, gz = z1 + (z2 - z1) * i / 4;
+            line(new Vec3d(gx, y + 0.02, z1), new Vec3d(gx, y + 0.02, z2), grid);
+            line(new Vec3d(x1, y + 0.02, gz), new Vec3d(x2, y + 0.02, gz), grid);
+        }
+        int bracket = argbA(ColorUtil2.whiten(0xFF000000 | rgb, 0.45f) & 0xFFFFFF, Math.min(1, a + 0.35));
+        double L = 3.5, yy = y + 0.03;
+        setLineWidth(3f);
+        double[][] corners = {{x1, z1, 1, 1}, {x2, z1, -1, 1}, {x2, z2, -1, -1}, {x1, z2, 1, -1}};
+        for (double[] c : corners) {
+            line(new Vec3d(c[0], yy, c[1]), new Vec3d(c[0] + c[2] * L, yy, c[1]), bracket);
+            line(new Vec3d(c[0], yy, c[1]), new Vec3d(c[0], yy, c[1] + c[3] * L), bracket);
+        }
+        if (outline) {
+            setLineWidth(1.5f);
+            boxOutline(new Box(x1, y, z1, x2, y, z2), argbA(rgb, Math.min(1, a + 0.2)));
+        }
+        setLineWidth(prev);
+    }
+
+    private static int argbA(int rgb, double alpha) {
+        return ((int) (Math.max(0, Math.min(1, alpha)) * 255) << 24) | (rgb & 0xFFFFFF);
+    }
+
     /** Horizontal quad with a colour per corner (x1z1, x2z1, x2z2, x1z2); {@code glow} = additive light. */
     public void quadXZ4(double x1, double z1, double x2, double z2, double y, int c11, int c21, int c22, int c12, boolean glow) {
         Matrix4f m = matrices.peek().getPositionMatrix();
