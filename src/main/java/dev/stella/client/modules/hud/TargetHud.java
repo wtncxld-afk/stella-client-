@@ -36,10 +36,13 @@ public class TargetHud extends HudElement {
 
     public TargetHud() { super("Target HUD", "Player you're fighting: health, armor, totem pops, distance", -9000, 300, false); }
 
+    private Object lastWorld;
+
     private LivingEntity target() {
         if (mc.player == null || mc.world == null) return null;
+        if (mc.world != lastWorld) { lastWorld = mc.world; CombatEvents.lastTarget = null; } // never show someone from another world
         if (crosshair.isOn() && mc.crosshairTarget instanceof EntityHitResult eh && eh.getEntity() instanceof PlayerEntity p && !FriendsModule.is(p)) return p;
-        if (CombatEvents.lastTarget instanceof LivingEntity le && le.isAlive() && !le.isRemoved()
+        if (CombatEvents.lastTarget instanceof LivingEntity le && le.isAlive() && !le.isRemoved() && mc.world.getEntityById(le.getId()) == le
                 && System.currentTimeMillis() - CombatEvents.lastAttackAt < keep.get() * 1000 && le.distanceTo(mc.player) <= range.get()) return le;
         return null;
     }

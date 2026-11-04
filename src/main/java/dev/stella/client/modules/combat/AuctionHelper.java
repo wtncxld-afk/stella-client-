@@ -33,11 +33,13 @@ public class AuctionHelper extends Module {
     private final TextSetting watchlist = add(new TextSetting("Watchlist", "item=max price, e.g. spawner=2m, elytra=500k, totem=8k", "spawner=2m, elytra=500k", 400));
 
     private final Set<String> alerted = new HashSet<>();
+    private static final Set<Object> HOOKED = java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>());
 
     public AuctionHelper() {
         super("Auction Helper", "Price per item, cheapest listing and watchlist alerts in the Auction House", Category.DONUTSMP);
         net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
-            if (screen instanceof HandledScreen<?> hs)
+            // init runs again on every resize: hook each screen only once
+            if (screen instanceof HandledScreen<?> hs && HOOKED.add(screen))
                 net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.afterRender(screen).register((s, ctx, mx, my, delta) -> render(hs, ctx));
         });
     }

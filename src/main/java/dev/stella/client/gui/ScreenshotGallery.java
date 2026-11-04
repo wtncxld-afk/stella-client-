@@ -49,7 +49,7 @@ public class ScreenshotGallery extends StellaScreen {
     }
 
     private void freeTextures() {
-        for (int i = 0; i < ids.size(); i++) client.getTextureManager().destroyTexture(ids.get(i));
+        for (int i = 0; i < ids.size(); i++) if (ids.get(i) != null) client.getTextureManager().destroyTexture(ids.get(i));
         ids.clear(); sizes.clear(); textures.clear();
     }
 

@@ -45,7 +45,7 @@ public class KnifeSkins extends Module {
 
     private long inspectStart = -1, drawStart = -1;
     private boolean keyWasDown;
-    private ItemStack lastStack = ItemStack.EMPTY;
+    private net.minecraft.item.Item lastItem;
     /** When >= 0, freezes the inspect animation at this progress (previews and the smoke test). */
     public static float previewT = -1f;
 
@@ -72,8 +72,8 @@ public class KnifeSkins extends Module {
         boolean down = mc.currentScreen == null && inspectKey.isBound() && Keys.down(inspectKey.key());
         if (down && !keyWasDown && applies(held)) inspect();
         keyWasDown = down;
-        if (applies(held) && !ItemStack.areItemsEqual(held, lastStack) && drawAnim.isOn()) { drawStart = System.currentTimeMillis(); inspectStart = -1; sound("knife_draw", 1.0f); }
-        lastStack = held.copy();
+        if (applies(held) && held.getItem() != lastItem && drawAnim.isOn()) { drawStart = System.currentTimeMillis(); inspectStart = -1; sound("knife_draw", 1.0f); }
+        lastItem = held.getItem();
     }
 
     public static KnifeSkins active(ItemStack stack) {

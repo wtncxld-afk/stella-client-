@@ -29,6 +29,21 @@ public class ClickGuiScreen extends dev.stella.client.gui.StellaScreen {
     private final ThemesPanel side = new ThemesPanel();
     private final ConfigsPopup configs = new ConfigsPopup();
     private final TextInput search = new TextInput("", 32, "SEARCH MODULES...");
+    private final WindowLayout win = new WindowLayout();
+
+    private boolean windowMode() {
+        ClickGuiModule g = ModuleManager.get(ClickGuiModule.class);
+        return g == null || g.layout.is("Window");
+    }
+
+    private boolean themesVisible() { return !windowMode() || win.showThemes; }
+
+    void clearSearch() { search.set(""); panels.forEach(p -> p.filter("")); }
+
+    private int searchX(int sw) {
+        int avail = vw - (themesVisible() ? ThemesPanel.WIDTH : 0);
+        return avail / 2 - sw / 2;
+    }
     private final Animation open = new Animation(0, 12).target(1);
     private Module hovered;
     private boolean closing;
@@ -83,8 +98,8 @@ public class ClickGuiScreen extends dev.stella.client.gui.StellaScreen {
         for (SettingsWindow w : windows) {
             if (w.module == m) { windows.remove(w); return; }
         }
-        int wx = mx + 12;
-        if (wx + SettingsWindow.WIDTH > vw - ThemesPanel.WIDTH - 8) wx = mx - SettingsWindow.WIDTH - 12;
+        int wx = windowMode() ? win.settingsX(mx, vw) : mx + 12;
+        if (wx + SettingsWindow.WIDTH > vw - (themesVisible() ? ThemesPanel.WIDTH : 0) - 8) wx = mx - SettingsWindow.WIDTH - 12;
         windows.add(new SettingsWindow(m, wx, Math.max(4, my - 20)));
         if (windows.size() > 4) windows.remove(0);
     }
@@ -169,22 +184,27 @@ public class ClickGuiScreen extends dev.stella.client.gui.StellaScreen {
         ctx.getMatrices().pushMatrix();
         ctx.getMatrices().translate(0, (float) (slide));
         // search bar (rounded pill with magnifier)
-        int sw = 140, sx = (vw - ThemesPanel.WIDTH) / 2 - sw / 2, sy = 6;
+        int sw = 140, sx = searchX(sw), sy = 6;
         dev.stella.client.render.Render2D.shadow(ctx, sx, sy, sw, 15, 7.5f, 3, ColorUtil.mulAlpha(0x80000000, a));
         dev.stella.client.render.Render2D.roundRect(ctx, sx, sy, sw, 15, 7.5f, ColorUtil.mulAlpha(t.header(), a));
         if (search.isFocused()) dev.stella.client.render.Render2D.roundRect(ctx, sx, sy + 14, sw, 1, 0.5f, ColorUtil.mulAlpha(t.accent(), a));
         GuiDraw.magnifier(ctx, sx + 8, sy + 4, ColorUtil.mulAlpha(t.textDim(), a));
         search.render(ctx, sx + 16, sy + 1, sw - 22, 13, 0, 0, ColorUtil.mulAlpha(t.text(), a), ColorUtil.mulAlpha(t.textDim(), a));
         boolean searching = !search.get().isBlank();
-        for (CategoryPanel p : panels) {
-            if (searching && !p.hasMatches()) continue;
-            renderPanelAnimated(ctx, p, mx, my - slide, a, searching);
+        if (windowMode()) {
+            ctx.createNewRootLayer();
+            win.render(ctx, mx, my - slide, vw, vh, a, search.get(), this);
+        } else {
+            for (CategoryPanel p : panels) {
+                if (searching && !p.hasMatches()) continue;
+                renderPanelAnimated(ctx, p, mx, my - slide, a, searching);
+            }
+            for (CategoryPanel p : panels) if (searching && !p.hasMatches()) renderPanelAnimated(ctx, p, mx, my - slide, a, true);
         }
-        for (CategoryPanel p : panels) if (searching && !p.hasMatches()) renderPanelAnimated(ctx, p, mx, my - slide, a, true);
         ctx.getMatrices().popMatrix();
 
         ctx.createNewRootLayer();
-        side.render(ctx, mx, my, vw, vh, a, this);
+        if (themesVisible()) side.render(ctx, mx, my, vw, vh, a, this);
         configs.render(ctx, mx, my, vw, vh, a);
         windows.removeIf(SettingsWindow::isClosed);
         for (SettingsWindow w : windows) w.render(ctx, mx, my, vw, vh);
@@ -223,12 +243,16 @@ public class ClickGuiScreen extends dev.stella.client.gui.StellaScreen {
         }
         TextInput.unfocusAll();
         if (configs.mouseClicked(mx, my)) return true;
-        if (side.mouseClicked(mx, my, vw, vh)) return true;
-        int sw = 140, sx = (vw - ThemesPanel.WIDTH) / 2 - sw / 2;
+        if (themesVisible() && side.mouseClicked(mx, my, vw, vh)) return true;
+        int sw = 140, sx = searchX(sw);
         if (GuiDraw.in(mx, my, sx, 6, sw, 15)) {
-            if (button == 1) { search.set(""); panels.forEach(p -> p.filter("")); }
+            if (button == 1) clearSearch();
             search.focus();
             return true;
+        }
+        if (windowMode()) {
+            if (win.mouseClicked(mx, my, button, vw, vh, search.get(), this)) return true;
+            return super.onMouseClicked(mx, my, button);
         }
         for (int i = panels.size() - 1; i >= 0; i--) {
             if (panels.get(i).mouseClicked(mx, my, button, vh, this)) {
@@ -244,7 +268,7 @@ public class ClickGuiScreen extends dev.stella.client.gui.StellaScreen {
     protected boolean onMouseDragged(double mx, double my, int button, double dx, double dy) {
         mx /= ui;
         my /= ui;
-        if (side.mouseDragged(mx)) return true;
+        if (themesVisible() && side.mouseDragged(mx)) return true;
         for (SettingsWindow w : windows) if (w.mouseDragged(mx, my)) return true;
         for (CategoryPanel p : panels) if (p.mouseDragged(mx, my)) return true;
         return super.onMouseDragged(mx, my, button, dx, dy);
@@ -265,15 +289,16 @@ public class ClickGuiScreen extends dev.stella.client.gui.StellaScreen {
         mx /= ui;
         my /= ui;
         for (int i = windows.size() - 1; i >= 0; i--) if (windows.get(i).mouseScrolled(mx, my, v, vh)) return true;
-        if (side.mouseScrolled(mx, my, v, vw, vh)) return true;
-        for (int i = panels.size() - 1; i >= 0; i--) if (panels.get(i).mouseScrolled(mx, my, v, vh)) return true;
+        if (themesVisible() && side.mouseScrolled(mx, my, v, vw, vh)) return true;
+        if (windowMode()) { if (win.mouseScrolled(mx, my, v, vw, vh, search.get())) return true; }
+        else for (int i = panels.size() - 1; i >= 0; i--) if (panels.get(i).mouseScrolled(mx, my, v, vh)) return true;
         return super.mouseScrolled(mx, my, h, v);
     }
 
     @Override
     protected boolean onKeyPressed(int key, int scan, int mods) {
         for (SettingsWindow w : windows) if (w.keyPressed(key)) return true;
-        if (side.keyPressed(key)) return true;
+        if (themesVisible() && side.keyPressed(key)) return true;
         if (configs.keyPressed(key)) return true;
         TextInput f = TextInput.focused();
         if (f != null && f.keyPressed(key, mods)) return true;
