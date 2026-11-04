@@ -67,6 +67,12 @@ public final class ModuleManager {
         register(new dev.stella.client.modules.cosmetics.JumpCircles());
         register(new dev.stella.client.modules.cosmetics.KnifeSkins());
         register(new dev.stella.client.modules.cosmetics.CustomGlint());
+        register(new dev.stella.client.modules.misc.FriendsModule());
+        register(new dev.stella.client.modules.misc.Macros());
+        register(new dev.stella.client.modules.hud.TargetHud());
+        register(new dev.stella.client.modules.hud.CombatTimerHud());
+        register(new dev.stella.client.modules.pvp.HitEffects());
+        register(new dev.stella.client.modules.pvp.ArmorBreakAlerts());
         register(new dev.stella.client.modules.anticheatoff.TestEnvironment());
         register(new dev.stella.client.modules.anticheatoff.Flight());
         register(new dev.stella.client.modules.anticheatoff.BoatFly());

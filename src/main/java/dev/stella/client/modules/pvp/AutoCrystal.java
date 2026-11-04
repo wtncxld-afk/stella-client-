@@ -38,7 +38,10 @@ public class AutoCrystal extends Module {
         if (pauseEating.isOn() && mc.player.isUsingItem()) return;
         HitResult t = mc.crosshairTarget;
         if (t instanceof EntityHitResult eh && eh.getEntity() instanceof EndCrystalEntity crystal) {
-            if (breakCrystals.isOn() && breakCd == 0) {
+            var fm = dev.stella.client.modules.misc.FriendsModule.get();
+            boolean friendNear = fm != null && fm.isEnabled() && fm.protect.isOn() && mc.world.getPlayers().stream()
+                    .anyMatch(p -> p != mc.player && dev.stella.client.modules.misc.FriendsModule.is(p) && p.squaredDistanceTo(crystal) < 36);
+            if (breakCrystals.isOn() && breakCd == 0 && !friendNear) {
                 mc.interactionManager.attackEntity(mc.player, crystal);
                 mc.player.swingHand(Hand.MAIN_HAND);
                 breakCd = breakDelay.getInt();

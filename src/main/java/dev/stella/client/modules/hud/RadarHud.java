@@ -151,7 +151,8 @@ public class RadarHud extends HudElement {
         m.pushMatrix();
         m.translate((float) x, (float) y);
         // outline so heads read on any background
-        int ring = b.e instanceof PlayerEntity p && p.isSneaking() ? 0xFF9AA0B0 : ThemeManager.get().accent();
+        int ring = b.e instanceof PlayerEntity p && dev.stella.client.modules.misc.FriendsModule.is(p) ? dev.stella.client.modules.misc.FriendsModule.get().color.argb()
+                : b.e instanceof PlayerEntity p2 && p2.isSneaking() ? 0xFF9AA0B0 : ThemeManager.get().accent();
         Render2D.roundRect(ctx, -hs / 2f - 1, -hs / 2f - 1, hs + 2, hs + 2, 1.5f, col(ColorUtil.withAlpha(ring, (int) (0xE0 * a))));
         var skin = DefaultSkinHelper.getSteve();
         if (b.e != null) {

@@ -77,14 +77,14 @@ public class PlayerESP extends Module {
                     default -> p.getHeight() / 2;
                 };
                 double dist = Math.sqrt(mc.player.squaredDistanceTo(p));
-                int c = staff(p) ? staffCol.argb() : tracerColor.argb();
+                int c = dev.stella.client.modules.misc.FriendsModule.is(p) ? dev.stella.client.modules.misc.FriendsModule.get().color.argb() : staff(p) ? staffCol.argb() : tracerColor.argb();
                 if (distanceFade.isOn()) c = dev.stella.client.util.ColorUtil.mulAlpha(c, 1 - 0.7 * Math.min(1, dist / range.get()));
                 dev.stella.client.render.Tracers.draw(r, origin, p.getLerpedPos(td).add(0, ty, 0), tracerWidth.getFloat(), c, tracerStyle);
             }
             if (!box.isOn() && !fill.isOn()) continue;
             Vec3d lerp = p.getLerpedPos(td);
             Box b = p.getBoundingBox().offset(lerp.subtract(p.getEntityPos()));
-            int oc = staff(p) ? staffCol.argb() : boxColor.argb();
+            int oc = dev.stella.client.modules.misc.FriendsModule.is(p) ? dev.stella.client.modules.misc.FriendsModule.get().color.argb() : staff(p) ? staffCol.argb() : boxColor.argb();
             r.box(b, oc, fillColor.argb(), box.isOn(), fill.isOn());
         }
     }
@@ -106,7 +106,7 @@ public class PlayerESP extends Module {
                     float hp = p.getHealth() + p.getAbsorptionAmount();
                     sb.append(sb.isEmpty() ? "" : " ").append(String.format("%.1f", hp)).append("❤");
                 }
-                int c = staff(p) ? staffCol.argb() : nameColor.argb();
+                int c = dev.stella.client.modules.misc.FriendsModule.is(p) ? dev.stella.client.modules.misc.FriendsModule.get().color.argb() : staff(p) ? staffCol.argb() : nameColor.argb();
                 Render2D.label(ctx, sb.toString(), s.x, s.y, labelScale.getFloat(), c, 0x90000000);
             }
         }

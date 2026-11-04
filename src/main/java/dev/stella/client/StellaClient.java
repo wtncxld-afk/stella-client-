@@ -41,6 +41,7 @@ public final class StellaClient implements ClientModInitializer {
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
             StaffDatabase.load();
             dev.stella.client.data.MediaDatabase.load();
+            dev.stella.client.data.Friends.load();
             RegionConfig.load();
             ConfigManager.init();
             ready = true;
