@@ -696,17 +696,21 @@ final class StellaSmokeTest {
                         for (String n : new String[]{"Storage ESP", "Block ESP", "Sus Chunk Finder", "Custom Sky"})
                             ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> { m.setEnabled(false); m.setEnabled(true); });
                         serverCmd(mc, "gamemode spectator " + mc.player.getGameProfile().name());
-                        serverCmd(mc, "tp " + mc.player.getGameProfile().name() + " " + (bx + 6.5) + " " + (oy + 24) + " " + (bz - 14.5) + " 0 48");
+                        // aerial: look down at 62 degrees so the room (centre bz+5, y by+2) sits in the middle of the frame
+                        double camY = oy + 18, back = (camY - (by + 2)) / Math.tan(Math.toRadians(62));
+                        serverCmd(mc, "tp " + mc.player.getGameProfile().name() + " " + (bx + 6.5) + " " + camY + " " + (bz + 5.5 - back) + " 0 62");
                         mc.inGameHud.getChatHud().clear(false);
                     }
-                    if (inStage() == 1006) { mc.player.setYaw(0f); mc.player.setPitch(48f); }
+                    if (inStage() == 1006) { mc.player.setYaw(0f); mc.player.setPitch(62f); }
                     if (inStage() == 1012) {
                         var sus = ModuleManager.get(dev.stella.client.modules.combat.SusChunkFinder.class);
                         StellaClient.LOGGER.info("[smoke] stash: sus chunks flagged {}", sus.suspectChunks().size());
                     }
+                    if (inStage() == 1013 && holdForTerrain(mc, 900)) return;
                     if (inStage() == 1014) shot(mc, "stash-aerial");
                     if (inStage() == 1016) serverCmd(mc, "tp " + mc.player.getGameProfile().name() + " " + (stashX + 1.5) + " -29 " + (stashZ + 8.5) + " -135 12");
                     if (inStage() == 1022) { mc.player.setYaw(-135f); mc.player.setPitch(12f); }
+                    if (inStage() == 1033 && holdForTerrain(mc, 900)) return;
                     if (inStage() == 1034) shot(mc, "stash-inside");
                     if (inStage() == 1040) {
                         int errors = StellaClient.errorCount();
@@ -725,6 +729,16 @@ final class StellaSmokeTest {
             StellaClient.LOGGER.error("[smoke] exception", t);
             fail(t.toString());
         }
+    }
+
+    private static int held;
+
+    /** Freezes the current stage until the chunk meshes around the camera are built (CI renders at ~5 FPS). */
+    private static boolean holdForTerrain(MinecraftClient mc, int maxTicks) {
+        if (held < 40 || (!mc.worldRenderer.isTerrainRenderComplete() && held < maxTicks)) { held++; stageStart++; return true; }
+        StellaClient.LOGGER.info("[smoke] terrain ready after {} ticks", held);
+        held = 0;
+        return false;
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
