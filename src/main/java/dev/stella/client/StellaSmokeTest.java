@@ -1107,7 +1107,7 @@ public final class StellaSmokeTest {
                     // dropdown view (Layout: Panels) via the bottom switch
                     if (T == 2111) { setting("ClickGUI", "Layout", "Panels"); mc.setScreen(new ClickGuiScreen()); }
                     if (T == 2119) shot(mc, "gui-dropdown-view");
-                    if (T == 2121) { if (mc.currentScreen != null) mc.currentScreen.close(); setting("ClickGUI", "Layout", "Window"); }
+                    if (T == 2121) { mc.setScreen(null); setting("ClickGUI", "Layout", "Window"); }
                     // default HUD layout: radar + region map top-left, module list + music top-right
                     if (T == 2123) {
                         serverCmd(mc, "gamemode creative " + me);
@@ -1124,8 +1124,10 @@ public final class StellaSmokeTest {
                                 if (m instanceof dev.stella.client.hud.HudElement h) h.resetLayout();
                             });
                     }
-                    if (T == 2126) shot(mc, "hud-layout");
-                    if (inStage() == 2132) {
+                    if (T == 2124) mc.setScreen(null);
+                    if (T == 2128) mc.inGameHud.getChatHud().clear(false);
+                    if (T == 2134) shot(mc, "hud-layout");
+                    if (inStage() == 2140) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {
