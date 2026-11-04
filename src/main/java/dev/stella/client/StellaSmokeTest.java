@@ -563,7 +563,8 @@ final class StellaSmokeTest {
                         serverCmd(mc, "clear " + mc.player.getGameProfile().name());
                         serverCmd(mc, "item replace entity " + mc.player.getGameProfile().name() + " hotbar.0 with minecraft:diamond_sword");
                         serverCmd(mc, "item replace entity " + mc.player.getGameProfile().name() + " hotbar.3 with minecraft:diamond_pickaxe");
-                        serverCmd(mc, "tp " + mc.player.getGameProfile().name() + " " + x + ".5 " + y + " " + z + ".5");
+                        serverCmd(mc, "tp " + mc.player.getGameProfile().name() + " " + (x + 0.5) + " " + y + " " + (z + 0.5) + " -90 40");
+                        serverCmd(mc, "setblock " + (x + 2) + " " + (y + 1) + " " + z + " minecraft:stone"); // block to mine, right in front
                         serverCmd(mc, "setblock " + (x + 2) + " " + y + " " + (z + 1) + " minecraft:torch");
                         serverCmd(mc, "setblock " + (x - 2) + " " + (y + 4) + " " + (z - 2) + " minecraft:glowstone");
                         ModuleManager.get(dev.stella.client.modules.combat.PlayerDetector.class).setEnabled(false);
