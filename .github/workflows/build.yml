@@ -87,6 +87,106 @@ jobs:
             run-smoke/logs/latest.log
             run-smoke/crash-reports/
 
+  compat-test:
+    # Runs the full smoke test again with the most popular open-source performance mods installed
+    # (latest 1.21.11 builds from Modrinth) to make sure Stella works alongside them.
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Install virtual display
+        run: sudo apt-get update && sudo apt-get install -y xvfb libgl1-mesa-dri mesa-utils
+      - name: Download open-source performance mods (Modrinth)
+        run: |
+          mkdir -p run-smoke/mods
+          python3 - <<'PY'
+          import json, urllib.request, urllib.parse
+          slugs = ["sodium", "lithium", "ferrite-core", "immediatelyfast", "entityculling", "modernfix", "modmenu"]
+          for slug in slugs:
+              q = urllib.parse.urlencode({"game_versions": json.dumps(["1.21.11"]), "loaders": json.dumps(["fabric"])})
+              req = urllib.request.Request(f"https://api.modrinth.com/v2/project/{slug}/version?{q}", headers={"User-Agent": "StellaClient-CI"})
+              try:
+                  versions = json.load(urllib.request.urlopen(req, timeout=30))
+              except Exception as e:
+                  print(f"COMPAT_MOD {slug} ERROR {e}"); continue
+              if not versions:
+                  print(f"COMPAT_MOD {slug} NONE (no 1.21.11 Fabric build yet)"); continue
+              v = versions[0]
+              f = next((x for x in v["files"] if x.get("primary")), v["files"][0])
+              data = urllib.request.urlopen(urllib.request.Request(f["url"], headers={"User-Agent": "StellaClient-CI"}), timeout=60).read()
+              open("run-smoke/mods/" + f["filename"], "wb").write(data)
+              print(f"COMPAT_MOD {slug} {v['version_number']} {f['filename']} {len(data)} bytes")
+          PY
+          ls -la run-smoke/mods
+      - name: Run smoke test with the mods
+        run: |
+          chmod +x gradlew
+          export LIBGL_ALWAYS_SOFTWARE=1
+          Xvfb :99 -screen 0 1280x720x24 &
+          export DISPLAY=:99
+          timeout 2100 ./gradlew runSmoke --no-daemon 2>&1 | tee compat.log || true
+          grep -E "Loading [0-9]+ mods|STELLA_SMOKE|Mixin apply failed|Incompatible|crash" compat.log | head -40 || true
+          if grep -q "STELLA_SMOKE_OK" compat.log; then echo "COMPAT_RESULT OK"; else echo "COMPAT_RESULT FAIL"; tail -120 compat.log; fi
+      - name: Print screenshots
+        if: always()
+        run: |
+          pip install --quiet pillow
+          python3 - <<'PY'
+          import base64, io, os
+          from PIL import Image
+          d = 'run-smoke/screenshots'
+          want = ['clickgui', 'hud-all', 'stash-inside', 'spawner-finder', 'player-detector', 'glass-gui', 'knife-tanto', 'new-target-hud', 'tour-8-everything']
+          for f in sorted(os.listdir(d)) if os.path.isdir(d) else []:
+              if not f.endswith('.png') or not any(w in f for w in want): continue
+              im = Image.open(os.path.join(d, f)).convert('RGB')
+              buf = io.BytesIO(); im.save(buf, 'JPEG', quality=80)
+              b = base64.b64encode(buf.getvalue()).decode()
+              print(f'SHOT_BEGIN {f}')
+              for i in range(0, len(b), 4000): print('SHOT ' + b[i:i+4000])
+              print(f'SHOT_END {f}')
+          PY
+
+  code-quality:
+    # Open-source static analysis: SpotBugs (compiled classes, with the Minecraft classpath) and PMD
+    # (source). Reports are printed to the log; this job never blocks a build.
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build and get classpath
+        run: |
+          chmod +x gradlew
+          ./gradlew compileJava printClasspath --no-daemon -q | grep '^STELLA_CLASSPATH ' | cut -d' ' -f2- > cp.txt
+          wc -c cp.txt
+      - name: SpotBugs
+        run: |
+          URL=$(curl -s https://api.github.com/repos/spotbugs/spotbugs/releases/latest | python3 -c "import json,sys;r=json.load(sys.stdin);print([a['browser_download_url'] for a in r['assets'] if a['name'].endswith('.tgz')][0])")
+          echo "SpotBugs from $URL"
+          curl -sL "$URL" -o spotbugs.tgz && tar xzf spotbugs.tgz
+          SB=$(ls -d spotbugs-*/ | head -1)
+          java -jar ${SB}lib/spotbugs.jar -textui -effort:max -low -auxclasspath "$(cat cp.txt)" -onlyAnalyze 'dev.stella.-' build/classes/java/main 2>/dev/null | sed 's/^/SPOTBUGS /' | head -400
+      - name: PMD
+        run: |
+          URL=$(curl -s https://api.github.com/repos/pmd/pmd/releases/latest | python3 -c "import json,sys;r=json.load(sys.stdin);print([a['browser_download_url'] for a in r['assets'] if a['name'].startswith('pmd-dist') and a['name'].endswith('bin.zip')][0])")
+          echo "PMD from $URL"
+          curl -sL "$URL" -o pmd.zip && unzip -q pmd.zip
+          PMD=$(ls -d pmd-bin-*/ | head -1)
+          ${PMD}bin/pmd check -d src/main/java -R category/java/errorprone.xml -f text --no-progress --no-cache 2>/dev/null | sed 's/^/PMD /' | grep -v "AvoidLiteralsInIfCondition\|AvoidDuplicateLiterals\|NullAssignment\|AvoidFieldNameMatchingMethodName" | head -400 || true
+
   screenshot-preview:
     # Re-encodes the smoke-test screenshots as small JPEGs and prints them as
     # base64 so they can be retrieved from the job log by tools without

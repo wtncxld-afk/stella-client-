@@ -77,3 +77,8 @@ jar {
         rename { "${it}_${project.archives_base_name}" }
     }
 }
+
+// Prints the compile classpath (used by the CI code-quality job so SpotBugs can resolve Minecraft classes)
+tasks.register('printClasspath') {
+    doLast { println 'STELLA_CLASSPATH ' + sourceSets.main.compileClasspath.asPath }
+}
