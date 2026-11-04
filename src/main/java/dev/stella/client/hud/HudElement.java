@@ -33,7 +33,7 @@ public abstract class HudElement extends Module {
                          String scaleName, double maxScale) {
         super(name, description, category, defaultEnabled);
         // compact default layout: smaller elements, stacked closer together
-        this.defX = defaultX * LAYOUT;
+        this.defX = defaultX <= CENTER ? CENTER : defaultX * LAYOUT;
         this.defY = defaultY * LAYOUT;
         posX = add(new NumberSetting("X", "Horizontal position", this.defX, -10000, 10000, 0.5)).hide();
         posY = add(new NumberSetting("Y", "Vertical position", this.defY, -10000, 10000, 0.5)).hide();
@@ -43,6 +43,9 @@ public abstract class HudElement extends Module {
 
     /** Default positions are multiplied by this so the smaller elements stack without gaps. */
     public static final double LAYOUT = 0.75;
+
+    /** Default X meaning "centred horizontally on first layout". */
+    public static final double CENTER = -9000;
 
     /** Default size of this element (constant per class; called from the constructor). */
     protected double defaultScale() { return 0.75; }

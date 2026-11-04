@@ -50,7 +50,8 @@ public final class HudManager {
         int sw = mc.getWindow().getScaledWidth(), sh = mc.getWindow().getScaledHeight();
         // negative default coordinates anchor to the right / bottom edge on first layout
         if (!h.isSized()) return; // anchor once the real size is known
-        if (h.x() < 0) h.posX.set((double) (sw + h.x() - h.scaledWidth()));
+        if (h.x() <= HudElement.CENTER + 1) h.posX.set((double) ((sw - h.scaledWidth()) / 2f)); // horizontally centred default
+        else if (h.x() < 0) h.posX.set((double) (sw + h.x() - h.scaledWidth()));
         if (h.y() < 0) h.posY.set((double) (sh + h.y() - h.scaledHeight()));
         float w = h.scaledWidth(), hh = h.scaledHeight();
         float x = Math.max(0, Math.min(sw - Math.min(w, sw), h.x()));

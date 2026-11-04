@@ -26,7 +26,7 @@ public class ItemCounterHud extends HudElement {
     private final BoolSetting hideZero = add(new BoolSetting("Hide Zero", "Hide items you have none of", true));
     private final BoolSetting warn = add(new BoolSetting("Low Totem Warning", "Count turns red at 1 or fewer totems", true));
 
-    public ItemCounterHud() { super("Item Counter HUD", "Counts totems, crystals, pearls and other PvP items you carry", -4, -232, false); }
+    public ItemCounterHud() { super("Item Counter HUD", "Counts totems, crystals, pearls and other PvP items you carry", HudElement.CENTER, -66, false); }
 
     private int count(Item item) {
         if (mc.player == null) return 0;
@@ -54,7 +54,7 @@ public class ItemCounterHud extends HudElement {
             if (c == 0 && hideZero.isOn() && !editor) continue;
             shown.add(it); counts.add(c);
         }
-        if (shown.isEmpty()) { setSize(4, 4); return; }
+        if (shown.isEmpty()) { setSize(items.size() * 24 + 11, 24); return; } // typical size so a centred default stays centred
         int cell = 24;
         int w = shown.size() * cell, h = 16;
         card.draw(ctx, this, w, h);
