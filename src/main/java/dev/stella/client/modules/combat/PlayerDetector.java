@@ -56,8 +56,8 @@ public class PlayerDetector extends HudElement {
     public record Seen(String name, UUID uuid, double distance, double dx, double dy, double dz, Status status) {}
 
     // ---- detection
-    private final ModeSetting mode = add(new ModeSetting("Detect", "All Players: every player loaded on your client. Hidden Only: only those you can't currently see",
-            "All Players", "All Players", "Hidden Only"));
+    private final ModeSetting mode = add(new ModeSetting("Detect", "Hidden Only: players you cannot currently see. All Players: every tracked player",
+            "Hidden Only", "Hidden Only", "All Players"));
     private final BoolSetting outOfViewCounts = add(new BoolSetting("Out Of View Counts As Hidden", "Players behind you / off-screen count as hidden, not only those behind walls", true))
             .visibleWhen(() -> mode.is("Hidden Only"));
     private final NumberSetting range = add(new NumberSetting("Range", "Maximum distance (the server decides how far players are sent)", 128, 8, 512, 8));
@@ -94,7 +94,7 @@ public class PlayerDetector extends HudElement {
     private Object lastWorld;
 
     public PlayerDetector() {
-        super("Player Detector", "Every player loaded on your client: blue chunk, distance, direction and a dropdown",
+        super("Player Detector", "Finds players you can't see (behind walls / out of view): blue chunks, distance, direction and a dropdown",
                 Category.DONUTSMP, -4, 140, false, "Scale", 4.0);
     }
 
