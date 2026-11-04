@@ -37,7 +37,7 @@ public class ModuleListHud extends HudElement {
     public ModuleListHud() { super("Module List HUD", "List of enabled modules down the top-right corner", -4, 26, true); }
 
     /** Height of the list as drawn (scaled), for elements stacked below it. */
-    public float scaledListHeight() { return listHeight * (float) scale.get(); }
+    public float scaledListHeight() { return listHeight * scale.getFloat(); }
 
     private boolean listed(Module m) {
         if (m == this) return false;
