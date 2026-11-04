@@ -35,7 +35,7 @@ public class PerformanceHud extends HudElement {
         long now = System.nanoTime();
         if (last != 0) { frames[head] = (now - last) / 1_000_000f; head = (head + 1) % frames.length; }
         last = now;
-        if (System.currentTimeMillis() - statsAt > 500) {
+        if (System.currentTimeMillis() - statsAt > 500 || avgFps <= 0) {
             statsAt = System.currentTimeMillis();
             float sum = 0; int n = 0;
             float[] sorted = new float[frames.length];

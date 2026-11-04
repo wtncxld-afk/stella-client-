@@ -1078,6 +1078,7 @@ public final class StellaSmokeTest {
                                 dev.stella.client.notification.Notification.Type.SUCCESS, 8000);
                         caption = null;
                     }
+                    if (T == 2005) mc.inGameHud.getChatHud().clear(false);
                     if (T == 2006) shot(mc, "glass-hud");
                     if (T == 2008) mc.setScreen(new ClickGuiScreen());
                     if (T == 2016) shot(mc, "glass-gui");

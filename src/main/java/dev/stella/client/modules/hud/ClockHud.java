@@ -16,7 +16,7 @@ public class ClockHud extends HudElement {
     private final BoolSetting h24 = add(new BoolSetting("24 Hour", "24-hour clock", false));
     private final BoolSetting game = add(new BoolSetting("Game Time", "Also show the in-game time and day", true));
 
-    public ClockHud() { super("Clock HUD", "Real time and in-game time of day", -4, 210, false); }
+    public ClockHud() { super("Clock HUD", "Real time and in-game time of day", HudElement.CENTER, 2, false); }
 
     @Override
     public void render(DrawContext ctx, float td, boolean editor) {
