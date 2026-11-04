@@ -24,7 +24,7 @@ public abstract class TextHud extends HudElement {
 
     @Override
     public void render(DrawContext ctx, float tickDelta, boolean editor) {
-        String l = showLabel.isOn() ? label().toUpperCase() : "";
+        String l = showLabel.isOn() ? label().toUpperCase(java.util.Locale.ROOT) : "";
         String v = value();
         String lt = l.isEmpty() ? "" : l + " ";
         int lw = dev.stella.client.render.StellaFont.width(lt);

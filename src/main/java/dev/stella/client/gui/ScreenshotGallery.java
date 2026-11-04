@@ -41,7 +41,7 @@ public class ScreenshotGallery extends StellaScreen {
         files.clear();
         try {
             if (Files.isDirectory(dir())) try (var s = Files.list(dir())) {
-                s.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".png"))
+                s.filter(p -> p.getFileName().toString().toLowerCase(java.util.Locale.ROOT).endsWith(".png"))
                         .sorted(Comparator.comparingLong((Path p) -> p.toFile().lastModified()).reversed()).forEach(files::add);
             }
         } catch (Exception e) { status = "Could not read the screenshots folder"; }

@@ -104,7 +104,7 @@ public final class ConfigManager {
         List<String> out = new ArrayList<>();
         try (Stream<Path> s = Files.list(profilesDir())) {
             s.filter(p -> p.toString().endsWith(".json")).forEach(p -> {
-                String f = p.getFileName().toString();
+                String f = String.valueOf(p.getFileName());
                 out.add(f.substring(0, f.length() - 5));
             });
         } catch (IOException ignored) { }
@@ -247,6 +247,7 @@ public final class ConfigManager {
     private static void saveClientFile() {
         JsonObject o = new JsonObject();
         o.addProperty("activeProfile", activeProfile);
-        try { Files.writeString(root().resolve("client.json"), GSON.toJson(o)); } catch (IOException ignored) { }
+        try { Files.writeString(root().resolve("client.json"), GSON.toJson(o)); }
+        catch (IOException e) { dev.stella.client.StellaClient.LOGGER.warn("Could not save client.json", e); }
     }
 }

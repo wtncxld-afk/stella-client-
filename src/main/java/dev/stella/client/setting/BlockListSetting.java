@@ -30,7 +30,7 @@ public class BlockListSetting extends Setting<List<String>> {
     protected List<String> sanitize(List<String> v) {
         LinkedHashSet<String> out = new LinkedHashSet<>();
         for (String s : v) {
-            Identifier id = Identifier.tryParse(s.trim().toLowerCase());
+            Identifier id = Identifier.tryParse(s.trim().toLowerCase(java.util.Locale.ROOT));
             if (id != null) out.add(id.toString());
         }
         resolved = null;
@@ -47,7 +47,7 @@ public class BlockListSetting extends Setting<List<String>> {
     }
 
     public boolean add(String id) {
-        Identifier parsed = Identifier.tryParse(id.trim().toLowerCase());
+        Identifier parsed = Identifier.tryParse(id.trim().toLowerCase(java.util.Locale.ROOT));
         if (parsed == null || !Registries.BLOCK.containsId(parsed)) return false;
         List<String> list = copy(value);
         if (list.contains(parsed.toString())) return false;

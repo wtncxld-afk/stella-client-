@@ -102,7 +102,6 @@ public final class Render2D {
 
     /** Label with translucent backing, centred at (cx, y). */
     public static void label(DrawContext ctx, String s, double cx, double y, float scale, int textColor, int bgColor) {
-        TextRenderer f = font();
         int w = StellaFont.width(s);
         ctx.getMatrices().pushMatrix();
         ctx.getMatrices().translate((float) (cx), (float) (y));

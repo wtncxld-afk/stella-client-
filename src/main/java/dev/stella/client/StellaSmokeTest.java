@@ -1003,7 +1003,7 @@ public final class StellaSmokeTest {
                     if (T >= 1418 && T < 1418 + knives.length * 8) {
                         int i = (T - 1418) / 8, k = (T - 1418) % 8;
                         var ks = ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class);
-                        String slug = "knife-" + knives[i][0].toLowerCase().replace(' ', '-');
+                        String slug = "knife-" + knives[i][0].toLowerCase(java.util.Locale.ROOT).replace(' ', '-');
                         if (k == 0) {
                             ks.setKnife(knives[i][0]); ks.setFinish(knives[i][1]);
                             ks.setWear(knives[i][0].equals("Tanto") ? 0.45 : 0.0);

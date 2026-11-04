@@ -246,10 +246,12 @@ public final class MusicService {
         info = i;
     }
 
+    /** One shared client (each HttpClient owns threads, so never create one per cover). */
+    private static final HttpClient COVER_HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(4)).build();
+
     private static byte[] fetch(String url) throws Exception {
         if (url.startsWith("file://")) return Files.readAllBytes(Path.of(URI.create(url)));
-        HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(4)).build();
-        HttpResponse<byte[]> r = http.send(HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(6)).build(),
+        HttpResponse<byte[]> r = COVER_HTTP.send(HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(6)).build(),
                 HttpResponse.BodyHandlers.ofByteArray());
         return r.body();
     }

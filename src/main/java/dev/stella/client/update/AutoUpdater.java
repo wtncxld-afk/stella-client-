@@ -69,7 +69,7 @@ public final class AutoUpdater {
     public static Path installedJar() {
         return FabricLoader.getInstance().getModContainer(StellaClient.MOD_ID)
                 .flatMap(c -> c.getOrigin().getPaths().stream().findFirst())
-                .filter(p -> p.getFileName().toString().endsWith(".jar") && Files.isRegularFile(p))
+                .filter(p -> String.valueOf(p.getFileName()).endsWith(".jar") && Files.isRegularFile(p))
                 .orElse(null);
     }
 
@@ -192,7 +192,7 @@ public final class AutoUpdater {
         Path old = installedJar();
         if (old == null) { StellaClient.LOGGER.info("Stella update not installed: running from a development environment"); return; }
         try {
-            Path target = old.resolveSibling(staged.getFileName().toString());
+            Path target = old.resolveSibling(String.valueOf(staged.getFileName()));
             String java = ProcessHandle.current().info().command().orElse("java");
             new ProcessBuilder(List.of(java, "-cp", staged.toString(), UpdateInstaller.class.getName(),
                     Long.toString(ProcessHandle.current().pid()), old.toString(), staged.toString(), target.toString()))
@@ -224,7 +224,7 @@ public final class AutoUpdater {
         if (!Files.isDirectory(dir)) return;
         try (var files = Files.list(dir)) {
             files.filter(p -> {
-                String n = p.getFileName().toString();
+                String n = String.valueOf(p.getFileName());
                 return n.endsWith(".jar") || n.endsWith(".part");
             }).forEach(p -> { try { Files.deleteIfExists(p); } catch (Exception ignored) { } });
         } catch (Exception ignored) { }

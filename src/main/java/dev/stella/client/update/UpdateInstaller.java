@@ -19,6 +19,7 @@ public final class UpdateInstaller {
         if (args.length != 4) return;
         long pid = Long.parseLong(args[0]);
         Path oldJar = Path.of(args[1]), staged = Path.of(args[2]), target = Path.of(args[3]);
+        if (oldJar.getFileName() == null || target.getFileName() == null || oldJar.getParent() == null) return;
         if (!oldJar.getFileName().toString().endsWith(".jar") || !target.getFileName().toString().endsWith(".jar")) return;
         if (!oldJar.getParent().equals(target.getParent())) return;
 

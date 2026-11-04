@@ -34,11 +34,11 @@ public class RegionAlerts extends Module {
         if (first || !RegionConfig.inGrid(col, row)) return;
         RegionConfig.Region r = RegionConfig.regionAt(col, row);
         String kind = r == null ? "Unmarked" : r.name();
-        if (glitchedOnly.isOn() && !kind.toLowerCase().contains("glitch")) return;
+        if (glitchedOnly.isOn() && !kind.toLowerCase(java.util.Locale.ROOT).contains("glitch")) return;
         int n = number(col, row);
         String note = noteFor(n);
         NotificationManager.post("Region " + n, kind + (note.isEmpty() ? "" : " - " + note),
-                kind.toLowerCase().contains("glitch") ? Notification.Type.WARNING : Notification.Type.INFO, 4000);
+                kind.toLowerCase(java.util.Locale.ROOT).contains("glitch") ? Notification.Type.WARNING : Notification.Type.INFO, 4000);
     }
 
     private String noteFor(int n) {

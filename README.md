@@ -120,6 +120,24 @@ is saved in your profile between launches.
 Turning any module on or off shows a small popup; switch this off with *Module Toggle Popups* in the
 Notifications HUD settings.
 
+**New in this version:**
+* **DonutSMP:** Auction Helper (price per item in auction menus, cheapest listing in green, watchlist in gold with
+  alerts), Region Alerts (popup + your notes when you enter a Region Map region), Base Saver (writes a report of
+  every container and spawner around you to `config/stella/bases/`), Spawner Finder *Copy All* / *Export To File*.
+* **Combat:** Target HUD (health, absorption, armor durability, totem pops, distance, winning / losing),
+  Combat Timer HUD, Hit Effects (coloured burst, crit sparkle), Armor Break Alerts.
+* **Misc:** Friends (middle-click a player; green in ESP / Radar / Target HUD, Auto Crystal protects them),
+  Macros (six keys for commands such as `/home`, `/ah`, `/spawn`).
+* **Cosmetics:** Cape (Galaxy / Theme / Stella / Aurora), Accessories (halo, horns, star pet), Trails,
+  Kill Effects (Stella burst, lightning, confetti), Custom Glint, Knife Skins (Karambit, Butterfly, Bayonet,
+  Stella Dagger, Kunai, Tanto; 13 finishes; Wear and Pattern Seed; your hand holds the knife; draw and inspect
+  animations with original sounds; per-slot knives).
+* **Visuals / HUD:** Block Outline, Trajectories (bow, crossbow, trident, pearls, potions), Saturation Overlay,
+  Scoreboard (hide / move / resize), Clock HUD, CPS Graph HUD, Money Tracker HUD, Radar HUD, Performance HUD
+  (frame-time graph, 1% lows, memory).
+* **Client:** Performance (background FPS limit, FPS boost preset, scanner budget), Client Tools (screenshot
+  gallery, profile share codes), **Liquid Glass** theme for the whole GUI and every HUD card.
+
 **Settings:** Config (auto-save), Animations, Auto Updater.
 
 ## Player Detector
@@ -161,6 +179,16 @@ server does not send (e.g. fully vanished staff), and it sends nothing to the se
 | Visible Rows / Width | 5 / 180 | Dropdown size (scroll with chat open for more) |
 
 Click the dropdown header (with chat open) to collapse it.
+
+## Performance and compatibility
+
+Stella is tested in CI on every change, both on its own and together with the most popular open-source
+performance mods (latest Minecraft 1.21.11 Fabric builds from Modrinth): **Sodium**, **Lithium**,
+**FerriteCore**, **ImmediatelyFast**, **Entity Culling**, **ModernFix** and **Mod Menu**. For the best FPS,
+install Sodium, Lithium and ImmediatelyFast next to Stella.
+
+Every build is also scanned with open-source tools: **ClamAV** (malware), **SpotBugs** (bug patterns in the
+compiled classes) and **PMD** (error-prone code).
 
 ## Configuration
 

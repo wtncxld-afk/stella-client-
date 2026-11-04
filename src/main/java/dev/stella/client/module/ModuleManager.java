@@ -188,7 +188,6 @@ public final class ModuleManager {
     }
 
     private static void handleKeybinds(MinecraftClient mc) {
-        long handle = mc.getWindow().getHandle();
         boolean allowed = mc.currentScreen == null;
         for (Module m : MODULES) {
             if (!m.keybind.isBound()) continue;
