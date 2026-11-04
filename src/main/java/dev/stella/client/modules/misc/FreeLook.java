@@ -24,6 +24,8 @@ public class FreeLook extends Module {
     private final NumberSetting sensitivity = add(new NumberSetting("Sensitivity", "Mouse sensitivity multiplier", 1, 0.2, 3, 0.05));
     private final dev.stella.client.setting.BoolSetting invertPitch = add(new dev.stella.client.setting.BoolSetting("Invert Pitch", "Invert up/down while free-looking", false));
     private boolean keyWasDown;
+    /** Smoke test / preview: behave as if the look key were held. */
+    public static boolean forceHeld;
 
     private boolean looking;
     private float yaw, pitch;
@@ -41,7 +43,7 @@ public class FreeLook extends Module {
     @Override
     public void onTick() {
         boolean held = inGame() && mc.currentScreen == null && lookKey.isBound()
-                && dev.stella.client.util.Keys.down(lookKey.key());
+                && dev.stella.client.util.Keys.down(lookKey.key()) || (inGame() && forceHeld);
         if (toggleMode.isOn()) {
             if (held && !keyWasDown) { if (looking) stop(); else start(); }
             if (!inGame() && looking) stop();
@@ -71,6 +73,9 @@ public class FreeLook extends Module {
     }
 
     @Override protected void onDisable() { if (looking) stop(); }
+
+    /** Sets the free-look angles directly (previews / smoke test). */
+    public void setAngles(float yaw, float pitch) { this.yaw = yaw; this.pitch = pitch; }
 
     public void look(double cursorDeltaX, double cursorDeltaY) {
         float k = 0.15f * sensitivity.getFloat();

@@ -1062,7 +1062,9 @@ public final class StellaSmokeTest {
                     }
                     // ================= Anti Cheat Off showcase (singleplayer): simulated key presses =================
                     if (T >= 1516 && T < 1830) acoDemo(mc, T, me);
-                    if (inStage() == 1840) {
+                    // ================= Free Look: orbit around a closed room, walls on / off =================
+                    if (T >= 1832 && T < 1912) freeLookDemo(mc, T, me);
+                    if (inStage() == 1920) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {
@@ -1089,6 +1091,34 @@ public final class StellaSmokeTest {
         StellaClient.LOGGER.info("[smoke] terrain ready after {} ticks", held);
         held = 0;
         return false;
+    }
+
+    private static void freeLookDemo(MinecraftClient mc, int T, String me) {
+        int x = ox, y = oy, z = oz + 20;
+        var fl = ModuleManager.get(dev.stella.client.modules.misc.FreeLook.class);
+        mc.getToastManager().clear();
+        if (T == 1832) {
+            serverCmd(mc, "gamemode creative " + me);
+            serverCmd(mc, "fill " + (x - 3) + " " + (y - 1) + " " + (z - 3) + " " + (x + 3) + " " + (y + 3) + " " + (z + 3) + " minecraft:stone_bricks hollow");
+            serverCmd(mc, "setblock " + x + " " + (y + 2) + " " + (z + 2) + " minecraft:lantern[hanging=false]");
+            serverCmd(mc, "tp " + me + " " + (x + 0.5) + " " + y + " " + (z + 0.5) + " 0 0");
+            mc.options.setPerspective(net.minecraft.client.option.Perspective.FIRST_PERSON);
+            fl.setEnabled(true);
+            setting("Free Look", "Mode", "Third Person");
+            setting("Free Look", "Distance", 7.0);
+            setting("Free Look", "Go Through Blocks", false);
+            caption("Free Look \u2022 Go Through Blocks OFF", "Inside a closed room the camera gets pushed in by the walls");
+        }
+        if (T == 1838) dev.stella.client.modules.misc.FreeLook.forceHeld = true;
+        if (T >= 1840 && T < 1872) fl.setAngles((T - 1840) * 11.25f, 25f);
+        if (T == 1856) shot(mc, "freelook-clip-off");
+        if (T == 1872) {
+            setting("Free Look", "Go Through Blocks", true);
+            caption("Free Look \u2022 Go Through Blocks ON", "The camera orbits straight through the walls");
+        }
+        if (T >= 1874 && T < 1906) fl.setAngles((T - 1874) * 11.25f, 25f);
+        if (T == 1890) shot(mc, "freelook-clip-on");
+        if (T == 1906) { dev.stella.client.modules.misc.FreeLook.forceHeld = false; caption = null; }
     }
 
     private static void keys(MinecraftClient mc, boolean fwd, boolean jump, boolean sneak, boolean sprint) {
