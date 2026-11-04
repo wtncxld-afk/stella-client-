@@ -6,6 +6,7 @@
   "client": [
     "AmbienceCloudMixin",
     "AttackMixin",
+    "BlockOutlineMixin",
     "AmbienceSkyMixin",
     "BackgroundRendererMixin",
     "CameraAccessor",
@@ -21,6 +22,7 @@
     "GameRendererMixin",
     "GlowOutlineMixin",
     "HeldItemRendererMixin",
+    "InGameHudMixin2",
     "InteractionManagerAccessor",
     "MinecraftClientMixin",
     "TextureManagerMixin",

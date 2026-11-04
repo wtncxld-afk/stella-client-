@@ -23,6 +23,9 @@ public abstract class EntityStatusMixin {
         Entity e = packet.getEntity(mc.world);
         if (e == null) return;
         TotemPopCounter tpc = ModuleManager.get(TotemPopCounter.class);
-        if (packet.getStatus() == 35) tpc.onPop(e); else tpc.onDeath(e);
+        if (packet.getStatus() == 35) tpc.onPop(e); else {
+            tpc.onDeath(e);
+            ModuleManager.get(dev.stella.client.modules.cosmetics.KillEffects.class).onDeath(e);
+        }
     }
 }

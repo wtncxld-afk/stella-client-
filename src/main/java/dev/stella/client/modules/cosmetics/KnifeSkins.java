@@ -35,6 +35,9 @@ public class KnifeSkins extends Module {
     private final BoolSetting sparkles = add(new BoolSetting("Sparkles", "Twinkling sparkles on the blade", true));
     private final BoolSetting sway = add(new BoolSetting("Idle Sway", "Gentle breathing movement", true));
     private final BoolSetting axes = add(new BoolSetting("Axes Too", "Also show the knife when holding an axe", false));
+    private final BoolSetting maces = add(new BoolSetting("Maces Too", "Also show the knife when holding a mace", false));
+    private final dev.stella.client.setting.TextSetting perSlot = add(new dev.stella.client.setting.TextSetting("Per Slot Knives",
+            "Different knife per hotbar slot, e.g. 1=Karambit, 2=Bayonet, 3=Butterfly, 4=Stella Dagger", "", 200));
 
     private long inspectStart = -1, drawStart = -1;
     private boolean keyWasDown;
@@ -67,7 +70,7 @@ public class KnifeSkins extends Module {
     private boolean applies(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
         String path = Registries.ITEM.getId(stack.getItem()).getPath();
-        return path.endsWith("_sword") || (axes.isOn() && path.endsWith("_axe"));
+        return path.endsWith("_sword") || (axes.isOn() && path.endsWith("_axe")) || (maces.isOn() && path.equals("mace"));
     }
 
     private float inspectProgress() {
@@ -93,7 +96,7 @@ public class KnifeSkins extends Module {
         float side = leftHand ? -1 : 1;
         double now = System.currentTimeMillis() / 1000.0;
         float t = inspectProgress(), d = drawProgress();
-        String k = knife.get();
+        String k = slotKnife();
         float open = 0;
 
         // inspect choreography: raise (0-.14), show face (.14-.36), roll to show the back (.36-.5),
@@ -155,6 +158,21 @@ public class KnifeSkins extends Module {
         queue.submitCustom(m, StellaPipelines.SOLID, mesh::emitSolid);
         queue.submitCustom(m, StellaPipelines.SKY_GLOW_Q, mesh::emitGlow);
         m.pop();
+    }
+
+    /** Knife for the selected hotbar slot (Per Slot Knives), else the main Knife setting. */
+    private String slotKnife() {
+        if (mc.player != null && !perSlot.get().isBlank()) {
+            String slot = String.valueOf(mc.player.getInventory().getSelectedSlot() + 1);
+            for (String e : perSlot.get().split(",")) {
+                int eq = e.indexOf('=');
+                if (eq <= 0 || !e.substring(0, eq).trim().equals(slot)) continue;
+                String want = e.substring(eq + 1).trim().toLowerCase(java.util.Locale.ROOT);
+                for (String option : new String[]{"Karambit", "Butterfly", "Bayonet", "Stella Dagger"})
+                    if (option.toLowerCase(java.util.Locale.ROOT).startsWith(want) || want.startsWith(option.toLowerCase(java.util.Locale.ROOT).split(" ")[0])) return option;
+            }
+        }
+        return knife.get();
     }
 
     private static float smooth(float x) { return x * x * (3 - 2 * x); }

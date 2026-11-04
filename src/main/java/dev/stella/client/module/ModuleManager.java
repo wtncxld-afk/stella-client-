@@ -67,6 +67,10 @@ public final class ModuleManager {
         register(new dev.stella.client.modules.cosmetics.JumpCircles());
         register(new dev.stella.client.modules.cosmetics.KnifeSkins());
         register(new dev.stella.client.modules.cosmetics.CustomGlint());
+        register(new dev.stella.client.modules.cosmetics.Cape());
+        register(new dev.stella.client.modules.cosmetics.Accessories());
+        register(new dev.stella.client.modules.cosmetics.Trails());
+        register(new dev.stella.client.modules.cosmetics.KillEffects());
         register(new dev.stella.client.modules.misc.FriendsModule());
         register(new dev.stella.client.modules.misc.Macros());
         register(new dev.stella.client.modules.hud.TargetHud());
@@ -77,6 +81,13 @@ public final class ModuleManager {
         register(new dev.stella.client.modules.combat.RegionAlerts());
         register(new dev.stella.client.modules.combat.BaseSaver());
         register(new dev.stella.client.modules.hud.MoneyTrackerHud());
+        register(new dev.stella.client.modules.visuals.BlockOutline());
+        register(new dev.stella.client.modules.visuals.Trajectories());
+        register(new dev.stella.client.modules.visuals.SaturationOverlay());
+        register(new dev.stella.client.modules.visuals.ScoreboardTweaks());
+        register(new dev.stella.client.modules.hud.ClockHud());
+        register(new dev.stella.client.modules.hud.CpsGraphHud());
+        register(new dev.stella.client.modules.client.ClientTools());
         register(new dev.stella.client.modules.anticheatoff.TestEnvironment());
         register(new dev.stella.client.modules.anticheatoff.Flight());
         register(new dev.stella.client.modules.anticheatoff.BoatFly());
