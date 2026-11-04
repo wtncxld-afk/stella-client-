@@ -26,7 +26,9 @@ public class AutoTool extends Module {
     @Override
     public void onTick() {
         if (!inGame() || mc.currentScreen != null) return;
-        boolean mining = mc.options.attackKey.isPressed() && mc.crosshairTarget instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK;
+        // holding left-click on a block, or Minecraft is already breaking one
+        boolean mining = (mc.options.attackKey.isPressed() || mc.interactionManager.isBreakingBlock())
+                && mc.crosshairTarget instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK;
         if (!mining || (mc.player.isCreative() && !creative.isOn())) { restore(); return; }
         BlockState state = mc.world.getBlockState(((BlockHitResult) mc.crosshairTarget).getBlockPos());
         if (state.isAir()) return;

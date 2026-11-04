@@ -47,6 +47,9 @@ final class StellaSmokeTest {
 
     private static int slow;
     private static int ox, oy, oz, spawnX, spawnZ;
+    private static net.minecraft.util.math.BlockPos breakPos;
+    private static net.minecraft.util.math.Direction breakSide;
+    private static boolean autoToolPicked;
 
     /** Logs every chunk the Sus Chunk Finder scored, flagged or not, so false positives are visible in CI. */
     private static final java.util.UUID STAFF_UUID = java.util.UUID.fromString("5e1a5a11-0000-4000-8000-00000000057a");
@@ -576,20 +579,21 @@ final class StellaSmokeTest {
                         mc.player.setPitch(0f);
                         mc.player.getInventory().setSelectedSlot(0);
                     }
-                    if (inStage() >= 727 && inStage() < 732) mc.options.attackKey.setPressed(true); // keep "holding" left-click
-                    if (inStage() == 729) {
-                        var at = ModuleManager.get(dev.stella.client.modules.misc.AutoTool.class);
-                        var tgt = mc.crosshairTarget;
-                        String block = tgt instanceof net.minecraft.util.hit.BlockHitResult bh ? mc.world.getBlockState(bh.getBlockPos()).toString() : "none";
-                        StellaClient.LOGGER.info("[smoke] auto tool diag: attackKey={} target={} block={} creative={} enabled={} bestSlot={}",
-                                mc.options.attackKey.isPressed(), tgt == null ? null : tgt.getType(), block, mc.player.isCreative(), at.isEnabled(),
-                                at.bestSlot(net.minecraft.block.Blocks.STONE.getDefaultState()));
+                    if (inStage() == 727 && mc.crosshairTarget instanceof net.minecraft.util.hit.BlockHitResult bh) {
+                        // start a real block break on the stone wall (what holding left-click does)
+                        breakPos = bh.getBlockPos(); breakSide = bh.getSide();
+                        mc.interactionManager.attackBlock(breakPos, breakSide);
                     }
-                    if (inStage() == 732) {
-                        int sel = mc.player.getInventory().getSelectedSlot();
-                        StellaClient.LOGGER.info("[smoke] auto tool while mining stone: slot {} ({})", sel, mc.player.getMainHandStack().getItem());
-                        if (sel != 3) fail("Auto Tool did not pick the pickaxe");
-                        mc.options.attackKey.setPressed(false);
+                    if (inStage() > 727 && inStage() < 734 && breakPos != null) {
+                        if (mc.world.getBlockState(breakPos).isAir()) breakPos = null;
+                        else mc.interactionManager.updateBlockBreakingProgress(breakPos, breakSide);
+                        if (mc.player.getInventory().getSelectedSlot() == 3) autoToolPicked = true;
+                    }
+                    if (inStage() > 727 && inStage() < 734 && mc.player.getInventory().getSelectedSlot() == 3) autoToolPicked = true;
+                    if (inStage() == 734) {
+                        StellaClient.LOGGER.info("[smoke] auto tool picked the pickaxe while mining stone: {}", autoToolPicked);
+                        if (!autoToolPicked) fail("Auto Tool did not pick the pickaxe");
+                        mc.interactionManager.cancelBlockBreaking();
                     }
                     if (inStage() == 736) {
                         int sel = mc.player.getInventory().getSelectedSlot();
