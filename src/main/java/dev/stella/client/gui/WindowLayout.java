@@ -240,6 +240,9 @@ final class WindowLayout {
     /** Settings windows open beside the window rather than over the cards when there is room. */
     int settingsX(int mx, int vw) {
         int right = wx + ww + 8;
-        return right + SettingsWindow.WIDTH < vw - (showThemes ? ThemesPanel.WIDTH + 8 : 0) ? right : mx + 12;
+        if (right + SettingsWindow.WIDTH < vw - (showThemes ? ThemesPanel.WIDTH + 8 : 0)) return right;
+        return wx + ww - SettingsWindow.WIDTH - 10; // tucked inside the window's right edge, never over the sidebar
     }
+
+    int settingsY() { return wy + 34; }
 }

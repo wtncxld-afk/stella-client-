@@ -1091,12 +1091,16 @@ public final class StellaSmokeTest {
                         ModuleManager.all().stream().filter(m -> m.getName().equals("Custom Sky")).forEach(m -> m.setEnabled(true));
                         setting("Custom Sky", "Preset", "Match GUI Theme");
                         serverCmd(mc, "time set midnight");
+                        serverCmd(mc, "gamemode spectator " + me);
+                        serverCmd(mc, "tp " + me + " " + ox + " 240 " + oz);
+                        for (String n : new String[]{"Block Outline", "Trajectories", "Player ESP", "Storage ESP", "Block ESP", "Spawner Finder", "Sus Chunk Finder"})
+                            ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> m.setEnabled(false));
                         mc.options.hudHidden = true;
-                        mc.player.setPitch(-32f);
+                        mc.player.setPitch(-20f);
                     }
                     if (T >= 2030 && T < 2030 + skyThemes.length * 8) {
                         int i = (T - 2030) / 8, k = (T - 2030) % 8;
-                        if (k == 0) { setting("ClickGUI", "Theme", skyThemes[i]); mc.player.setYaw(i * 36f); mc.player.setPitch(-28f - (i % 3) * 6f); }
+                        if (k == 0) { setting("ClickGUI", "Theme", skyThemes[i]); mc.player.setYaw(i * 36f); mc.player.setPitch(-12f - (i % 3) * 8f); }
                         if (k == 6) shot(mc, "sky-theme-" + skyThemes[i].toLowerCase(java.util.Locale.ROOT).replace(' ', '-'));
                     }
                     if (T == 2030 + skyThemes.length * 8) { mc.options.hudHidden = false; setting("ClickGUI", "Theme", "Stella"); }

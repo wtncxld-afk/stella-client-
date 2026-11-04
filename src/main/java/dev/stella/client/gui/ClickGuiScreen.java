@@ -100,7 +100,8 @@ public class ClickGuiScreen extends dev.stella.client.gui.StellaScreen {
         }
         int wx = windowMode() ? win.settingsX(mx, vw) : mx + 12;
         if (wx + SettingsWindow.WIDTH > vw - (themesVisible() ? ThemesPanel.WIDTH : 0) - 8) wx = mx - SettingsWindow.WIDTH - 12;
-        windows.add(new SettingsWindow(m, wx, Math.max(4, my - 20)));
+        int wy = windowMode() ? win.settingsY() + windows.size() * 14 : Math.max(4, my - 20);
+        windows.add(new SettingsWindow(m, wx, wy));
         if (windows.size() > 4) windows.remove(0);
     }
 
