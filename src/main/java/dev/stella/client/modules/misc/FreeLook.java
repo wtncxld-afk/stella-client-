@@ -18,6 +18,8 @@ public class FreeLook extends Module {
     private final KeySetting lookKey = add(new KeySetting("Look Key", "Hold to free-look", GLFW.GLFW_KEY_LEFT_ALT));
     private final ModeSetting mode = add(new ModeSetting("Mode", "Orbit in third person or look around in first person", "Third Person", "Third Person", "First Person"));
     private final NumberSetting distance = add(new NumberSetting("Distance", "Third-person camera distance", 4, 1, 12, 0.5)).visibleWhen(() -> mode.is("Third Person"));
+    private final dev.stella.client.setting.BoolSetting noClip = add(new dev.stella.client.setting.BoolSetting("Go Through Blocks",
+            "The orbiting camera passes through walls instead of being pushed in front of you", true)).visibleWhen(() -> mode.is("Third Person"));
     private final dev.stella.client.setting.BoolSetting toggleMode = add(new dev.stella.client.setting.BoolSetting("Toggle Instead Of Hold", "Press once to start, again to stop", false));
     private final NumberSetting sensitivity = add(new NumberSetting("Sensitivity", "Mouse sensitivity multiplier", 1, 0.2, 3, 0.05));
     private final dev.stella.client.setting.BoolSetting invertPitch = add(new dev.stella.client.setting.BoolSetting("Invert Pitch", "Invert up/down while free-looking", false));
@@ -32,6 +34,7 @@ public class FreeLook extends Module {
     public boolean active() { return isEnabled() && looking; }
     public boolean thirdPerson() { return mode.is("Third Person"); }
     public float distance() { return distance.getFloat(); }
+    public boolean noClip() { return noClip.isOn(); }
     public float yaw() { return yaw; }
     public float pitch() { return pitch; }
 

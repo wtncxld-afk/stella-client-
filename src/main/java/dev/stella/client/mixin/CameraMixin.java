@@ -37,7 +37,7 @@ public abstract class CameraMixin {
             setRotation(fl.yaw(), fl.pitch());
             if (fl.thirdPerson()) {
                 setPos(focusedEntity.getCameraPosVec(tickDelta));
-                moveBy(-clipToSpace(fl.distance()), 0f, 0f);
+                moveBy(-(fl.noClip() ? fl.distance() : clipToSpace(fl.distance())), 0f, 0f);
             }
         }
     }
