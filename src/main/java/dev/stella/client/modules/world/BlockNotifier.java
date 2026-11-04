@@ -1,6 +1,5 @@
 package dev.stella.client.modules.world;
 
-import dev.stella.client.data.Waypoints;
 import dev.stella.client.module.Category;
 import dev.stella.client.module.Module;
 import dev.stella.client.notification.Notification;
@@ -116,8 +115,4 @@ public class BlockNotifier extends Module {
         NotificationManager.post("Copied", d.x + " " + d.y + " " + d.z, Notification.Type.SUCCESS, 1500);
     }
 
-    public void createWaypoint(Detection d) {
-        Waypoints.add(new Waypoints.Waypoint(d.blockName, d.x, d.y, d.z, d.dimension, 0xFFA855F7));
-        NotificationManager.post("Waypoint created", d.blockName + " at " + d.x + " " + d.y + " " + d.z, Notification.Type.SUCCESS, 2000);
-    }
 }

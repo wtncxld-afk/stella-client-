@@ -650,9 +650,9 @@ public final class StellaSmokeTest {
                     }
                     if (inStage() == 668) {
                         boolean dead = mc.player.isDead();
-                        boolean waypoint = dev.stella.client.data.Waypoints.all().stream().anyMatch(w -> w.name().equals("Death"));
-                        StellaClient.LOGGER.info("[smoke] death coordinates: dead={} death waypoint={}", dead, waypoint);
-                        if (!waypoint) fail("Death Coordinates did not record the death");
+                        String where = dev.stella.client.modules.misc.DeathCoordinates.lastDeath;
+                        StellaClient.LOGGER.info("[smoke] death coordinates: dead={} recorded at {}", dead, where);
+                        if (where == null) fail("Death Coordinates did not record the death");
                         mc.player.requestRespawn();
                     }
                     if (inStage() == 674) {
@@ -812,8 +812,6 @@ public final class StellaSmokeTest {
                     String me = mc.player.getGameProfile().name();
                     if (T == 1040) {
                         for (String c : new String[]{"time set noon", "weather clear", "gamerule sendCommandFeedback false", "gamerule doDaylightCycle false"}) serverCmd(mc, c);
-                        dev.stella.client.data.Waypoints.all().removeIf(w -> w.name().toLowerCase(java.util.Locale.ROOT).contains("death"));
-                        dev.stella.client.data.Waypoints.save();
                         setting("Spawner Finder", "Chat Message", false);
                         ModuleManager.get(dev.stella.client.modules.combat.SusChunkFinder.class).setEnabled(true);
                         for (String n : new String[]{"Death Coordinates", "Light Level Overlay"})

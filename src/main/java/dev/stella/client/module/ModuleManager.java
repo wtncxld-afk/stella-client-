@@ -16,7 +16,6 @@ import dev.stella.client.modules.combat.AntiVanish;
 import dev.stella.client.modules.combat.BlockESP;
 import dev.stella.client.modules.combat.StorageESP;
 import dev.stella.client.modules.combat.SusChunkFinder;
-import dev.stella.client.modules.render.WaypointsModule;
 import dev.stella.client.modules.settings.AnimationsModule;
 import dev.stella.client.modules.settings.ConfigModule;
 import dev.stella.client.modules.visuals.*;
@@ -88,7 +87,6 @@ public final class ModuleManager {
         register(new dev.stella.client.modules.misc.Freecam());
         register(new dev.stella.client.modules.misc.FreeLook());
         // Render
-        register(new WaypointsModule());
         // World
         register(new BlockNotifier());
         register(new AmethystDetector());

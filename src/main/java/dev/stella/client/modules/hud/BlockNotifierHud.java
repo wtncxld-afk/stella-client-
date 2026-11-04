@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * Movable dropdown listing Block Notifier detections. Open chat to interact:
  * click the header to collapse, left-click an entry to copy its coordinates,
- * right-click to create a waypoint, middle-click to remove it, scroll to page.
+ * right-click or middle-click to remove it, scroll to page.
  * Right-click the header to clear everything.
  */
 public class BlockNotifierHud extends HudElement {
@@ -89,8 +89,7 @@ public class BlockNotifierHud extends HudElement {
         BlockNotifier.Detection d = list.get(idx);
         switch (button) {
             case 0 -> bn.copyCoords(d);
-            case 1 -> bn.createWaypoint(d);
-            case 2 -> bn.remove(d);
+            case 1, 2 -> bn.remove(d);
             default -> { }
         }
         return true;

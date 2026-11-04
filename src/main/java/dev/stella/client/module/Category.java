@@ -4,7 +4,6 @@ public enum Category {
     DONUTSMP("DonutSMP"),
     COMBAT("Combat"),
     MISC("Misc"),
-    RENDER("Render"),
     VISUALS("Visuals"),
     CLIENT("Client"),
     WORLD("World"),

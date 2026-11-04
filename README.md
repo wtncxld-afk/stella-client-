@@ -81,10 +81,9 @@ Staff List, Media Base Finder (lists media / content creators in your region wit
 **Combat:** Auto Totem, Auto Inv Totem, Hover Totem, Auto Crystal, Auto Anchor, Double Anchor (keybind macro), Totem Pop Counter.
 These send real actions to the server; servers such as DonutSMP may ban automation, and anticheats can detect it.
 
-**Misc:** Toggle Sprint, Death Coordinates (chat message + waypoint where you died), Durability Warning, Auto Relog, Freecam (press **V** to fly the camera away from your player, who stays put),
+**Misc:** Toggle Sprint, Death Coordinates (chat message with where you died), Durability Warning, Auto Relog, Freecam (press **V** to fly the camera away from your player, who stays put),
 Free Look (hold **Left Alt** to look around without turning your head, in third or first person).
 
-**Render:** Waypoints.
 
 **World:** Block Notifier, Amethyst Detector, Weather Notifier (alerts when rain or thunder starts or stops).
 
@@ -174,7 +173,6 @@ Everything lives in `.minecraft/config/stella/`:
 | `exports/` | Profiles exported from the GUI |
 | `staff.json` | **Your** verified staff roster (ships empty) |
 | `regions.json` | Region Map grid (ships as a flagged placeholder) |
-| `waypoints.json` | Waypoints created from Block Notifier |
 | `../../.stella-update/` | Verified update waiting to be installed, plus `installer.log` |
 
 The **CONFIGS** button at the bottom of the ClickGUI handles profiles. *New* copies the current profile.
@@ -266,7 +264,7 @@ src/main/java/dev/stella/client/
   config/                  profile persistence, GUI layout
   scan/                    shared incremental chunk scanner
   render/                  batched 3D boxes, 2D helpers, world→screen projection
-  data/                    staff roster, region grid, waypoints
+  data/                    staff roster, region grid
   notification/            toast queue
   mixin/                   Minecraft hooks
 ```

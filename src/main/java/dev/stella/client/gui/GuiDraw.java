@@ -84,7 +84,6 @@ public final class GuiDraw {
             case DONUTSMP -> "♦";
             case COMBAT -> "⚔";
             case MISC -> "✦";
-            case RENDER -> "◉";
             case VISUALS -> "◈";
             case COSMETICS -> "✧";
             case ANTI_CHEAT_OFF -> "⚠";

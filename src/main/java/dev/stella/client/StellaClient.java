@@ -3,7 +3,6 @@ package dev.stella.client;
 import dev.stella.client.config.ConfigManager;
 import dev.stella.client.data.RegionConfig;
 import dev.stella.client.data.StaffDatabase;
-import dev.stella.client.data.Waypoints;
 import dev.stella.client.hud.HudManager;
 import dev.stella.client.module.ModuleManager;
 import dev.stella.client.modules.visuals.CustomSky;
@@ -43,7 +42,6 @@ public final class StellaClient implements ClientModInitializer {
             StaffDatabase.load();
             dev.stella.client.data.MediaDatabase.load();
             RegionConfig.load();
-            Waypoints.load();
             ConfigManager.init();
             ready = true;
             LOGGER.info("Stella Client ready - profile '{}'", ConfigManager.activeProfile());
