@@ -999,24 +999,28 @@ public final class StellaSmokeTest {
                         mc.player.setPitch(10f);
                         ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class).setEnabled(true);
                     }
-                    String[][] knives = {{"Karambit", "Nebula"}, {"Butterfly", "Damascus"}, {"Bayonet", "Ember"}, {"Stella Dagger", "Sunset"}};
-                    if (T >= 1414 && T < 1414 + knives.length * 12) {
-                        int i = (T - 1414) / 12, k = (T - 1414) % 12;
+                    String[][] knives = {{"Karambit", "Nebula"}, {"Butterfly", "Damascus"}, {"Bayonet", "Ember"}, {"Stella Dagger", "Sunset"}, {"Kunai", "Galaxy"}, {"Tanto", "Chrome"}};
+                    if (T >= 1414 && T < 1414 + knives.length * 8) {
+                        int i = (T - 1414) / 8, k = (T - 1414) % 8;
                         var ks = ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class);
+                        String slug = "knife-" + knives[i][0].toLowerCase().replace(' ', '-');
                         if (k == 0) {
                             ks.setKnife(knives[i][0]); ks.setFinish(knives[i][1]);
+                            ks.setWear(knives[i][0].equals("Tanto") ? 0.45 : 0.0);
                             dev.stella.client.modules.cosmetics.KnifeSkins.previewT = -1f;
-                            caption("Cosmetics \u2022 Knife Skins", knives[i][0] + " | " + knives[i][1] + "  -  press Y to inspect");
+                            caption("Cosmetics \u2022 Knife Skins", knives[i][0] + " | " + knives[i][1] + (knives[i][0].equals("Tanto") ? " (worn)" : "") + "  -  press Y to inspect");
                         }
-                        if (k == 4) shot(mc, "knife-" + knives[i][0].toLowerCase().replace(' ', '-'));
-                        if (k == 6) dev.stella.client.modules.cosmetics.KnifeSkins.previewT = 0.3f;
-                        if (k == 8) shot(mc, "knife-" + knives[i][0].toLowerCase().replace(' ', '-') + "-inspect");
-                        if (k == 9) dev.stella.client.modules.cosmetics.KnifeSkins.previewT = 0.66f;
-                        if (k == 11) shot(mc, "knife-" + knives[i][0].toLowerCase().replace(' ', '-') + "-trick");
+                        if (k == 2) shot(mc, slug);
+                        if (k == 3) dev.stella.client.modules.cosmetics.KnifeSkins.previewT = 0.3f;
+                        if (k == 5) shot(mc, slug + "-inspect");
+                        if (k == 6) dev.stella.client.modules.cosmetics.KnifeSkins.previewT = 0.66f;
+                        if (k == 7) shot(mc, slug + "-trick");
                     }
-                    if (T == 1414 + knives.length * 12) {
+                    if (T == 1414 + knives.length * 8) {
                         dev.stella.client.modules.cosmetics.KnifeSkins.previewT = -1f;
-                        ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class).inspect();
+                        var ks = ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class);
+                        ks.setKnife("Karambit"); ks.setFinish("Nebula"); ks.setWear(0.0);
+                        ks.inspect();
                     }
                     // custom enchantment glint on armor + items (third person front)
                     if (T == 1468) {

@@ -21,6 +21,7 @@
     "EntityStatusMixin",
     "GameRendererMixin",
     "GlowOutlineMixin",
+    "HeldItemRendererInvoker",
     "HeldItemRendererMixin",
     "InGameHudMixin2",
     "InteractionManagerAccessor",

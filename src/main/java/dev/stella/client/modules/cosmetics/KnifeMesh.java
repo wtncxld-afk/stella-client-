@@ -147,7 +147,7 @@ final class KnifeMesh {
      */
     void blade(float[][] spine, float[][] edge, float th, boolean doubleEdge, Finish finish, float shine, int edgeGlow) {
         int n = spine.length;
-        int across = 4;
+        int across = 7;
         for (int i = 0; i < n - 1; i++) {
             float s0 = i / (float) (n - 1), s1 = (i + 1) / (float) (n - 1);
             for (int side = -1; side <= 1; side += 2) {

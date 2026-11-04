@@ -25,9 +25,13 @@ import org.lwjgl.glfw.GLFW;
  * other players still see your sword.
  */
 public class KnifeSkins extends Module {
-    private final ModeSetting knife = add(new ModeSetting("Knife", "Knife model", "Karambit", "Karambit", "Butterfly", "Bayonet", "Stella Dagger"));
+    private final ModeSetting knife = add(new ModeSetting("Knife", "Knife model", "Karambit", "Karambit", "Butterfly", "Bayonet", "Stella Dagger", "Kunai", "Tanto"));
     private final ModeSetting finish = add(new ModeSetting("Finish", "Blade finish", "Nebula",
-            "Nebula", "Damascus", "Sunset", "Ember", "Prism", "Ruby", "Sapphire", "Emerald", "Gold", "Midnight", "Theme"));
+            "Nebula", "Galaxy", "Chrome", "Damascus", "Sunset", "Ember", "Prism", "Ruby", "Sapphire", "Emerald", "Gold", "Midnight", "Theme"));
+    private final NumberSetting wear = add(new NumberSetting("Wear", "0 = factory new, 1 = battle-scarred (scratches and worn patches)", 0.0, 0.0, 1.0, 0.01));
+    private final NumberSetting seed = add(new NumberSetting("Pattern Seed", "Shifts the pattern so every knife looks a little different", 0, 0, 999, 1));
+    private final BoolSetting showHand = add(new BoolSetting("Show Hand", "Draw your arm holding the knife", true));
+    private final BoolSetting knifeSounds = add(new BoolSetting("Sounds", "Draw, flip and spin sounds", true));
     private final KeySetting inspectKey = add(new KeySetting("Inspect Key", "Press to inspect your knife", GLFW.GLFW_KEY_Y));
     private final NumberSetting inspectTime = add(new NumberSetting("Inspect Time", "Length of the inspect animation", 2.8, 1.5, 5.0, 0.1).suffix("s"));
     private final BoolSetting drawAnim = add(new BoolSetting("Draw Animation", "Flourish when you switch to the knife", true));
@@ -49,6 +53,16 @@ public class KnifeSkins extends Module {
 
     public void setKnife(String k) { knife.set(k); }
     public void setFinish(String f) { finish.set(f); }
+    public boolean showHand() { return showHand.isOn(); }
+    public void setWear(double w) { wear.set(w); }
+
+    private float lastSoundT = -1;
+
+    private void sound(String name, float pitch) {
+        if (!knifeSounds.isOn()) return;
+        mc.getSoundManager().play(net.minecraft.client.sound.PositionedSoundInstance.ui(
+                net.minecraft.sound.SoundEvent.of(net.minecraft.util.Identifier.of(dev.stella.client.StellaClient.MOD_ID, name)), pitch, 0.7f));
+    }
     public void inspect() { inspectStart = System.currentTimeMillis(); }
 
     @Override
@@ -58,7 +72,7 @@ public class KnifeSkins extends Module {
         boolean down = mc.currentScreen == null && inspectKey.isBound() && Keys.down(inspectKey.key());
         if (down && !keyWasDown && applies(held)) inspect();
         keyWasDown = down;
-        if (applies(held) && !ItemStack.areItemsEqual(held, lastStack) && drawAnim.isOn()) { drawStart = System.currentTimeMillis(); inspectStart = -1; }
+        if (applies(held) && !ItemStack.areItemsEqual(held, lastStack) && drawAnim.isOn()) { drawStart = System.currentTimeMillis(); inspectStart = -1; sound("knife_draw", 1.0f); }
         lastStack = held.copy();
     }
 
@@ -102,6 +116,13 @@ public class KnifeSkins extends Module {
         // inspect choreography: raise (0-.14), show face (.14-.36), roll to show the back (.36-.5),
         // trick (.5-.84), return (.84-1)
         float pose = 0, roll = 0, trick = 0;
+        if (previewT < 0) {
+            // sounds at the roll and the trick
+            if (t >= 0.36f && lastSoundT < 0.36f) sound("knife_flip", 1.3f);
+            if (t >= 0.5f && lastSoundT < 0.5f) sound(k.equals("Butterfly") ? "knife_flip" : "knife_spin", k.equals("Karambit") ? 1.2f : 1.0f);
+            if (k.equals("Butterfly") && t >= 0.67f && lastSoundT < 0.67f) sound("knife_flip", 0.9f);
+            lastSoundT = t;
+        }
         if (t >= 0) {
             pose = smooth(clamp(t / 0.14f)) * (1 - smooth(clamp((t - 0.84f) / 0.16f)));
             roll = smooth(clamp((t - 0.36f) / 0.14f)) * (1 - smooth(clamp((t - 0.84f) / 0.16f)));
@@ -168,7 +189,7 @@ public class KnifeSkins extends Module {
                 int eq = e.indexOf('=');
                 if (eq <= 0 || !e.substring(0, eq).trim().equals(slot)) continue;
                 String want = e.substring(eq + 1).trim().toLowerCase(java.util.Locale.ROOT);
-                for (String option : new String[]{"Karambit", "Butterfly", "Bayonet", "Stella Dagger"})
+                for (String option : new String[]{"Karambit", "Butterfly", "Bayonet", "Stella Dagger", "Kunai", "Tanto"})
                     if (option.toLowerCase(java.util.Locale.ROOT).startsWith(want) || want.startsWith(option.toLowerCase(java.util.Locale.ROOT).split(" ")[0])) return option;
             }
         }
@@ -185,6 +206,8 @@ public class KnifeSkins extends Module {
 
     private Palette palette() {
         return switch (finish.get()) {
+            case "Galaxy" -> new Palette(0xFF05040E, 0xFF2B1466, 0xFF0B0A14, 0xFFB9A0FF, 0xFF6E8BFF);
+            case "Chrome" -> new Palette(0xFF4A5060, 0xFFFFFFFF, 0xFF15161C, 0xFFE8ECF4, 0xFFBFE3FF);
             case "Damascus" -> new Palette(0xFF4A4D57, 0xFFC9CDD8, 0xFF2B1D14, 0xFFB8BCC8, 0xFF9FD3FF);
             case "Sunset" -> new Palette(0xFFFF4FA3, 0xFFFFD36B, 0xFF1F1420, 0xFFFFB3D9, 0xFFFF8FC8);
             case "Ember" -> new Palette(0xFFFF7A1A, 0xFF1A0E08, 0xFF16100C, 0xFFFFB066, 0xFFFF6A1A);
@@ -202,13 +225,41 @@ public class KnifeSkins extends Module {
 
     /** Blade pattern for the chosen finish (across 0 = spine .. 1 = edge, along 0 = base .. 1 = tip). */
     private KnifeMesh.Finish pattern(Palette p, double now) {
+        KnifeMesh.Finish base = basePattern(p, now, seed.get() * 0.61);
+        double w = wear.get();
+        if (w <= 0.001) return base;
+        return (u, s, side) -> {
+            int c = base.at(u, s, side);
+            // worn patches and scratches: deterministic noise over the blade
+            double n = 0.5 + 0.25 * Math.sin(u * 23 + s * 71 + seed.get()) + 0.25 * Math.sin(u * 57 - s * 39 + 2.1 + seed.get() * 0.3);
+            double scratch = Math.abs(Math.sin(s * 140 + u * 9 + seed.get())) > 0.985 ? 1 : 0;
+            if (n < w * 0.75) c = ColorUtil.lerp(c, 0xFF6E7078, 0.55 + 0.3 * w);   // paint worn off to steel
+            if (scratch > 0 && w > 0.2) c = ColorUtil.lerp(c, 0xFFD8DCE4, 0.6);
+            return ColorUtil.lerp(c, 0xFF2A2A30, w * 0.18);
+        };
+    }
+
+    private KnifeMesh.Finish basePattern(Palette p, double now, double ph) {
         return switch (finish.get()) {
+            case "Galaxy" -> (u, s, side) -> {
+                double neb = 0.5 + 0.5 * Math.sin(s * 9 + ph + Math.sin(u * 5 + s * 3) * 2);
+                double neb2 = 0.5 + 0.5 * Math.sin(s * 17 - u * 7 + ph * 2);
+                int c = ColorUtil.lerp(0xFF05040E, 0xFF2B1466, neb * 0.8);
+                return ColorUtil.lerp(c, 0xFF1F6BFF, neb2 * neb * 0.45);
+            };
+            case "Chrome" -> (u, s, side) -> {
+                // mirror-like: sharp bright and dark reflection bands that drift with time
+                double b = Math.sin((s * 6 - u * 2.2) + now * 0.8 + ph);
+                double hl = Math.pow(Math.max(0, b), 6);
+                int c = ColorUtil.lerp(0xFF4A5060, 0xFFC8CED8, 0.5 + 0.5 * Math.sin(s * 3 + u + ph));
+                return ColorUtil.lerp(c, 0xFFFFFFFF, hl * 0.9);
+            };
             case "Damascus" -> (u, s, side) -> {
-                double w = Math.sin(s * 46 + Math.sin(u * 7 + s * 9) * 2.2);
+                double w = Math.sin(s * 46 + ph + Math.sin(u * 7 + s * 9 + ph) * 2.2);
                 return ColorUtil.lerp(p.a(), p.b(), 0.5 + 0.5 * w);
             };
             case "Ember" -> (u, s, side) -> {
-                double stripe = Math.sin(s * 30 + Math.sin(u * 5) * 1.8);
+                double stripe = Math.sin(s * 30 + ph + Math.sin(u * 5 + ph) * 1.8);
                 return stripe > 0.45 ? 0xFF1A0E08 : ColorUtil.lerp(0xFFFF4A0A, 0xFFFFB347, u * 0.7 + s * 0.3);
             };
             case "Sunset" -> (u, s, side) -> {
@@ -217,11 +268,11 @@ public class KnifeSkins extends Module {
             };
             case "Prism" -> (u, s, side) -> ColorUtil.fromHsb((float) ((s * 0.8 + u * 0.3 + now * 0.08 + (side > 0 ? 0 : 0.5)) % 1.0), 0.55f, 1f, 255);
             case "Ruby", "Sapphire", "Emerald" -> (u, s, side) -> {
-                double n = Math.sin(s * 23 + u * 5) * Math.sin(s * 9 - u * 11 + 1.3) + 0.4 * Math.sin(s * 41 + u * 17);
+                double n = Math.sin(s * 23 + u * 5 + ph) * Math.sin(s * 9 - u * 11 + 1.3 + ph) + 0.4 * Math.sin(s * 41 + u * 17 + ph);
                 return ColorUtil.lerp(p.a(), p.b(), Math.max(0, Math.min(1, 0.45 + n * 0.55)));
             };
             case "Nebula" -> (u, s, side) -> {
-                double cloud = 0.5 + 0.5 * Math.sin(s * 13 + Math.sin(u * 6 + s * 4) * 2.5);
+                double cloud = 0.5 + 0.5 * Math.sin(s * 13 + ph + Math.sin(u * 6 + s * 4 + ph) * 2.5);
                 int c = ColorUtil.lerp(p.a(), 0xFF3A6BFF, s * 0.5);
                 return ColorUtil.lerp(c, p.b(), cloud * 0.75);
             };
@@ -239,6 +290,8 @@ public class KnifeSkins extends Module {
             case "Karambit" -> karambit(mesh, p, f, shine, glow, now);
             case "Butterfly" -> butterfly(mesh, p, f, shine, glow, open, now);
             case "Bayonet" -> bayonet(mesh, p, f, shine, glow, now);
+            case "Kunai" -> kunai(mesh, p, f, shine, glow, now);
+            case "Tanto" -> tanto(mesh, p, f, shine, glow, now);
             default -> dagger(mesh, p, f, shine, glow, now);
         }
     }
@@ -377,6 +430,61 @@ public class KnifeSkins extends Module {
         if (sparkles.isOn()) bladeSparkles(m, sp, ed, p.glow(), now, 6);
         double a = now * 2.2; // orbiting sparkle around the star guard
         m.sparkle((float) Math.cos(a) * 0.11f, 0.226f + (float) Math.sin(a) * 0.05f, 0.03f, 0.03f, p.glow());
+    }
+
+    private void kunai(KnifeMesh m, Palette p, KnifeMesh.Finish f, float shine, int glow, double now) {
+        // ring pommel, cord-wrapped grip, leaf-shaped double-edged blade
+        m.ring(0, -0.055f, 0.035f, 0.011f, ColorUtil.lerp(0xFF9EA3B0, p.accent(), 0.3), ColorUtil.lerp(0xFFE9ECF3, p.accent(), 0.3));
+        m.metal(-0.012f, -0.022f, -0.012f, 0.012f, 0.0f, 0.012f, p.accent());
+        for (int i = 0; i < 12; i++) {
+            float y0 = i * 0.018f;
+            boolean a = i % 2 == 0;
+            m.box(a ? -0.017f : -0.015f, y0, a ? -0.015f : -0.017f, a ? 0.017f : 0.015f, y0 + 0.018f, a ? 0.015f : 0.017f,
+                    a ? p.handle() : ColorUtil.lerp(p.handle(), p.glow(), 0.4));
+        }
+        m.metal(-0.02f, 0.216f, -0.016f, 0.02f, 0.23f, 0.016f, p.accent());
+        int n = 20;
+        float y0 = 0.23f, y1 = 0.62f;
+        float[][] sp = new float[n][], ed = new float[n][];
+        for (int i = 0; i < n; i++) {
+            float s = i / (float) (n - 1), y = y0 + (y1 - y0) * s;
+            float w = (float) (0.012 + 0.05 * Math.sin(Math.min(1, s * 1.25) * Math.PI) * (1 - s * 0.25)) * (s > 0.85f ? (1 - (s - 0.85f) / 0.15f) : 1) + 0.0015f;
+            sp[i] = new float[]{-w, y};
+            ed[i] = new float[]{w, y};
+        }
+        m.blade(sp, ed, 0.01f, true, f, shine, glow);
+        if (sparkles.isOn()) bladeSparkles(m, sp, ed, p.glow(), now, 4);
+    }
+
+    private void tanto(KnifeMesh m, Palette p, KnifeMesh.Finish f, float shine, int glow, double now) {
+        // wrapped tsuka with a diamond pattern, round tsuba, habaki collar, angular tanto point
+        m.metal(-0.022f, -0.02f, -0.02f, 0.022f, 0.0f, 0.02f, p.accent());                       // kashira (end cap)
+        for (int i = 0; i < 10; i++) {
+            float y0 = i * 0.022f;
+            m.box(-0.021f, y0, -0.019f, 0.021f, y0 + 0.022f, 0.019f, p.handle());
+            // crossing wrap: two slanted bands per segment, front and back
+            float yc = y0 + 0.011f;
+            for (int side = -1; side <= 1; side += 2) {
+                float z = side * 0.0195f;
+                int wc = m.lit(ColorUtil.lerp(p.accent(), p.glow(), 0.3), side > 0 ? 1f : 0.75f);
+                m.quad(KnifeMesh.v(-0.021f, yc - 0.004f, z), KnifeMesh.v(0f, yc - 0.011f, z), KnifeMesh.v(0.021f, yc - 0.004f, z), KnifeMesh.v(0f, yc + 0.003f, z), wc);
+            }
+        }
+        m.ring(0, 0.226f, 0.034f, 0.024f, ColorUtil.lerp(0xFF2A2C34, p.accent(), 0.3), ColorUtil.lerp(0xFF8A8F9C, p.accent(), 0.4)); // tsuba
+        m.metal(-0.03f, 0.232f, -0.012f, 0.03f, 0.252f, 0.012f, 0xFFFFE07A);                       // habaki
+        int n = 20;
+        float y0 = 0.252f, y1 = 0.74f;
+        float[][] sp = new float[n][], ed = new float[n][];
+        for (int i = 0; i < n; i++) {
+            float s = i / (float) (n - 1), y = y0 + (y1 - y0) * s;
+            float spineX = -0.03f;
+            float edgeX = s < 0.82f ? 0.034f : 0.034f - (s - 0.82f) / 0.18f * 0.062f;                 // the angular tanto tip
+            float ey = s < 0.82f ? y : y + (s - 0.82f) * 0.02f;
+            sp[i] = new float[]{spineX, y + (s > 0.9f ? (s - 0.9f) * 0.12f : 0)};
+            ed[i] = new float[]{Math.max(edgeX, spineX + 0.0015f), ey};
+        }
+        m.blade(sp, ed, 0.01f, false, f, shine, glow);
+        if (sparkles.isOn()) bladeSparkles(m, sp, ed, p.glow(), now, 4);
     }
 
     /** Twinkling four-point sparkles scattered on both faces of the blade. */
