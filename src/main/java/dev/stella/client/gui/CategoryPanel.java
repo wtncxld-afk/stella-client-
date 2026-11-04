@@ -38,6 +38,9 @@ public class CategoryPanel {
     private double dragX, dragY;
     private List<Module> visible = new ArrayList<>();
     private Module lastHovered;
+    /** Click ripples: {x, y, startMillis, colour}. */
+    private final java.util.List<double[]> ripples = new java.util.ArrayList<>();
+    private final Map<Module, dev.stella.client.util.Spring> sweep = new HashMap<>();
 
     CategoryPanel(Category category, int defaultX, int defaultY) {
         this.category = category;
@@ -47,9 +50,13 @@ public class CategoryPanel {
         this.openAnim = new Animation(state.open ? 1 : 0, 16);
         for (Module m : modules) {
             toggleAnim.put(m, new Animation(m.isEnabled() ? 1 : 0, 18));
+            sweep.put(m, new dev.stella.client.util.Spring(m.isEnabled() ? 1 : 0, 260, 22));
             hoverAnim.put(m, new Animation(0, 22));
         }
     }
+
+    int panelX() { return state.x; }
+    int panelY() { return state.y; }
 
     void filter(String query) {
         String q = query.trim().toLowerCase(Locale.ROOT);
@@ -107,15 +114,22 @@ public class CategoryPanel {
                 boolean hover = GuiDraw.in(mx, my, x + 3, ry, WIDTH - 6, ROW) && my >= bodyY && my < bodyY + bh;
                 double hv = hoverAnim.get(m).target(hover ? 1 : 0).get();
                 double tv = toggleAnim.get(m).target(m.isEnabled() ? 1 : 0).get();
-                // row: transparent -> hover tint; enabled rows are filled with the accent
+                // row: transparent -> hover tint; enabled rows get an accent fill that sweeps in from the left (springy)
                 if (hv > 0.01) Render2D.roundRect(ctx, x + 3, ry, WIDTH - 6, ROW - 1, 3, ColorUtil.mulAlpha(t.rowHover(), a * hv));
-                if (tv > 0.01) {
-                    int left = ColorUtil.withAlpha(ThemeManager.accentAt(0), (int) (0xE0 * tv));
-                    Render2D.roundRect(ctx, x + 3, ry, WIDTH - 6, ROW - 1, 3, ColorUtil.mulAlpha(left, a));
-                    Render2D.hGradient(ctx, x + WIDTH / 2f, ry + 1, WIDTH / 2f - 6, ROW - 3, 0x00000000, ColorUtil.mulAlpha(0x38000000, a * tv));
+                double sv = sweep.computeIfAbsent(m, k -> new dev.stella.client.util.Spring(tv, 260, 22)).target(m.isEnabled() ? 1 : 0).get();
+                if (sv > 0.01) {
+                    float fillW = (float) Math.max(4, (WIDTH - 6) * Math.min(1.04, sv));
+                    fillW = Math.min(WIDTH - 6, fillW);
+                    int left = ColorUtil.withAlpha(ThemeManager.accentAt(0), (int) (0xE0 * Math.min(1, sv)));
+                    Render2D.roundRect(ctx, x + 3, ry, fillW, ROW - 1, 3, ColorUtil.mulAlpha(left, a));
+                    Render2D.hGradient(ctx, x + WIDTH / 2f, ry + 1, WIDTH / 2f - 6, ROW - 3, 0x00000000, ColorUtil.mulAlpha(0x38000000, a * Math.min(1, sv)));
+                    // soft leading-edge glow while the fill is still moving
+                    if (sv < 0.98) Render2D.hGradient(ctx, x + 3 + fillW - 10, ry, 10, ROW - 1, 0, ColorUtil.mulAlpha(0x70FFFFFF, a * (1 - sv)));
                 }
+                // hover accent bar slides in on the left, name nudges right
+                if (hv > 0.02) Render2D.roundRect(ctx, x + 3, ry + 2, (float) (2 * hv), ROW - 5, 1, ColorUtil.mulAlpha(ThemeManager.accentAt(0.2) | 0xFF000000, a * hv));
                 int nameColor = ColorUtil.lerp(ColorUtil.lerp(t.textDim(), t.text(), hv * 0.7), 0xFFFFFFFF, tv);
-                GuiDraw.small(ctx, GuiDraw.trimSmall(label(m), WIDTH - 34, TEXT), x + 7, ry + 3, TEXT, ColorUtil.mulAlpha(nameColor, a));
+                GuiDraw.small(ctx, GuiDraw.trimSmall(label(m), WIDTH - 34, TEXT), (float) (x + 7 + 2 * hv), ry + 3, TEXT, ColorUtil.mulAlpha(nameColor, a));
                 boolean gearHover = GuiDraw.in(mx, my, x + WIDTH - 28, ry, 10, ROW);
                 boolean open = screen.isSettingsOpen(m);
                 if (hover || open || gearHover) {
@@ -126,6 +140,16 @@ public class CategoryPanel {
                 if (hover) hoveredNow = m;
             }
             ry += ROW;
+        }
+        // click ripples (expanding, fading circles), clipped to the panel body
+        long nowMs = System.currentTimeMillis();
+        ripples.removeIf(r -> nowMs - r[2] > 450);
+        for (double[] r : ripples) {
+            double p = (nowMs - r[2]) / 450.0;
+            double ease = 1 - Math.pow(1 - p, 3);
+            float rad = (float) (4 + 46 * ease);
+            int c = r[3] > 0.5 ? 0xFFFFFFFF : ThemeManager.accentAt(0) | 0xFF000000;
+            Render2D.roundRect(ctx, (float) r[0] - rad, (float) r[1] - rad, rad * 2, rad * 2, rad, ColorUtil.mulAlpha(ColorUtil.withAlpha(c, 0x60), a * (1 - p)));
         }
         ctx.disableScissor();
         if (hoveredNow != null) {
@@ -157,7 +181,11 @@ public class CategoryPanel {
         Module m = visible.get(idx);
         boolean gear = mx >= x + WIDTH - 29 && mx < x + WIDTH - 18;
         if (button == 1 || button == 2 || gear) { screen.toggleSettings(m, (int) mx, (int) my); Sounds.click(); }
-        else if (button == 0) { m.toggle(); Sounds.toggle(m.isEnabled()); }
+        else if (button == 0) {
+            m.toggle();
+            Sounds.toggle(m.isEnabled());
+            ripples.add(new double[]{mx, my, System.currentTimeMillis(), m.isEnabled() ? 1 : 0});
+        }
         return true;
     }
 

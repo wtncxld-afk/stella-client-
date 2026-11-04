@@ -46,6 +46,8 @@ public class SettingsWindow {
     private final Map<Setting<?>, TextInput> inputs = new HashMap<>();
     private final Map<BoolSetting, Animation> anims = new HashMap<>();
     private final Animation openAnim = new Animation(0, 18).target(1);
+    /** Springy pop-in scale (slight overshoot). */
+    private final dev.stella.client.util.Spring pop = new dev.stella.client.util.Spring(0.82, 320, 17).target(1);
     private int contentHeight;
     private boolean closed;
 
@@ -92,6 +94,10 @@ public class SettingsWindow {
 
         ctx.getMatrices().pushMatrix();
         ctx.getMatrices().translate(0, (float) (slide));
+        float popScale = (float) pop.get();
+        ctx.getMatrices().translate(x + WIDTH / 2f, y);
+        ctx.getMatrices().scale(popScale, popScale);
+        ctx.getMatrices().translate(-(x + WIDTH / 2f), -y);
         Render2D.shadow(ctx, x, y, WIDTH, HEADER + h, 5, 5, ColorUtil.mulAlpha(0x90000000, a));
         Render2D.roundRect(ctx, x - 0.5f, y - 0.5f, WIDTH + 1, HEADER + h + 1, 5.5f, ColorUtil.mulAlpha(t.outline(), a));
         Render2D.roundRect(ctx, x, y, WIDTH, HEADER + h, 5, ColorUtil.mulAlpha(t.background(), Math.min(1, a + 0.05)));

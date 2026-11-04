@@ -41,9 +41,10 @@ public class NotificationsHud extends HudElement {
                 y = togglePill(ctx, n, now, w, y);
                 continue;
             }
-            double slide = Animation.easeOutCubic(Math.min(1, (now - n.createdAt()) / 280.0));
+            double slide = Animation.easeOutBack(Math.min(1, (now - n.createdAt()) / 380.0));
             double fade = p > 0.9 ? (1 - p) / 0.1 : 1;
-            float ox = (float) ((1 - slide) * (w + 10));
+            double exit = p > 0.86 ? Math.pow((p - 0.86) / 0.14, 2) : 0; // accelerate back out to the side
+            float ox = (float) ((1 - slide) * (w + 10) + exit * (w + 10));
             int accent = switch (n.type()) {
                 case SUCCESS -> 0xFF6EE7A0;
                 case WARNING -> 0xFFF5D76E;
@@ -73,7 +74,7 @@ public class NotificationsHud extends HudElement {
     /** Compact pill: "● MODULE NAME   ENABLED". */
     private int togglePill(DrawContext ctx, Notification n, long now, int w, int y) {
         float p = n.progress(now);
-        double slide = Animation.easeOutCubic(Math.min(1, (now - n.createdAt()) / 220.0));
+        double slide = Animation.easeOutBack(Math.min(1, (now - n.createdAt()) / 320.0));
         double fade = p > 0.8 ? (1 - p) / 0.2 : 1;
         boolean on = n.type() == Notification.Type.ENABLED;
         int accent = on ? ThemeManager.get().accent() : 0xFF8C8696;

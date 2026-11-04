@@ -14,6 +14,7 @@ public class MenusModule extends Module {
     public final TextSetting quickJoinName = add(new TextSetting("Quick Join Name", "Button label", "DonutSMP", 24)).visibleWhen(quickJoin::isOn);
     public final TextSetting quickJoinAddress = add(new TextSetting("Quick Join Address", "Server address for the button", "donutsmp.net", 64)).visibleWhen(quickJoin::isOn);
     public final NumberSetting stars = add(new NumberSetting("Background Stars", "Number of animated stars", 220, 0, 800, 10));
+    public final BoolSetting loadingScreens = add(new BoolSetting("Stella Loading Screens", "Animated Stella startup, connecting and world-loading screens", true));
     public final BoolSetting pauseStars = add(new BoolSetting("Pause Menu Stars", "Animated stars over the blurred game in the pause menu", true));
 
     public MenusModule() { super("Menus", "Stella-styled main menu and pause menu", Category.CLIENT, true); }

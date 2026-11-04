@@ -32,4 +32,11 @@ public final class Animation {
         t = Math.max(0, Math.min(1, t));
         return 1 - Math.pow(1 - t, 3);
     }
+
+    /** Ease-out with a small overshoot past 1 before settling (springy entrance). */
+    public static double easeOutBack(double t) {
+        t = Math.max(0, Math.min(1, t));
+        double c1 = 1.70158, c3 = c1 + 1;
+        return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+    }
 }

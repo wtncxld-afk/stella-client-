@@ -115,20 +115,36 @@ public class ClickGuiScreen extends dev.stella.client.gui.StellaScreen {
     }
 
     private final long openedAt = System.currentTimeMillis();
+    private long closedAt;
 
     /** Staggered entrance: each panel drops in slightly after the previous one with a soft overshoot. */
     private void renderPanelAnimated(DrawContext ctx, CategoryPanel p, int mx, int my, double a, boolean searching) {
         var anims = ModuleManager.get(dev.stella.client.modules.settings.AnimationsModule.class);
         boolean animate = anims == null || !anims.isEnabled() || anims.guiSlide.isOn();
-        double pa = 1, dy = 0;
+        double pa = 1, dy = 0, sc = 1;
+        long now = System.currentTimeMillis();
         if (animate && !closing) {
-            double tt = (System.currentTimeMillis() - openedAt - p.category.ordinal() * 35) / 320.0;
+            // open: each panel drops in after the previous one, scaling up with a soft overshoot
+            double tt = (now - openedAt - p.category.ordinal() * 35) / 340.0;
             pa = Math.max(0, Math.min(1, tt));
-            dy = (1 - easeOutBack(pa)) * -18;
+            double e = easeOutBack(pa);
+            dy = (1 - e) * -18;
+            sc = 0.86 + 0.14 * e;
+        } else if (animate) {
+            // close: the same choreography in reverse, panels lift away one after another
+            double tc = (now - closedAt - p.category.ordinal() * 18) / 190.0;
+            pa = Math.max(0, Math.min(1, 1 - tc));
+            double e = 1 - Math.pow(1 - pa, 3);
+            dy = (1 - e) * -14;
+            sc = 0.92 + 0.08 * e;
         }
         ctx.createNewRootLayer();
         ctx.getMatrices().pushMatrix();
         ctx.getMatrices().translate(0, (float) (dy));
+        float pcx = p.panelX() + CategoryPanel.WIDTH / 2f, pcy = p.panelY();
+        ctx.getMatrices().translate(pcx, pcy);
+        ctx.getMatrices().scale((float) sc, (float) sc);
+        ctx.getMatrices().translate(-pcx, -pcy);
         p.render(ctx, mx, (int) (my - dy), vh, a * Math.min(1, pa * 1.6), searching, this);
         ctx.getMatrices().popMatrix();
     }
@@ -141,7 +157,7 @@ public class ClickGuiScreen extends dev.stella.client.gui.StellaScreen {
     private void renderScaled(DrawContext ctx, int mx, int my) {
         Theme t = ThemeManager.get();
         double a = open.get();
-        if (closing && a < 0.05) {
+        if (closing && a < 0.05 && System.currentTimeMillis() - closedAt > 300) {
             if (client != null && client.world == null) client.setScreen(new net.minecraft.client.gui.screen.TitleScreen(false));
             else super.close();
             return;
@@ -287,6 +303,7 @@ public class ClickGuiScreen extends dev.stella.client.gui.StellaScreen {
     public void close() {
         if (closing) return;
         closing = true;
+        closedAt = System.currentTimeMillis();
         dev.stella.client.util.Sounds.open(false);
         TextInput.unfocusAll();
         open.target(0);
