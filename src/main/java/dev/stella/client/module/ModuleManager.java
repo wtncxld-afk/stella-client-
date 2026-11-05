@@ -45,6 +45,7 @@ public final class ModuleManager {
         register(new PlayerDetector());
         register(new StorageESP());
         register(new BlockESP());
+        register(new dev.stella.client.modules.combat.BlockEntityDebug());
         register(new SusChunkFinder());
         register(new dev.stella.client.modules.combat.SpawnerFinder());
         // Combat

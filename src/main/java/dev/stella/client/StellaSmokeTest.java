@@ -1129,7 +1129,56 @@ public final class StellaSmokeTest {
                     if (T == 2124) mc.setScreen(null);
                     if (T == 2128) mc.inGameHud.getChatHud().clear(false);
                     if (T == 2134) shot(mc, "hud-layout");
-                    if (inStage() == 2140) {
+                    // Block Entity Debug inside the stash (extra redstone parts added for variety)
+                    if (T == 2140) {
+                        serverCmd(mc, "gamemode spectator " + me);
+                        int y0 = by;
+                        for (String c : new String[]{
+                                "setblock " + (bx + 2) + " " + y0 + " " + (bz + 7) + " minecraft:repeater[facing=west,delay=3]",
+                                "setblock " + (bx + 3) + " " + y0 + " " + (bz + 7) + " minecraft:comparator[facing=west,mode=subtract]",
+                                "setblock " + (bx + 4) + " " + y0 + " " + (bz + 7) + " minecraft:redstone_wire",
+                                "setblock " + (bx + 5) + " " + y0 + " " + (bz + 7) + " minecraft:redstone_block",
+                                "setblock " + (bx + 6) + " " + y0 + " " + (bz + 7) + " minecraft:target",
+                                "setblock " + (bx + 7) + " " + y0 + " " + (bz + 7) + " minecraft:observer[facing=east]",
+                                "setblock " + (bx + 2) + " " + (y0 + 1) + " " + (bz + 7) + " minecraft:redstone_lamp",
+                                "setblock " + (bx + 4) + " " + (y0 + 1) + " " + (bz + 7) + " minecraft:lever[face=floor,facing=north,powered=true]"})
+                            serverCmd(mc, c);
+                        for (String n : new String[]{"Player ESP", "Storage ESP", "Block ESP", "Spawner Finder", "Sus Chunk Finder", "Block Outline",
+                                "Trajectories", "Music HUD", "Radar HUD", "Region Map HUD", "Module List HUD"})
+                            ModuleManager.all().stream().filter(m -> m.getName().equals(n)).forEach(m -> m.setEnabled(false));
+                        ModuleManager.get(dev.stella.client.modules.combat.BlockEntityDebug.class).setEnabled(true);
+                        serverCmd(mc, "tp " + me + " " + (bx + 1.5) + " " + (by + 1) + " " + (bz + 9.5) + " -125 28");
+                        mc.inGameHud.getChatHud().clear(false);
+                    }
+                    if (T == 2146) { mc.player.setYaw(-125f); mc.player.setPitch(28f); }
+                    if (T == 2155 && holdForTerrain(mc, 900)) return;
+                    if (T == 2156) {
+                        var bed = ModuleManager.get(dev.stella.client.modules.combat.BlockEntityDebug.class);
+                        StellaClient.LOGGER.info("[smoke] block entity debug: {} blocks tracked", bed.trackedCount());
+                        if (bed.trackedCount() == 0) fail("Block Entity Debug found nothing in the stash");
+                        shot(mc, "block-entity-debug");
+                    }
+                    // Freecam inside solid deepslate next to the stash: the room must still render (cave culling off)
+                    if (T == 2160) {
+                        serverCmd(mc, "gamemode creative " + me);
+                        serverCmd(mc, "tp " + me + " " + (bx + 1.5) + " " + by + " " + (bz + 4.5) + " -90 0");
+                        mc.inGameHud.getChatHud().clear(false);
+                    }
+                    if (T == 2164) {
+                        var fc = ModuleManager.get(dev.stella.client.modules.misc.Freecam.class);
+                        fc.setEnabled(true);
+                        fc.nudge(-5, 1.2, 1);          // 4 blocks into the rock west of the stash wall
+                        fc.setLook(-90f, 6f);          // looking east, back at the room
+                    }
+                    if (T == 2166) StellaClient.LOGGER.info("[smoke] freecam culling while active: {}", mc.chunkCullingEnabled);
+                    if (T == 2175 && holdForTerrain(mc, 900)) return;
+                    if (T == 2176) shot(mc, "freecam-underground");
+                    if (T == 2178) {
+                        ModuleManager.get(dev.stella.client.modules.misc.Freecam.class).setEnabled(false);
+                        StellaClient.LOGGER.info("[smoke] freecam culling restored: {}", mc.chunkCullingEnabled);
+                        if (!mc.chunkCullingEnabled) fail("Freecam did not restore chunk culling");
+                    }
+                    if (inStage() == 2186) {
                         int errors = StellaClient.errorCount();
                         if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
                         else {

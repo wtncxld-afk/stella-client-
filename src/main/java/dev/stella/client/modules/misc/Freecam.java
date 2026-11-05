@@ -21,9 +21,12 @@ public class Freecam extends Module {
     private final NumberSetting sensitivity = add(new NumberSetting("Sensitivity", "Mouse sensitivity multiplier", 1, 0.2, 3, 0.05));
     private final BoolSetting showPlayer = add(new BoolSetting("Show Player", "Render your own player while flying", true));
     private final BoolSetting exitOnDamage = add(new BoolSetting("Exit On Damage", "Snap back to your player if you take damage", true));
+    private final BoolSetting renderUnderground = add(new BoolSetting("Render Underground",
+            "Show caves, tunnels and bases around the camera even when it is inside blocks (turns off cave culling while flying)", true));
     private final BoolSetting resetOnEnable = add(new BoolSetting("Start At Player", "Start at your eyes each time (off = resume where you left the camera)", true));
     private float lastHealth = -1;
     private boolean started;
+    private boolean cullingChanged, cullingBefore;
 
     private Vec3d pos = Vec3d.ZERO, prevPos = Vec3d.ZERO;
     private float yaw, pitch;
@@ -63,6 +66,31 @@ public class Freecam extends Module {
             pitch = mc.player.getPitch();
         }
         started = true;
+        updateCulling();
+    }
+
+    @Override
+    protected void onDisable() { restoreCulling(); }
+
+    /**
+     * Vanilla (and Sodium) cull chunk sections that can't be seen from the camera, and only skip that when the
+     * player is a spectator inside a block. A free camera underground is neither, so caves and tunnels that are
+     * already loaded stay hidden. Turning culling off while flying makes everything the server sent visible.
+     */
+    private void updateCulling() {
+        if (renderUnderground.isOn() && !cullingChanged) {
+            cullingBefore = mc.chunkCullingEnabled;
+            mc.chunkCullingEnabled = false;
+            cullingChanged = true;
+            if (mc.worldRenderer != null) mc.worldRenderer.scheduleTerrainUpdate();
+        } else if (!renderUnderground.isOn() && cullingChanged) restoreCulling();
+    }
+
+    private void restoreCulling() {
+        if (!cullingChanged) return;
+        mc.chunkCullingEnabled = cullingBefore;
+        cullingChanged = false;
+        if (mc.worldRenderer != null) mc.worldRenderer.scheduleTerrainUpdate();
     }
 
     @Override
@@ -75,6 +103,7 @@ public class Freecam extends Module {
             return;
         }
         lastHealth = mc.player.getHealth();
+        updateCulling();
         prevPos = pos;
         double f = 0, s = 0, v = 0;
         if (mc.options.forwardKey.isPressed()) f++;
