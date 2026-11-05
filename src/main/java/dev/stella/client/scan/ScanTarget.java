@@ -74,6 +74,28 @@ public class ScanTarget {
 
     /** Positions within {@code range} blocks (horizontal chunk filter + exact sphere), nearest first. */
     public synchronized List<BlockPos> near(BlockPos center, double range, int limit) {
+        List<BlockPos> all = within(center, range, Integer.MAX_VALUE);
+        int n = all.size();
+        if (n == 0) return all;
+        // sort by a distance computed once per position (the comparator used to recompute both distances
+        // on every comparison: ~n*log(n)*2 square-distance calculations)
+        long[] keyed = new long[n];
+        double cx = center.getX(), cy = center.getY(), cz = center.getZ();
+        for (int i = 0; i < n; i++) {
+            BlockPos p = all.get(i);
+            double dx = p.getX() - cx, dy = p.getY() - cy, dz = p.getZ() - cz;
+            long d = (long) Math.min(dx * dx + dy * dy + dz * dz, 0x7FFFFFFFL); // squared distance fits in 31 bits for any real range
+            keyed[i] = (d << 32) | i;
+        }
+        java.util.Arrays.sort(keyed);
+        int m = Math.min(limit, n);
+        List<BlockPos> out = new ArrayList<>(m);
+        for (int i = 0; i < m; i++) out.add(all.get((int) (keyed[i] & 0xFFFFFFFFL)));
+        return out;
+    }
+
+    /** Positions within {@code range} blocks, in no particular order (cheaper when the caller doesn't need nearest-first). */
+    public synchronized List<BlockPos> within(BlockPos center, double range, int limit) {
         List<BlockPos> out = new ArrayList<>();
         int cr = (int) Math.ceil(range / 16.0) + 1;
         int ccx = center.getX() >> 4, ccz = center.getZ() >> 4;
@@ -84,12 +106,14 @@ public class ScanTarget {
                 if (set == null) continue;
                 for (long l : set) {
                     BlockPos p = BlockPos.fromLong(l);
-                    if (p.getSquaredDistance(center) <= r2) out.add(p);
+                    if (p.getSquaredDistance(center) <= r2) {
+                        out.add(p);
+                        if (out.size() >= limit) return out;
+                    }
                 }
             }
         }
-        out.sort((a, b) -> Double.compare(a.getSquaredDistance(center), b.getSquaredDistance(center)));
-        return out.size() > limit ? new ArrayList<>(out.subList(0, limit)) : out;
+        return out;
     }
 
     /** Requests a full rescan of all loaded chunks (call after the filter changed). */

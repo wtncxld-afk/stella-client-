@@ -101,9 +101,9 @@ public final class Render3D {
         float height = (float) Math.min(y2 - y1, 220);
         // level of detail: far-away beams are a few pixels wide, so they need far fewer segments and sides
         double dist = Math.sqrt((double) cx * cx + (double) cz * cz);
-        int segs = dist < 48 ? 28 : dist < 128 ? 16 : 9;
-        int sides = dist < 48 ? 14 : dist < 128 ? 10 : 7;
-        int coreSides = dist < 48 ? 8 : 6;
+        int segs = dist < 48 ? 20 : dist < 128 ? 12 : 8;
+        int sides = dist < 48 ? 12 : dist < 128 ? 9 : 6;
+        int coreSides = dist < 48 ? 7 : 5;
         float spin = (float) (t * 0.8);
         // pulsing ground ring + expanding shockwave
         float pulse = (float) (0.5 + 0.5 * Math.sin(t * 3));

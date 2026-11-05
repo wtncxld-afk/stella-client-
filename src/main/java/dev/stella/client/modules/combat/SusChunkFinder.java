@@ -135,11 +135,11 @@ public class SusChunkFinder extends Module {
         BlockPos center = mc.player.getBlockPos();
         double r = range.get();
         List<Finding> out = new ArrayList<>();
-        if (redstone.isOn()) analyseRedstone(inY(redstoneTarget.near(center, r, 5000)), out);
-        if (amethyst.isOn()) analyseAmethyst(inY(clusterTarget.near(center, r, 5000)), inY(budTarget.near(center, r, 5000)), out);
-        if (deepslate.isOn()) analyseDeepslate(inY(deepslateTarget.near(center, r, 5000)), out);
-        if (unnatural.isOn()) analyseUnnatural(inY(unnaturalTarget.near(center, r, 5000)), out);
-        if (ignoreStructures.isOn()) explainByStructures(out, structureTarget.near(center, r + 48, 20000));
+        if (redstone.isOn()) analyseRedstone(inY(redstoneTarget.within(center, r, 5000)), out);
+        if (amethyst.isOn()) analyseAmethyst(inY(clusterTarget.within(center, r, 5000)), inY(budTarget.within(center, r, 5000)), out);
+        if (deepslate.isOn()) analyseDeepslate(inY(deepslateTarget.within(center, r, 5000)), out);
+        if (unnatural.isOn()) analyseUnnatural(inY(unnaturalTarget.within(center, r, 5000)), out);
+        if (ignoreStructures.isOn()) explainByStructures(out, structureTarget.within(center, r + 48, 20000));
         findings = out;
         if (notify.isOn()) {
             for (SusChunk c : suspectChunks()) {
@@ -292,19 +292,40 @@ public class SusChunkFinder extends Module {
         lastMarkers = markers.size();
         if (markers.isEmpty()) { lastExplained = List.of(); return; }
         List<String> explained = new ArrayList<>();
-        List<BlockPos> strong = new ArrayList<>(), weak = new ArrayList<>();
-        for (BlockPos p : markers) (STRONG_STRUCTURE.contains(mc.world.getBlockState(p).getBlock()) ? strong : weak).add(p);
+        // bucket the structure blocks by chunk column, so each finding only looks at the few chunks around it
+        // (this used to test every marker against every finding, allocating a Box and a Vec3d for each test)
+        Map<Long, List<BlockPos>> strong = new HashMap<>(), weak = new HashMap<>();
+        for (BlockPos p : markers) {
+            long k = net.minecraft.util.math.ChunkPos.toLong(p.getX() >> 4, p.getZ() >> 4);
+            (STRONG_STRUCTURE.contains(mc.world.getBlockState(p).getBlock()) ? strong : weak).computeIfAbsent(k, x -> new ArrayList<>()).add(p);
+        }
         List<Finding> keep = new ArrayList<>();
         for (Finding f : out) {
-            Box area = new Box(f.min.getX(), f.min.getY(), f.min.getZ(), f.max.getX() + 1, f.max.getY() + 1, f.max.getZ() + 1);
-            boolean natural = strong.stream().anyMatch(p -> area.expand(48).contains(Vec3d.ofCenter(p)))
-                    || weak.stream().filter(p -> area.expand(20).contains(Vec3d.ofCenter(p))).limit(12).count() >= 12;
+            boolean natural = countNear(strong, f, 48, 1) >= 1 || countNear(weak, f, 20, 12) >= 12;
             if (!natural) { keep.add(f); continue; }
             explained.add(f.type + " " + f.score + " at chunk " + (f.min.getX() >> 4) + " " + (f.min.getZ() >> 4) + " (" + f.reasons.get(0) + ")");
         }
         out.clear();
         out.addAll(keep);
         lastExplained = explained;
+    }
+
+    /** How many markers lie within {@code pad} blocks of the finding's box (stops counting at {@code enough}). */
+    private static int countNear(Map<Long, List<BlockPos>> buckets, Finding f, int pad, int enough) {
+        int x1 = f.min.getX() - pad, y1 = f.min.getY() - pad, z1 = f.min.getZ() - pad;
+        int x2 = f.max.getX() + 1 + pad, y2 = f.max.getY() + 1 + pad, z2 = f.max.getZ() + 1 + pad;
+        int n = 0;
+        for (int cx = x1 >> 4; cx <= x2 >> 4; cx++) {
+            for (int cz = z1 >> 4; cz <= z2 >> 4; cz++) {
+                List<BlockPos> l = buckets.get(net.minecraft.util.math.ChunkPos.toLong(cx, cz));
+                if (l == null) continue;
+                for (BlockPos p : l) {
+                    // same test as Box.contains(block centre): x1 <= px + 0.5 < x2
+                    if (p.getX() >= x1 && p.getX() < x2 && p.getY() >= y1 && p.getY() < y2 && p.getZ() >= z1 && p.getZ() < z2 && ++n >= enough) return n;
+                }
+            }
+        }
+        return n;
     }
 
     /** One suspected chunk with all of its findings; {@code score} 0-100. */

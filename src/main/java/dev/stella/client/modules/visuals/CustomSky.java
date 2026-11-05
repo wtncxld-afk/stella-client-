@@ -157,6 +157,14 @@ public class CustomSky extends Module {
         return shade(c, 1f) | 0xFF000000;
     }
 
+    // dome grid: sin/cos computed once instead of ~4600 trig calls per frame
+    private static final int LAT = 24, LON = 48;
+    private static final float[] LAT_SIN = new float[LAT + 1], LAT_COS = new float[LAT + 1], LON_SIN = new float[LON + 1], LON_COS = new float[LON + 1];
+    static {
+        for (int i = 0; i <= LAT; i++) { double a = -Math.PI / 2 + Math.PI * i / LAT; LAT_SIN[i] = (float) Math.sin(a); LAT_COS[i] = (float) Math.cos(a); }
+        for (int j = 0; j <= LON; j++) { double b = Math.PI * 2 * j / LON; LON_SIN[j] = (float) Math.sin(b); LON_COS[j] = (float) Math.cos(b); }
+    }
+
     /** Called from WorldRenderEvents.BEFORE_ENTITIES. Model-view already holds the camera rotation. */
     public void render(MatrixStack matrices, VertexConsumerProvider.Immediate consumers, float tickDelta) {
         if (!active()) return;
@@ -170,17 +178,16 @@ public class CustomSky extends Module {
 
         // ---- dome
         VertexConsumer buf = consumers.getBuffer(StellaPipelines.SKY);
-        int lat = 24, lon = 48;
-        for (int i = 0; i < lat; i++) {
-            float a1 = (float) (-Math.PI / 2 + Math.PI * i / lat), a2 = (float) (-Math.PI / 2 + Math.PI * (i + 1) / lat);
-            float y1 = MathHelper.sin(a1), y2 = MathHelper.sin(a2), r1 = MathHelper.cos(a1), r2 = MathHelper.cos(a2);
+        for (int i = 0; i < LAT; i++) {
+            float y1 = LAT_SIN[i], y2 = LAT_SIN[i + 1], r1 = LAT_COS[i] * radius, r2 = LAT_COS[i + 1] * radius;
             int c1 = gradient(y1), c2 = gradient(y2);
-            for (int j = 0; j < lon; j++) {
-                float b1 = (float) (Math.PI * 2 * j / lon), b2 = (float) (Math.PI * 2 * (j + 1) / lon);
-                v(buf, m, r1 * MathHelper.cos(b1) * radius, y1 * radius, r1 * MathHelper.sin(b1) * radius, c1);
-                v(buf, m, r1 * MathHelper.cos(b2) * radius, y1 * radius, r1 * MathHelper.sin(b2) * radius, c1);
-                v(buf, m, r2 * MathHelper.cos(b2) * radius, y2 * radius, r2 * MathHelper.sin(b2) * radius, c2);
-                v(buf, m, r2 * MathHelper.cos(b1) * radius, y2 * radius, r2 * MathHelper.sin(b1) * radius, c2);
+            float yy1 = y1 * radius, yy2 = y2 * radius;
+            for (int j = 0; j < LON; j++) {
+                float cb1 = LON_COS[j], sb1 = LON_SIN[j], cb2 = LON_COS[j + 1], sb2 = LON_SIN[j + 1];
+                v(buf, m, r1 * cb1, yy1, r1 * sb1, c1);
+                v(buf, m, r1 * cb2, yy1, r1 * sb2, c1);
+                v(buf, m, r2 * cb2, yy2, r2 * sb2, c2);
+                v(buf, m, r2 * cb1, yy2, r2 * sb1, c2);
             }
         }
         consumers.draw(StellaPipelines.SKY);
