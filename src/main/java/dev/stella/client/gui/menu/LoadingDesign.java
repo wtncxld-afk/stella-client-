@@ -165,7 +165,7 @@ public final class LoadingDesign {
     private static void ring(DrawContext ctx, float cx, float cy, float r, float progress, double alpha, float width) {
         if (r < 2) return;
         long now = System.currentTimeMillis();
-        int segs = 90;
+        int segs = 64;
         circle(ctx, cx, cy, r, width, ColorUtil.mulAlpha(0x40FFFFFF, alpha * 0.35), segs);
         double start, sweep;
         if (progress < 0) {
@@ -188,7 +188,7 @@ public final class LoadingDesign {
         }
         // comet head
         float hs = width * 1.8f;
-        Render2D.roundRect(ctx, (float) prevX - hs * 2, (float) prevY - hs * 2, hs * 4, hs * 4, hs * 2, ColorUtil.mulAlpha(ColorUtil.withAlpha(ThemeManager.accentAt(0.5), 0x50), alpha));
+        Render2D.glow(ctx, (float) prevX, (float) prevY, hs * 3, ColorUtil.mulAlpha(ColorUtil.withAlpha(ThemeManager.accentAt(0.5), 0xA0), alpha));
         Render2D.roundRect(ctx, (float) prevX - hs / 2, (float) prevY - hs / 2, hs, hs, hs / 2, ColorUtil.mulAlpha(0xFFFFFFFF, alpha));
     }
 
@@ -211,7 +211,7 @@ public final class LoadingDesign {
             double mx = Math.cos(spin) * rx, my = Math.sin(spin) * ry;
             float px = (float) (cx + mx * ct - my * st), py = (float) (cy + mx * st + my * ct);
             float s = Math.max(1.5f, r / 14f) * (Math.sin(spin) > 0 ? 1.2f : 0.8f);
-            Render2D.roundRect(ctx, px - s * 2, py - s * 2, s * 4, s * 4, s * 2, ColorUtil.mulAlpha(ColorUtil.withAlpha(ThemeManager.accentAt(0.5), 0x45), alpha));
+            Render2D.glow(ctx, px, py, s * 3, ColorUtil.mulAlpha(ColorUtil.withAlpha(ThemeManager.accentAt(0.5), 0x90), alpha));
             Render2D.roundRect(ctx, px - s / 2, py - s / 2, s, s, s / 2, ColorUtil.mulAlpha(0xFFFFFFFF, alpha));
         }
     }
@@ -234,10 +234,7 @@ public final class LoadingDesign {
         double pulse = 0.88 + 0.12 * Math.sin(now / 420.0);
         int accent = ThemeManager.get().accent();
         // halo rings
-        for (int i = 6; i >= 1; i--) {
-            float rr = (float) (r * (1.1 + i * 0.28) * pulse);
-            Render2D.roundRect(ctx, cx - rr, cy - rr, rr * 2, rr * 2, rr, ColorUtil.mulAlpha(ColorUtil.withAlpha(accent, 0x16), alpha * (1.0 - i * 0.12)));
-        }
+        Render2D.glow(ctx, cx, cy, (float) (r * 3.0 * pulse), ColorUtil.mulAlpha(ColorUtil.withAlpha(accent, 0x80), alpha));
         // light rays rotating behind the star
         double rot = Math.sin(now / 2600.0) * 0.18;
         for (int i = 0; i < 8; i++) {
@@ -248,7 +245,7 @@ public final class LoadingDesign {
         }
         // filled star: nested outlines from the edge inward, theme colour -> white
         int edge = ColorUtil.lerp(accent, 0xFFFFFFFF, 0.25);
-        int layers = Math.max(6, (int) (r / 2));
+        int layers = Math.max(5, Math.min(10, (int) (r / 3)));
         for (int l = 0; l <= layers; l++) {
             double k = 1 - l / (double) layers;
             int c = ColorUtil.lerp(edge, 0xFFFFFFFF, Math.pow(1 - k, 1.4));
@@ -266,7 +263,7 @@ public final class LoadingDesign {
             double a = now / 900.0 + i * Math.PI * 2 / 3;
             float ox = cx + (float) Math.cos(a) * r * 1.5f, oy = cy + (float) Math.sin(a) * r * 0.6f;
             float s = Math.max(1.5f, r / 9f);
-            Render2D.roundRect(ctx, ox - s * 2, oy - s * 2, s * 4, s * 4, s * 2, ColorUtil.mulAlpha(0x40F472B6, alpha));
+            Render2D.glow(ctx, ox, oy, s * 3, ColorUtil.mulAlpha(0x90F472B6, alpha));
             Render2D.roundRect(ctx, ox - s / 2, oy - s / 2, s, s, s / 2, ColorUtil.mulAlpha(0xFFFFFFFF, alpha));
         }
     }

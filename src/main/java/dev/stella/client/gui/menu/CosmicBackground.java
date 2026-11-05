@@ -55,10 +55,7 @@ public final class CosmicBackground {
             double cy = (b[1] + 0.04 * Math.cos(t * 0.05 + b[3])) * h - py * 4;
             float rad = b[2] * Math.max(w, h) * 0.5f * (float) (1 + 0.06 * Math.sin(t * 0.3 + b[3]));
             int c = i % 2 == 0 ? accent : ColorUtil.lerp(accent2, 0xFFEC4899, 0.35);
-            for (int k = 6; k >= 1; k--) {
-                float rr = rad * k / 6f;
-                Render2D.roundRect(ctx, (float) cx - rr, (float) cy - rr, rr * 2, rr * 2, rr, ColorUtil.mulAlpha(ColorUtil.withAlpha(c, 10), alpha));
-            }
+            Render2D.glow(ctx, (float) cx, (float) cy, rad, ColorUtil.mulAlpha(ColorUtil.withAlpha(c, 0x48), alpha)); // one quad
         }
         if (aurora) aurora(ctx, w, h, t, alpha, accent, accent2);
         // stars: three depth layers, nearer ones drift faster and move more with the mouse
@@ -87,7 +84,7 @@ public final class CosmicBackground {
 
     /** Two slow ribbons of light waving across the upper half, tinted with the theme. */
     private void aurora(DrawContext ctx, int w, int h, double t, double alpha, int c1, int c2) {
-        int step = Math.max(3, w / 160);
+        int step = Math.max(4, w / 96);
         for (int band = 0; band < 2; band++) {
             int col = band == 0 ? c1 : c2;
             double base = h * (0.22 + band * 0.12);

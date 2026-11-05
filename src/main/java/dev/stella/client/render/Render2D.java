@@ -39,7 +39,7 @@ public final class Render2D {
         r = Math.max(0, Math.min(r, Math.min(w, h) / 2f));
         if (r < 0.5f) { rect(ctx, x, y, w, h, color); return; }
         rect(ctx, x, y + r, w, h - 2 * r, color);
-        float step = r > 4 ? 0.5f : 0.34f; // fewer slices, same look at GUI scale
+        float step = r > 16 ? r / 32f : r > 4 ? 0.5f : 0.34f; // big circles: ~64 slices max, GUI corners unchanged
         for (float dy = 0; dy < r; dy += step) {
             float cy = r - dy - step / 2f;
             float inset = r - (float) Math.sqrt(Math.max(0, r * r - cy * cy));
@@ -108,6 +108,32 @@ public final class Render2D {
         ctx.getMatrices().scale((float) (scale), (float) (scale));
         if ((bgColor >>> 24) != 0) ctx.fill(-w / 2 - 2, -1, w / 2 + 2, 9, bgColor);
         dev.stella.client.render.StellaFont.draw(ctx, s, -w / 2, 0, textColor, true);
+        ctx.getMatrices().popMatrix();
+    }
+
+    private static final net.minecraft.util.Identifier SOFT_GLOW = net.minecraft.util.Identifier.of("stella", "textures/gui/soft_glow.png");
+
+    /**
+     * Soft radial glow centred on (cx, cy): one textured quad, so it costs the same as a single rect
+     * regardless of size (stacked round rects cost hundreds of draws each).
+     */
+    private static boolean glowReady;
+
+    public static void glow(DrawContext ctx, float cx, float cy, float radius, int color) {
+        if (radius < 0.5f || (color >>> 24) == 0) return;
+        // During the very first resource load our texture isn't there yet (it would draw as the
+        // missing-texture checkerboard), so use two cheap soft circles until loading has finished once.
+        if (!glowReady) glowReady = MinecraftClient.getInstance().getOverlay() == null && MinecraftClient.getInstance().currentScreen != null;
+        if (!glowReady) {
+            int a = (color >>> 24) / 4;
+            roundRect(ctx, cx - radius * 0.8f, cy - radius * 0.8f, radius * 1.6f, radius * 1.6f, radius * 0.8f, (a << 24) | (color & 0xFFFFFF));
+            roundRect(ctx, cx - radius * 0.45f, cy - radius * 0.45f, radius * 0.9f, radius * 0.9f, radius * 0.45f, (a << 24) | (color & 0xFFFFFF));
+            return;
+        }
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate(cx - radius, cy - radius);
+        ctx.getMatrices().scale(radius * 2 / 128f, radius * 2 / 128f);
+        ctx.drawTexture(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, SOFT_GLOW, 0, 0, 0f, 0f, 128, 128, 128, 128, color);
         ctx.getMatrices().popMatrix();
     }
 }

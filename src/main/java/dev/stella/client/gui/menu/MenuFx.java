@@ -64,8 +64,8 @@ public final class MenuFx {
         int accent = ThemeManager.get().accent();
 
         // ---- petals: keep a steady population drifting down and to the right
-        int wantPetals = petalsOn() ? Math.round(Math.max(w, 1) * Math.max(h, 1) / 9000f * amt) : 0;
-        wantPetals = Math.min(wantPetals, 140);
+        int wantPetals = petalsOn() ? Math.round(Math.max(w, 1) * Math.max(h, 1) / 14000f * amt) : 0;
+        wantPetals = Math.min(wantPetals, 60);
         boolean seed = petals.isEmpty();
         while (petals.size() < wantPetals) petals.add(newPetal(w, h, seed)); // first frame: spread over the screen
         for (int i = petals.size() - 1; i >= 0; i--) {
@@ -255,7 +255,7 @@ public final class MenuFx {
         // flash at the strike point
         float ex = b.xs[b.xs.length - 1], ey = b.ys[b.ys.length - 1];
         float r = 5 * b.width * (float) (1 - k);
-        if (r > 0.6f) Render2D.roundRect(ctx, ex - r, ey - r, r * 2, r * 2, r, ColorUtil.mulAlpha(ColorUtil.withAlpha(b.color, 0x50), a));
+        if (r > 0.6f) Render2D.glow(ctx, ex, ey, r * 1.6f, ColorUtil.mulAlpha(ColorUtil.withAlpha(b.color, 0xA0), a));
     }
 
     // ------------------------------------------------------------------ sparks
