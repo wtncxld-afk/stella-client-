@@ -1002,8 +1002,11 @@ public final class StellaSmokeTest {
                         mc.player.setPitch(10f);
                         ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class).setEnabled(false);
                     }
-                    if (T == 1414) shot(mc, "sword-vanilla-reference"); // the knife should sit exactly where this sword is
-                    if (T == 1416) ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class).setEnabled(true);
+                    if (T == 1416) { // vanilla sword for comparison (waits for the equip animation to finish)
+                        StellaClient.LOGGER.info("[smoke] reference: main hand = {}", mc.player.getMainHandStack());
+                        shot(mc, "sword-vanilla-reference");
+                    }
+                    if (T == 1417) ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class).setEnabled(true);
                     String[][] knives = {{"Karambit", "Nebula"}, {"Butterfly", "Damascus"}, {"Bayonet", "Ember"}, {"Stella Dagger", "Sunset"}, {"Kunai", "Galaxy"}, {"Tanto", "Chrome"}};
                     if (T >= 1418 && T < 1418 + knives.length * 8) {
                         int i = (T - 1418) / 8, k = (T - 1418) % 8;

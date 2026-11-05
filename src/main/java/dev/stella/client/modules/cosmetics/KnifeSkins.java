@@ -206,22 +206,17 @@ public class KnifeSkins extends Module {
     }
 
     /**
-     * Vanilla's first-person sword transform (item/handheld "firstperson_righthand": rotation 0,-90,25,
-     * translation 1.13,3.2,1.13 /16, scale 0.68, then the model's -0.5 centring), followed by laying the knife
-     * along the sword sprite's diagonal: pommel at the sword's pommel pixel, blade pointing at its tip.
-     * So the knife sits in exactly the spot and angle your sword does.
+     * Held like a sword: the grip in the lower-right of the screen (where your hand is), the blade standing up
+     * and leaning towards the centre with a slight forward tilt, flat of the blade facing you.
+     * Applied in the item's first-person space (after vanilla's equip / swing offsets, before the item model).
      */
     private static org.joml.Matrix4f heldPose(float side, float breathe) {
         float r = (float) (Math.PI / 180);
         return new org.joml.Matrix4f()
-                .translate(side * 1.13f / 16f, 3.2f / 16f + breathe * 0.004f, 1.13f / 16f)
-                .rotateY(-90 * side * r)
-                .rotateZ((25 + breathe * 0.6f) * side * r)
-                .scale(0.68f)
-                .translate(-0.5f, -0.5f, -0.5f)
-                .translate(0.16f, 0.16f, 0.5f)     // just above the sword's pommel pixel, centre of the sprite's depth
-                .rotateZ(-45 * r)                   // knife +Y (pommel -> tip) along the sprite diagonal
-                .scale(1.2f);                       // a little shorter than a sword, so the whole grip stays on screen
+                .translate(0.02f * side, 0.1f + breathe * 0.004f, -0.08f)
+                .rotateX((-38 + breathe * 0.8f) * r)   // tip tilted a little away from you
+                .rotateZ(22 * side * r)                 // and leaning in towards the crosshair
+                .scale(1.15f);
     }
 
     /** Raised in front of you with the flat of the blade towards the camera (start of the inspect). */
