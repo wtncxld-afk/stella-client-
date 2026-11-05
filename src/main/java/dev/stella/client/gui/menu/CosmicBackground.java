@@ -84,7 +84,7 @@ public final class CosmicBackground {
 
     /** Two slow ribbons of light waving across the upper half, tinted with the theme. */
     private void aurora(DrawContext ctx, int w, int h, double t, double alpha, int c1, int c2) {
-        int step = Math.max(4, w / 96);
+        int step = Math.max(2, w / 240); // narrow columns so the ribbon edges stay smooth
         for (int band = 0; band < 2; band++) {
             int col = band == 0 ? c1 : c2;
             double base = h * (0.22 + band * 0.12);

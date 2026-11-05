@@ -166,7 +166,7 @@ public final class LoadingDesign {
         if (r < 2) return;
         long now = System.currentTimeMillis();
         int segs = 64;
-        circle(ctx, cx, cy, r, width, ColorUtil.mulAlpha(0x40FFFFFF, alpha * 0.35), segs);
+        circle(ctx, cx, cy, r, width, ColorUtil.mulAlpha(ColorUtil.withAlpha(ThemeManager.get().accent(), 0x40), alpha * 0.6), segs);
         double start, sweep;
         if (progress < 0) {
             start = now / 380.0;
@@ -240,8 +240,8 @@ public final class LoadingDesign {
         for (int i = 0; i < 8; i++) {
             double a = now / 6000.0 + i * Math.PI / 4;
             float len = r * (1.5f + 0.3f * (float) Math.sin(now / 500.0 + i));
-            Render2D.line(ctx, cx, cy, cx + Math.cos(a) * len, cy + Math.sin(a) * len, r * 0.16f,
-                    ColorUtil.mulAlpha(ColorUtil.withAlpha(ColorUtil.lerp(accent, 0xFFFFFFFF, 0.5), 0x22), alpha));
+            Render2D.line(ctx, cx, cy, cx + Math.cos(a) * len, cy + Math.sin(a) * len, r * 0.08f,
+                    ColorUtil.mulAlpha(ColorUtil.withAlpha(ColorUtil.lerp(accent, 0xFFFFFFFF, 0.2), 0x18), alpha));
         }
         // filled star: nested outlines from the edge inward, theme colour -> white
         int edge = ColorUtil.lerp(accent, 0xFFFFFFFF, 0.25);
