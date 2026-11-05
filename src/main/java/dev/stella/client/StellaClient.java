@@ -57,7 +57,9 @@ public final class StellaClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!ready) return;
             ModuleManager.tick();
+            long ts = dev.stella.client.util.Profiler.start();
             BlockScanner.tick();
+            dev.stella.client.util.Profiler.end("Block Scanner", ts);
             ConfigManager.tick();
         });
 
@@ -74,8 +76,10 @@ public final class StellaClient implements ClientModInitializer {
             if (!ready) return;
             CustomSky sky = ModuleManager.get(CustomSky.class);
             if (sky.active()) {
+                long t0 = dev.stella.client.util.Profiler.start();
                 try { sky.render(ctx.matrices(), immediate(ctx.consumers()), frameDelta); }
                 catch (Throwable t) { reportError("Custom Sky", t); }
+                dev.stella.client.util.Profiler.end("Custom Sky", t0);
             }
         });
 
@@ -86,7 +90,9 @@ public final class StellaClient implements ClientModInitializer {
             ModuleManager.render3D(r);
             var mb = ModuleManager.get(dev.stella.client.modules.visuals.MotionBlur.class);
             if (mb.isEnabled()) {
+                long t0 = dev.stella.client.util.Profiler.start();
                 try { mb.apply(immediate(ctx.consumers())); } catch (Throwable t) { reportError("Motion Blur", t); }
+                dev.stella.client.util.Profiler.end("Motion Blur", t0);
             }
         });
 
@@ -96,6 +102,7 @@ public final class StellaClient implements ClientModInitializer {
             float td = tickCounter.getTickProgress(true);
             if (mc.world != null && !mc.options.hudHidden) ModuleManager.renderOverlay(drawContext, td);
             HudManager.render(drawContext, td);
+            dev.stella.client.util.Profiler.frame();
         });
     }
 

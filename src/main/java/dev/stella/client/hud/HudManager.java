@@ -36,11 +36,13 @@ public final class HudManager {
         ctx.getMatrices().translate((float) (h.x()), (float) (h.y()));
         float s = h.scale.getFloat();
         ctx.getMatrices().scale((float) (s), (float) (s));
+        long t0 = dev.stella.client.util.Profiler.start();
         try {
             h.render(ctx, tickDelta, editor);
         } catch (Throwable t) {
             StellaClient.reportError("hud " + h.getName(), t);
         }
+        dev.stella.client.util.Profiler.end(h.getName(), t0);
         ctx.getMatrices().popMatrix();
     }
 

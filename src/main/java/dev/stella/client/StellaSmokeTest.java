@@ -132,6 +132,7 @@ public final class StellaSmokeTest {
     private static int inStage() { return tick - stageStart; }
 
     private static void shot(MinecraftClient mc, String name) {
+        StellaClient.LOGGER.info("[perf] {}: {}", name, dev.stella.client.util.Profiler.report(8));
         ScreenshotRecorder.saveScreenshot(mc.runDirectory, "stella-" + name + ".png", mc.getFramebuffer(), 1,
                 msg -> StellaClient.LOGGER.info("[smoke] screenshot {}: {}", name, msg.getString()));
     }
@@ -999,8 +1000,10 @@ public final class StellaSmokeTest {
                         serverCmd(mc, "item replace entity " + me + " hotbar.0 with minecraft:diamond_sword");
                         mc.player.getInventory().setSelectedSlot(0);
                         mc.player.setPitch(10f);
-                        ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class).setEnabled(true);
+                        ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class).setEnabled(false);
                     }
+                    if (T == 1414) shot(mc, "sword-vanilla-reference"); // the knife should sit exactly where this sword is
+                    if (T == 1416) ModuleManager.get(dev.stella.client.modules.cosmetics.KnifeSkins.class).setEnabled(true);
                     String[][] knives = {{"Karambit", "Nebula"}, {"Butterfly", "Damascus"}, {"Bayonet", "Ember"}, {"Stella Dagger", "Sunset"}, {"Kunai", "Galaxy"}, {"Tanto", "Chrome"}};
                     if (T >= 1418 && T < 1418 + knives.length * 8) {
                         int i = (T - 1418) / 8, k = (T - 1418) % 8;

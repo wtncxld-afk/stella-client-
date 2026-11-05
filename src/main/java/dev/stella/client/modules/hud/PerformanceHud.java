@@ -14,6 +14,7 @@ public class PerformanceHud extends HudElement {
     private final CardStyle card = card("Modern");
     private final BoolSetting graph = add(new BoolSetting("Frame Graph", "Frame-time graph (taller bars = slower frames)", true));
     private final BoolSetting memory = add(new BoolSetting("Memory", "Java memory in use", true));
+    private final BoolSetting topModules = add(new BoolSetting("Top Modules", "The Stella modules using the most CPU time per frame", true));
 
     private final float[] frames = new float[120];
     private int head;
@@ -48,7 +49,8 @@ public class PerformanceHud extends HudElement {
             float worst = n == 0 ? 0 : sorted[Math.max(0, n - 1 - n / 100)];
             lowFps = worst <= 0 ? 0 : 1000f / worst;
         }
-        int w = 128, h = (graph.isOn() ? 52 : 22) + (memory.isOn() ? 12 : 0);
+        var top = topModules.isOn() ? dev.stella.client.util.Profiler.top(4) : java.util.List.<java.util.Map.Entry<String, Double>>of();
+        int w = 128, h = (graph.isOn() ? 52 : 22) + (memory.isOn() ? 12 : 0) + (topModules.isOn() ? 10 + top.size() * 8 : 0);
         card.draw(ctx, this, w, h);
         setSize(w + card.padLeft() + card.pad(), h + card.pad() * 2);
         int x = card.padLeft(), y = card.pad();
@@ -92,6 +94,18 @@ public class PerformanceHud extends HudElement {
             Render2D.textScaled(ctx, mem, x, gy, 0.65f, col(0xFFCFD8E6), true);
             Render2D.roundRect(ctx, x + 70, gy + 1, w - 76, 4, 2, col(0x50000000));
             Render2D.hGradient(ctx, x + 70, gy + 1, (w - 76) * f, 4, col(0xFF4DE38B), col(ColorUtil.lerp(0xFF4DE38B, 0xFFFF5A5A, f)));
+            gy += 12;
+        }
+        if (topModules.isOn()) {
+            String hdr = String.format(java.util.Locale.ROOT, "STELLA CPU %.2f ms", dev.stella.client.util.Profiler.totalMs());
+            Render2D.textScaled(ctx, hdr, x, gy, 0.65f, col(0xFFE9D5FF), true);
+            gy += 9;
+            for (var e : top) {
+                String v = String.format(java.util.Locale.ROOT, "%.2f", e.getValue());
+                Render2D.textScaled(ctx, e.getKey(), x + 3, gy, 0.6f, col(0xFF9A93A6), true);
+                Render2D.textScaled(ctx, v, x + w - 4 - StellaFont.width(v) * 0.6f, gy, 0.6f, col(e.getValue() > 1 ? 0xFFFFC94D : 0xFFCFD8E6), true);
+                gy += 8;
+            }
         }
     }
 }

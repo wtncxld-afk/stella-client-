@@ -30,7 +30,9 @@ public class KnifeSkins extends Module {
             "Nebula", "Galaxy", "Chrome", "Damascus", "Sunset", "Ember", "Prism", "Ruby", "Sapphire", "Emerald", "Gold", "Midnight", "Theme"));
     private final NumberSetting wear = add(new NumberSetting("Wear", "0 = factory new, 1 = battle-scarred (scratches and worn patches)", 0.0, 0.0, 1.0, 0.01));
     private final NumberSetting seed = add(new NumberSetting("Pattern Seed", "Shifts the pattern so every knife looks a little different", 0, 0, 999, 1));
-    private final BoolSetting showHand = add(new BoolSetting("Show Hand", "Draw your arm holding the knife", true));
+    // Vanilla draws no arm when you hold a sword; an arm in the empty-hand pose can't line up with the grip,
+    // so it is off by default (new setting name, so older configs with "Show Hand" on don't keep it on).
+    private final BoolSetting showHand = add(new BoolSetting("Show Arm", "Also draw your arm (vanilla swords have none; may not line up with every knife)", false));
     private final BoolSetting knifeSounds = add(new BoolSetting("Sounds", "Draw, flip and spin sounds", true));
     private final KeySetting inspectKey = add(new KeySetting("Inspect Key", "Press to inspect your knife", GLFW.GLFW_KEY_Y));
     private final NumberSetting inspectTime = add(new NumberSetting("Inspect Time", "Length of the inspect animation", 2.8, 1.5, 5.0, 0.1).suffix("s"));
@@ -135,14 +137,19 @@ public class KnifeSkins extends Module {
         m.translate(0.04f * side * dIn, -0.32f * dIn, 0.05f * dIn);
 
         float tilt = t >= 0 ? (float) Math.sin(clamp((t - 0.14f) / 0.22f) * Math.PI) : 0;
-        // held pose: the grip sits inside your fist like a sword (only the pommel peeks out under the hand)
-        float hand = showHand.isOn() ? 1f : 0f;
-        m.translate(lerp(0.085f * hand, -0.17f, pose) * side, lerp(0.13f - 0.065f * hand, 0.21f, pose) + breathe * 0.006f, lerp(-0.06f + 0.01f * hand, -0.04f, pose));
-        m.multiply(RotationAxis.POSITIVE_X.rotationDegrees(lerp(-68, -14, pose) + breathe * 0.8f));
-        m.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((lerp(16, 64, pose) + 20 * tilt) * side));
-        m.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((lerp(0, -16, pose) + 180 * roll) * side - 360 * dIn * side));
-        float sc = lerp(1.28f, 1.12f, pose);
+        // Held: exactly where Minecraft draws a sword. Inspect: raised towards the centre of the screen.
+        // Both are full transforms; the knife blends between them (position lerp + rotation slerp).
+        org.joml.Matrix4f held = heldPose(side, breathe), insp = inspectPose(side);
+        org.joml.Vector3f ta = held.getTranslation(new org.joml.Vector3f()), tb = insp.getTranslation(new org.joml.Vector3f());
+        org.joml.Quaternionf qa = held.getNormalizedRotation(new org.joml.Quaternionf()), qb = insp.getNormalizedRotation(new org.joml.Quaternionf());
+        float sa = held.getScale(new org.joml.Vector3f()).x, sb = insp.getScale(new org.joml.Vector3f()).x;
+        m.translate(lerp(ta.x, tb.x, pose), lerp(ta.y, tb.y, pose), lerp(ta.z, tb.z, pose));
+        m.multiply(pose <= 0 ? qa : pose >= 1 ? qb : new org.joml.Quaternionf(qa).slerp(qb, pose));
+        float sc = lerp(sa, sb, pose);
         m.scale(sc, sc, sc);
+        // inspect extras around the knife's own axes: tilt the face to the camera, roll to show the back
+        m.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(20 * tilt * side));
+        m.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180 * roll * side - 360 * dIn * side));
         if (t >= 0 && trick > 0) {
             float sm = smooth(trick);
             switch (k) {
@@ -196,6 +203,36 @@ public class KnifeSkins extends Module {
             }
         }
         return knife.get();
+    }
+
+    /**
+     * Vanilla's first-person sword transform (item/handheld "firstperson_righthand": rotation 0,-90,25,
+     * translation 1.13,3.2,1.13 /16, scale 0.68, then the model's -0.5 centring), followed by laying the knife
+     * along the sword sprite's diagonal: pommel at the sword's pommel pixel, blade pointing at its tip.
+     * So the knife sits in exactly the spot and angle your sword does.
+     */
+    private static org.joml.Matrix4f heldPose(float side, float breathe) {
+        float r = (float) (Math.PI / 180);
+        return new org.joml.Matrix4f()
+                .translate(side * 1.13f / 16f, 3.2f / 16f + breathe * 0.004f, 1.13f / 16f)
+                .rotateY(-90 * side * r)
+                .rotateZ((25 + breathe * 0.6f) * side * r)
+                .scale(0.68f)
+                .translate(-0.5f, -0.5f, -0.5f)
+                .translate(0.1f, 0.1f, 0.5f)       // sword pommel pixel (bottom-left of the sprite), centre of its depth
+                .rotateZ(-45 * r)                   // knife +Y (pommel -> tip) along the sprite diagonal
+                .scale(1.42f);                      // grip + blade about as long as the sword
+    }
+
+    /** Raised in front of you with the flat of the blade towards the camera (start of the inspect). */
+    private static org.joml.Matrix4f inspectPose(float side) {
+        float r = (float) (Math.PI / 180);
+        return new org.joml.Matrix4f()
+                .translate(-0.17f * side, 0.21f, -0.04f)
+                .rotateX(-14 * r)
+                .rotateZ(64 * side * r)
+                .rotateY(-16 * side * r)
+                .scale(1.12f);
     }
 
     private static float smooth(float x) { return x * x * (3 - 2 * x); }
