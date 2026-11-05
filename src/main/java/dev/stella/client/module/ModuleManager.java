@@ -187,7 +187,7 @@ public final class ModuleManager {
             if (!m.isEnabled()) continue;
             long t0 = dev.stella.client.util.Profiler.start();
             try { m.onTick(); } catch (Throwable t) { dev.stella.client.StellaClient.reportError("tick " + m.getName(), t); }
-            dev.stella.client.util.Profiler.end(m.getName(), t0);
+            dev.stella.client.util.Profiler.end(m.profLabel(0), t0);
         }
     }
 
@@ -211,7 +211,7 @@ public final class ModuleManager {
             if (!m.isEnabled()) continue;
             long t0 = dev.stella.client.util.Profiler.start();
             try { m.onRender3D(r); } catch (Throwable t) { dev.stella.client.StellaClient.reportError("render3D " + m.getName(), t); }
-            dev.stella.client.util.Profiler.end(m.getName(), t0);
+            dev.stella.client.util.Profiler.end(m.profLabel(1), t0);
         }
         long tf = dev.stella.client.util.Profiler.start();
         r.flush();
@@ -223,7 +223,7 @@ public final class ModuleManager {
             if (!m.isEnabled()) continue;
             long t0 = dev.stella.client.util.Profiler.start();
             try { m.onRenderOverlay(ctx, tickDelta); } catch (Throwable t) { dev.stella.client.StellaClient.reportError("overlay " + m.getName(), t); }
-            dev.stella.client.util.Profiler.end(m.getName(), t0);
+            dev.stella.client.util.Profiler.end(m.profLabel(2), t0);
         }
     }
 }

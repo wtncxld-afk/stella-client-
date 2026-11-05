@@ -16,6 +16,7 @@ public abstract class SplashOverlayMixin {
 
     @Inject(method = "render", at = @At("TAIL"))
     private void stella$splash(DrawContext ctx, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+        dev.stella.client.render.StellaFont.clearCache(); // fonts are (re)loading: cached text widths may be stale
         if (!LoadingDesign.enabled()) return;
         // stay fully opaque until Minecraft removes the overlay; fading ourselves let the red Mojang screen show through
         float alpha = 1f;

@@ -49,6 +49,14 @@ public abstract class Module {
         settings.add(keybind);
     }
 
+    private String[] profLabels;
+
+    /** Profiler labels "Name (tick)", "Name (3D)", "Name (overlay)" built once (not every frame). */
+    public String profLabel(int phase) {
+        if (profLabels == null) profLabels = new String[]{getName() + " (tick)", getName() + " (3D)", getName() + " (overlay)"};
+        return profLabels[phase];
+    }
+
     public String getName() { return name; }
     public String getDescription() { return description; }
     public Category getCategory() { return category; }

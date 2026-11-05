@@ -38,14 +38,45 @@ public final class Render2D {
     public static void roundRect(DrawContext ctx, float x, float y, float w, float h, float r, int color) {
         r = Math.max(0, Math.min(r, Math.min(w, h) / 2f));
         if (r < 0.5f) { rect(ctx, x, y, w, h, color); return; }
+        if (!texturesReady()) { roundRectSlices(ctx, x, y, w, h, r, color); return; }
+        // 3 rects + 4 anti-aliased corner quads = 7 GUI elements (the sliced version needed ~2r/0.5 + 1)
+        rect(ctx, x + r, y, w - 2 * r, h, color);
+        rect(ctx, x, y + r, r, h - 2 * r, color);
+        rect(ctx, x + w - r, y + r, r, h - 2 * r, color);
+        corner(ctx, x, y, r, 0, 0, color);
+        corner(ctx, x + w - r, y, r, 32, 0, color);
+        corner(ctx, x, y + h - r, r, 0, 32, color);
+        corner(ctx, x + w - r, y + h - r, r, 32, 32, color);
+    }
+
+    private static final net.minecraft.util.Identifier CORNER = net.minecraft.util.Identifier.of("stella", "textures/gui/round_corner.png");
+
+    /** One quadrant (u, v = 0 or 32) of the 64x64 anti-aliased circle, scaled to r x r at (x, y). */
+    private static void corner(DrawContext ctx, float x, float y, float r, int u, int v, int color) {
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate(x, y);
+        ctx.getMatrices().scale(r / 32f, r / 32f);
+        ctx.drawTexture(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, CORNER, 0, 0, u, v, 32, 32, 64, 64, color);
+        ctx.getMatrices().popMatrix();
+    }
+
+    /** Shape-only version for the first resource load, before textures exist. */
+    private static void roundRectSlices(DrawContext ctx, float x, float y, float w, float h, float r, int color) {
         rect(ctx, x, y + r, w, h - 2 * r, color);
-        float step = r > 16 ? r / 32f : r > 4 ? 0.5f : 0.34f; // big circles: ~64 slices max, GUI corners unchanged
+        float step = r > 16 ? r / 32f : r > 4 ? 0.5f : 0.34f;
         for (float dy = 0; dy < r; dy += step) {
             float cy = r - dy - step / 2f;
             float inset = r - (float) Math.sqrt(Math.max(0, r * r - cy * cy));
             rect(ctx, x + inset, y + dy, w - inset * 2, step, color);
             rect(ctx, x + inset, y + h - dy - step, w - inset * 2, step, color);
         }
+    }
+
+    /** True once Minecraft has finished its first resource load (our textures can be drawn). */
+    public static boolean texturesReady() {
+        if (!glowReady) glowReady = MinecraftClient.getInstance().getOverlay() == null && MinecraftClient.getInstance().currentScreen != null
+                || MinecraftClient.getInstance().world != null;
+        return glowReady;
     }
 
     /** Soft drop shadow: stacked rounded rects with falling alpha. */
@@ -123,8 +154,7 @@ public final class Render2D {
         if (radius < 0.5f || (color >>> 24) == 0) return;
         // During the very first resource load our texture isn't there yet (it would draw as the
         // missing-texture checkerboard), so use two cheap soft circles until loading has finished once.
-        if (!glowReady) glowReady = MinecraftClient.getInstance().getOverlay() == null && MinecraftClient.getInstance().currentScreen != null;
-        if (!glowReady) {
+        if (!texturesReady()) {
             int a = (color >>> 24) / 4;
             roundRect(ctx, cx - radius * 0.8f, cy - radius * 0.8f, radius * 1.6f, radius * 1.6f, radius * 0.8f, (a << 24) | (color & 0xFFFFFF));
             roundRect(ctx, cx - radius * 0.45f, cy - radius * 0.45f, radius * 0.9f, radius * 0.9f, radius * 0.45f, (a << 24) | (color & 0xFFFFFF));

@@ -23,7 +23,13 @@ public final class StellaFont {
 
     private StellaFont() {}
 
-    public static void setEnabled(boolean on) { enabled = on; }
+    public static void setEnabled(boolean on) { if (on != enabled) WIDTHS.clear(); enabled = on; }
+
+    /** Text widths are asked for many times per frame (sorting lists, centring); cache them. */
+    private static final java.util.HashMap<String, Integer> WIDTHS = new java.util.HashMap<>();
+
+    /** Called after a resource reload (fonts may have changed). */
+    public static void clearCache() { WIDTHS.clear(); }
     public static boolean enabled() { return enabled; }
 
     private static TextRenderer tr() { return MinecraftClient.getInstance().textRenderer; }
@@ -39,7 +45,14 @@ public final class StellaFont {
         return x + tr().getWidth(t);
     }
 
-    public static int width(String s) { return enabled ? tr().getWidth(text(s)) : tr().getWidth(s); }
+    public static int width(String s) {
+        Integer w = WIDTHS.get(s);
+        if (w != null) return w;
+        int v = enabled ? tr().getWidth(text(s)) : tr().getWidth(s);
+        if (WIDTHS.size() > 4096) WIDTHS.clear(); // coordinates and timers change every frame; keep it bounded
+        WIDTHS.put(s, v);
+        return v;
+    }
 
     /** Trims to {@code w} pixels (no ellipsis). */
     public static String trimToWidth(String s, int w) {
