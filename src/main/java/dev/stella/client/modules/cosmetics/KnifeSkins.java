@@ -219,9 +219,9 @@ public class KnifeSkins extends Module {
                 .rotateZ((25 + breathe * 0.6f) * side * r)
                 .scale(0.68f)
                 .translate(-0.5f, -0.5f, -0.5f)
-                .translate(0.1f, 0.1f, 0.5f)       // sword pommel pixel (bottom-left of the sprite), centre of its depth
+                .translate(0.16f, 0.16f, 0.5f)     // just above the sword's pommel pixel, centre of the sprite's depth
                 .rotateZ(-45 * r)                   // knife +Y (pommel -> tip) along the sprite diagonal
-                .scale(1.42f);                      // grip + blade about as long as the sword
+                .scale(1.2f);                       // a little shorter than a sword, so the whole grip stays on screen
     }
 
     /** Raised in front of you with the flat of the blade towards the camera (start of the inspect). */

@@ -99,22 +99,50 @@ public final class Render3D {
         int rgb = argb & 0xFFFFFF;
         int hot = ColorUtil2.whiten(argb, 0.7f) & 0xFFFFFF;
         float height = (float) Math.min(y2 - y1, 220);
-        int segs = 28, sides = 14;
+        // level of detail: far-away beams are a few pixels wide, so they need far fewer segments and sides
+        double dist = Math.sqrt((double) cx * cx + (double) cz * cz);
+        int segs = dist < 48 ? 28 : dist < 128 ? 16 : 9;
+        int sides = dist < 48 ? 14 : dist < 128 ? 10 : 7;
+        int coreSides = dist < 48 ? 8 : 6;
         float spin = (float) (t * 0.8);
         // pulsing ground ring + expanding shockwave
         float pulse = (float) (0.5 + 0.5 * Math.sin(t * 3));
         ring(glow, m, cx, base + 0.02f, cz, (float) radius * 1.2f, (float) radius * (2.6f + pulse * 0.6f), sides * 2, rgb, a0 * 0.55f, 0f);
         float wave = (float) ((t % 1.6) / 1.6);
         ring(glow, m, cx, base + 0.03f, cz, (float) radius * (1.5f + wave * 6f), (float) radius * (1.9f + wave * 6f), sides * 2, rgb, a0 * 0.6f * (1 - wave), a0 * 0.6f * (1 - wave));
+        // cos/sin of every side computed once per beam (was once per segment per cylinder)
+        float[] outer = unitCircle(sides, spin), mid = unitCircle(sides, -spin), core = unitCircle(coreSides, spin * 2);
+        float[] fades = new float[segs + 1], energy = new float[segs + 1];
+        for (int i = 0; i <= segs; i++) {
+            float h = height * i / segs;
+            fades[i] = fade(h, height);
+            energy[i] = (float) (0.7 + 0.3 * Math.sin(h * 0.45 - t * 7)); // energy bands moving upward
+        }
+        float rOuter = (float) radius * 2.6f, rMid = (float) radius, rCore = (float) radius * 0.32f;
         for (int i = 0; i < segs; i++) {
-            float h0 = height * i / segs, h1 = height * (i + 1) / segs;
-            float f0 = fade(h0, height), f1 = fade(h1, height);
-            // energy bands moving upward
-            float e0 = (float) (0.7 + 0.3 * Math.sin(h0 * 0.45 - t * 7)), e1 = (float) (0.7 + 0.3 * Math.sin(h1 * 0.45 - t * 7));
-            float ya = base + h0, yb = base + h1;
-            cylinder(glow, m, cx, cz, ya, yb, (float) radius * 2.6f, sides, spin, rgb, a0 * 0.16f * f0, a0 * 0.16f * f1);
-            cylinder(glow, m, cx, cz, ya, yb, (float) radius, sides, -spin, rgb, a0 * 0.55f * f0 * e0, a0 * 0.55f * f1 * e1);
-            cylinder(glow, m, cx, cz, ya, yb, (float) radius * 0.32f, 8, spin * 2, hot, Math.min(1f, a0 * 1.1f * f0 * e0), Math.min(1f, a0 * 1.1f * f1 * e1));
+            float ya = base + height * i / segs, yb = base + height * (i + 1) / segs;
+            float f0 = fades[i], f1 = fades[i + 1], e0 = energy[i], e1 = energy[i + 1];
+            cyl(glow, m, cx, cz, ya, yb, rOuter, outer, argbOf(rgb, a0 * 0.16f * f0), argbOf(rgb, a0 * 0.16f * f1));
+            cyl(glow, m, cx, cz, ya, yb, rMid, mid, argbOf(rgb, a0 * 0.55f * f0 * e0), argbOf(rgb, a0 * 0.55f * f1 * e1));
+            cyl(glow, m, cx, cz, ya, yb, rCore, core, argbOf(hot, Math.min(1f, a0 * 1.1f * f0 * e0)), argbOf(hot, Math.min(1f, a0 * 1.1f * f1 * e1)));
+        }
+    }
+
+    /** cos/sin pairs around a circle, starting at {@code rot}; {@code sides + 1} points (closed). */
+    private static float[] unitCircle(int sides, float rot) {
+        float[] a = new float[(sides + 1) * 2];
+        for (int i = 0; i <= sides; i++) {
+            double ang = rot + Math.PI * 2 * i / sides;
+            a[i * 2] = (float) Math.cos(ang);
+            a[i * 2 + 1] = (float) Math.sin(ang);
+        }
+        return a;
+    }
+
+    private static void cyl(VertexConsumer f, Matrix4f m, float cx, float cz, float ya, float yb, float r, float[] uc, int bottom, int top) {
+        int sides = uc.length / 2 - 1;
+        for (int s = 0; s < sides; s++) {
+            vquad(f, m, cx + uc[s * 2] * r, cz + uc[s * 2 + 1] * r, cx + uc[s * 2 + 2] * r, cz + uc[s * 2 + 3] * r, ya, yb, bottom, top);
         }
     }
 
@@ -125,17 +153,6 @@ public final class Render3D {
 
     private static int argbOf(int rgb, float alpha) {
         return ((int) (Math.max(0f, Math.min(1f, alpha)) * 255) << 24) | rgb;
-    }
-
-    private static void cylinder(VertexConsumer f, Matrix4f m, float cx, float cz, float ya, float yb, float r, int sides, float rot,
-                                 int rgb, float alphaBottom, float alphaTop) {
-        int cb = argbOf(rgb, alphaBottom), ct = argbOf(rgb, alphaTop);
-        for (int s = 0; s < sides; s++) {
-            double t0 = rot + Math.PI * 2 * s / sides, t1 = rot + Math.PI * 2 * (s + 1) / sides;
-            float x0 = cx + (float) Math.cos(t0) * r, z0 = cz + (float) Math.sin(t0) * r;
-            float x1 = cx + (float) Math.cos(t1) * r, z1 = cz + (float) Math.sin(t1) * r;
-            vquad(f, m, x0, z0, x1, z1, ya, yb, cb, ct);
-        }
     }
 
     /** Flat annulus; colour fades from the inner edge (alphaIn) to the outer edge (alphaOut). */

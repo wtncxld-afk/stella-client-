@@ -72,15 +72,32 @@ public class CustomGlint extends Module {
         refresh();
     }
 
-    /** Regenerates the texture when a setting or the theme changes. */
+    /** Settings + theme colours captured on the main thread, so the pixels can be computed on another thread. */
+    private record Params(String style, String colorMode, int c1, int c2, int accent, int accent2, double gain) {}
+
+    private java.util.concurrent.CompletableFuture<int[]> pending;
+    private String pendingKey;
+
+    /**
+     * Regenerates the texture when a setting or the theme changes. The 256x256 pattern is computed on a
+     * background thread (it used to stall a frame for ~60 ms on every theme change); only the upload runs here.
+     */
     private void refresh() {
         INSTANCE = this;
-        String key = style.get() + colorMode.get() + color1.get() + color2.get() + brightness.get() + ThemeManager.get().accent() + ThemeManager.accentAt(0.5);
-        if (key.equals(lastKey) && textures[0] != null) return;
-        lastKey = key;
+        int accent = ThemeManager.get().accent(), accent2 = ThemeManager.accentAt(0.5);
+        String key = style.get() + colorMode.get() + color1.get() + color2.get() + brightness.get() + accent + accent2;
+        if (!key.equals(lastKey) && !key.equals(pendingKey)) {
+            Params p = new Params(style.get(), colorMode.get(), color1.get(), color2.get(), accent, accent2, brightness.get());
+            pendingKey = key;
+            pending = java.util.concurrent.CompletableFuture.supplyAsync(() -> pixels(p));
+        }
+        if (pending == null || !pending.isDone()) return;
         try {
+            int[] px = pending.join();
+            lastKey = pendingKey;
             for (int i = 0; i < TARGETS.length; i++) {
-                NativeImage img = generate();
+                NativeImage img = new NativeImage(SIZE, SIZE, false);
+                for (int y = 0; y < SIZE; y++) for (int x = 0; x < SIZE; x++) img.setColorArgb(x, y, px[y * SIZE + x]);
                 if (textures[i] == null) {
                     final int idx = i;
                     textures[i] = new NativeImageBackedTexture(() -> "stella_glint_" + idx, img);
@@ -91,31 +108,37 @@ public class CustomGlint extends Module {
                 textures[i].upload();
             }
         } catch (Throwable t) { StellaClient.reportError("Custom Glint", t); }
+        pending = null;
+        pendingKey = null;
     }
 
     /** A representative glint colour (knife shimmer, previews). */
     public int previewColor() { return colorAt(0.3, 0.2) | 0xFF000000; }
 
     private int colorAt(double u, double v) {
-        return switch (colorMode.get()) {
+        return colorAt(colorMode.get(), color1.get(), color2.get(), ThemeManager.get().accent(), ThemeManager.accentAt(0.5), u, v);
+    }
+
+    private static int colorAt(String mode, int c1, int c2, int accent, int accent2, double u, double v) {
+        return switch (mode) {
             case "Rainbow" -> ColorUtil.fromHsb((float) ((u + v) % 1.0), 0.8f, 1f, 255);
-            case "Custom" -> color1.get();
-            case "Gradient" -> ColorUtil.lerp(color1.get(), color2.get(), 0.5 + 0.5 * Math.sin((u + v) * Math.PI * 2));
-            default -> ColorUtil.lerp(ThemeManager.get().accent(), ThemeManager.accentAt(0.5), 0.5 + 0.5 * Math.sin((u + v) * Math.PI * 2));
+            case "Custom" -> c1;
+            case "Gradient" -> ColorUtil.lerp(c1, c2, 0.5 + 0.5 * Math.sin((u + v) * Math.PI * 2));
+            default -> ColorUtil.lerp(accent, accent2, 0.5 + 0.5 * Math.sin((u + v) * Math.PI * 2));
         };
     }
 
-    /** Builds the tiling glint texture (the glint is drawn additively, so black = no glint). */
-    private NativeImage generate() {
-        NativeImage img = new NativeImage(SIZE, SIZE, false);
+    /** Builds the tiling glint pattern as ARGB pixels (the glint is drawn additively, so black = no glint). Thread-safe. */
+    private static int[] pixels(Params p) {
+        int[] out = new int[SIZE * SIZE];
         java.util.Random rnd = new java.util.Random(7);
         double[][] sparkles = new double[28][3];
         for (double[] s : sparkles) { s[0] = rnd.nextDouble(); s[1] = rnd.nextDouble(); s[2] = 0.015 + rnd.nextDouble() * 0.035; }
-        double gain = brightness.get();
+        double gain = p.gain();
         for (int y = 0; y < SIZE; y++) {
             for (int x = 0; x < SIZE; x++) {
                 double u = x / (double) SIZE, v = y / (double) SIZE;
-                double k = switch (style.get()) {
+                double k = switch (p.style()) {
                     case "Classic" -> streaks(u, v);
                     case "Waves" -> {
                         double w = Math.sin((u * 3 + Math.sin(v * Math.PI * 2) * 0.35) * Math.PI * 2);
@@ -133,12 +156,12 @@ public class CustomGlint extends Module {
                     }
                 };
                 k = Math.max(0, Math.min(1.4, k * gain));
-                int c = colorAt(u, v);
+                int c = colorAt(p.colorMode(), p.c1(), p.c2(), p.accent(), p.accent2(), u, v);
                 int r = (int) Math.min(255, ((c >> 16) & 0xFF) * k), g = (int) Math.min(255, ((c >> 8) & 0xFF) * k), b = (int) Math.min(255, (c & 0xFF) * k);
-                img.setColorArgb(x, y, 0xFF000000 | (r << 16) | (g << 8) | b);
+                out[y * SIZE + x] = 0xFF000000 | (r << 16) | (g << 8) | b;
             }
         }
-        return img;
+        return out;
     }
 
     /** Diagonal streaky noise that tiles. */

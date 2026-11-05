@@ -123,7 +123,12 @@ public class CustomSky extends Module {
         for (int i = 0; i < n; i++) {
             Vector3f d = randomDir(r);
             if (d.y < -0.15f) d.y = -d.y; // keep most stars above the horizon
-            starData[i] = new float[]{d.x, d.y, d.z, 0.35f + r.nextFloat() * r.nextFloat() * 1.4f, r.nextFloat() * 6.28f, 0.4f + r.nextFloat() * 0.6f};
+            float size = 0.35f + r.nextFloat() * r.nextFloat() * 1.4f, phase = r.nextFloat() * 6.28f, bright = 0.4f + r.nextFloat() * 0.6f;
+            // the stars never move, so their facing basis (the two edge vectors of the quad) is computed once here
+            Vector3f[] b = basis(d);
+            starData[i] = new float[]{d.x, d.y, d.z, size, phase, bright,
+                    -b[0].x - b[1].x, -b[0].y - b[1].y, -b[0].z - b[1].z,
+                    b[0].x - b[1].x, b[0].y - b[1].y, b[0].z - b[1].z};
         }
         nebulaData = new float[14][];
         for (int i = 0; i < nebulaData.length; i++) {
@@ -239,17 +244,18 @@ public class CustomSky extends Module {
             VertexConsumer sb = consumers.getBuffer(StellaPipelines.SKY);
             double tw = (time % 100000L) / 1000.0;
             float rr = radius * 0.9f;
+            float starAlpha = nightAlpha * (float) Math.min(1, intensity.get());
+            int starColor = cur.starColor();
             for (float[] s : starData) {
-                Vector3f d = new Vector3f(s[0], s[1], s[2]);
-                Vector3f[] b = basis(d);
                 float size = s[3] * radius / 400f;
                 float twinkle = (float) (0.65 + 0.35 * Math.sin(tw * 2.2 + s[4]));
-                int c = ColorUtil.mulAlpha(cur.starColor(), s[5] * twinkle * nightAlpha * Math.min(1, intensity.get()));
-                float cx = d.x * rr, cy = d.y * rr, cz = d.z * rr;
-                v(sb, m, cx + (-b[0].x - b[1].x) * size, cy + (-b[0].y - b[1].y) * size, cz + (-b[0].z - b[1].z) * size, c);
-                v(sb, m, cx + (b[0].x - b[1].x) * size, cy + (b[0].y - b[1].y) * size, cz + (b[0].z - b[1].z) * size, c);
-                v(sb, m, cx + (b[0].x + b[1].x) * size, cy + (b[0].y + b[1].y) * size, cz + (b[0].z + b[1].z) * size, c);
-                v(sb, m, cx + (-b[0].x + b[1].x) * size, cy + (-b[0].y + b[1].y) * size, cz + (-b[0].z + b[1].z) * size, c);
+                int c = ColorUtil.mulAlpha(starColor, s[5] * twinkle * starAlpha);
+                float cx = s[0] * rr, cy = s[1] * rr, cz = s[2] * rr;
+                // corners: c + (-a-b), c + (a-b), c + (a+b) = c - (-a-b), c + (-a+b) = c - (a-b)
+                v(sb, m, cx + s[6] * size, cy + s[7] * size, cz + s[8] * size, c);
+                v(sb, m, cx + s[9] * size, cy + s[10] * size, cz + s[11] * size, c);
+                v(sb, m, cx - s[6] * size, cy - s[7] * size, cz - s[8] * size, c);
+                v(sb, m, cx - s[9] * size, cy - s[10] * size, cz - s[11] * size, c);
             }
             consumers.draw(StellaPipelines.SKY);
         }

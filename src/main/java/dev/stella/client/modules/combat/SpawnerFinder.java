@@ -98,6 +98,7 @@ public class SpawnerFinder extends HudElement {
     private List<Spawner> list = new ArrayList<>();
     private boolean collapsed;
     private int scroll, timer;
+    private static final int MAX_BEAMS = 48;
 
     public SpawnerFinder() {
         super("Spawner Finder", "Beam into the sky above every spawner, plus a dropdown of their mob types", Category.DONUTSMP,
@@ -111,9 +112,15 @@ public class SpawnerFinder extends HudElement {
     public ScanTarget scanTarget() { return target; }
 
     /** Mob type of a spawner ("Zombie"), or "Unknown" if the server sent no mob. */
+    private final Map<BlockPos, Long> unknownRetry = new java.util.HashMap<>();
+
     private String typeAt(BlockPos p) {
         String cached = types.get(p);
         if (cached != null && !cached.equals("Unknown")) return cached;
+        // unknown: the server hasn't sent the mob yet; re-check every 3 s instead of building an entity twice a second
+        long now = System.currentTimeMillis();
+        if (cached != null && now - unknownRetry.getOrDefault(p, 0L) < 3000) return cached;
+        unknownRetry.put(p.toImmutable(), now);
         String t = "Unknown";
         try {
             BlockEntity be = mc.world.getBlockEntity(p);
@@ -132,7 +139,7 @@ public class SpawnerFinder extends HudElement {
     public void onTick() {
         if (mc.world != lastWorld) { // new server / dimension: forget everything from the old world
             lastWorld = mc.world;
-            types.clear(); entityTypes.clear(); firstSeen.clear(); announced.clear(); list = new ArrayList<>();
+            types.clear(); entityTypes.clear(); firstSeen.clear(); announced.clear(); unknownRetry.clear(); list = new ArrayList<>();
         }
         if (!inGame() || ++timer < 10) return;
         timer = 0;
@@ -176,7 +183,9 @@ public class SpawnerFinder extends HudElement {
     public void onRender3D(Render3D r) {
         if (!inGame()) return;
         int top = mc.world.getTopYInclusive() + 1;
+        int drawn = 0;
         for (Spawner s : list) {
+            if (drawn++ >= MAX_BEAMS) break; // list is nearest-first; dozens of far beams just cost FPS
             int c = colorFor(s);
             if (beam.isOn()) {
                 int a = (int) (255 * beamAlpha.get());

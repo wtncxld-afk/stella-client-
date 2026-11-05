@@ -13,7 +13,7 @@ import java.util.Random;
 final class SkyEffects {
     private SkyEffects() {}
 
-    private static float[][] milky, galaxy, parts;
+    private static float[][] milky, galaxy, parts, milkyDir;
 
     private static void build() {
         if (milky != null) return;
@@ -56,12 +56,16 @@ final class SkyEffects {
                     quad(g, m, p0, p1, q1, q0, R, c, c, s.milkyWay() & 0xFFFFFF, s.milkyWay() & 0xFFFFFF);
                 }
             }
-            for (float[] st : milky) {
-                Vector3f p = ring(b, n, st[0], st[1]);
-                if (p.y < -0.1f) continue;
+            if (milkyDir == null) { // the band never moves: work out each star's direction once
+                milkyDir = new float[milky.length][];
+                for (int i = 0; i < milky.length; i++) { Vector3f p = ring(b, n, milky[i][0], milky[i][1]); milkyDir[i] = new float[]{p.x, p.y, p.z}; }
+            }
+            for (int i = 0; i < milky.length; i++) {
+                float[] st = milky[i], p = milkyDir[i];
+                if (p[1] < -0.1f) continue;
                 float tw = (float) (0.6 + 0.4 * Math.sin(t * 2 + st[4]));
                 int c = ColorUtil.withAlpha(ColorUtil.lerp(s.milkyWay(), 0xFFFFFFFF, st[3]), (int) (200 * tw * night * inten));
-                star(g, m, p, R * 0.99f, st[2] * radius / 600f, c);
+                starFast(g, m, p[0], p[1], p[2], R * 0.99f, st[2] * radius / 600f, c);
             }
             consumers.draw(StellaPipelines.SKY_GLOW_Q);
         }
@@ -76,9 +80,10 @@ final class SkyEffects {
             for (float[] st : galaxy) {
                 double ang = st[1] + spin;
                 float x = (float) (Math.cos(ang) * st[0] * size), y = (float) (Math.sin(ang) * st[0] * size * 0.42 + st[2]);
-                Vector3f p = new Vector3f(c0).add(new Vector3f(b[0]).mul(x)).add(new Vector3f(b[1]).mul(y)).normalize();
+                float px = c0.x + b[0].x * x + b[1].x * y, py = c0.y + b[0].y * x + b[1].y * y, pz = c0.z + b[0].z * x + b[1].z * y;
+                float il = 1f / (float) Math.sqrt(px * px + py * py + pz * pz);
                 int col = st[0] < 0.18f ? 0xFFFFF4E0 : ColorUtil.lerp(s.galaxy(), 0xFFF472B6, st[0]);
-                star(g, m, p, R, st[3] * radius / (st[0] < 0.18f ? 300f : 520f), ColorUtil.withAlpha(col, (int) (220 * night * inten * (1.1f - st[0] * 0.6f))));
+                starFast(g, m, px * il, py * il, pz * il, R, st[3] * radius / (st[0] < 0.18f ? 300f : 520f), ColorUtil.withAlpha(col, (int) (220 * night * inten * (1.1f - st[0] * 0.6f))));
             }
             consumers.draw(StellaPipelines.SKY_GLOW_Q);
             VertexConsumer f = consumers.getBuffer(StellaPipelines.SKY_GLOW);
@@ -227,9 +232,29 @@ final class SkyEffects {
 
     /** Small square star facing the centre. */
     private static void star(VertexConsumer buf, Matrix4f m, Vector3f d, float r, float size, int c) {
-        Vector3f[] b = basis(d);
-        float s = size / r;
-        quad(buf, m, add(d, b, -s, -s), add(d, b, s, -s), add(d, b, s, s), add(d, b, -s, s), r, c, c, c, c);
+        starFast(buf, m, d.x, d.y, d.z, r, size, c);
+    }
+
+    /**
+     * Square star of half-size {@code size} at unit direction (dx, dy, dz) on a sphere of radius r, facing the
+     * centre. Plain float maths: no objects are created (thousands of these are drawn every frame).
+     */
+    static void starFast(VertexConsumer buf, Matrix4f m, float dx, float dy, float dz, float r, float size, int c) {
+        float ux = 0, uy = 1, uz = 0;
+        if (Math.abs(dy) > 0.9f) { ux = 1; uy = 0; }
+        float ax = dy * uz - dz * uy, ay = dz * ux - dx * uz, az = dx * uy - dy * ux;
+        float il = 1f / (float) Math.sqrt(ax * ax + ay * ay + az * az);
+        ax *= il; ay *= il; az *= il;
+        float bx = dy * az - dz * ay, by = dz * ax - dx * az, bz = dx * ay - dy * ax;
+        il = 1f / (float) Math.sqrt(bx * bx + by * by + bz * bz);
+        bx *= il * size; by *= il * size; bz *= il * size;
+        ax *= size; ay *= size; az *= size;
+        float cx = dx * r, cy = dy * r, cz = dz * r;
+        int rr = (c >> 16) & 0xFF, gg = (c >> 8) & 0xFF, bb = c & 0xFF, aa = (c >>> 24) & 0xFF;
+        buf.vertex(m, cx - ax - bx, cy - ay - by, cz - az - bz).color(rr, gg, bb, aa);
+        buf.vertex(m, cx + ax - bx, cy + ay - by, cz + az - bz).color(rr, gg, bb, aa);
+        buf.vertex(m, cx + ax + bx, cy + ay + by, cz + az + bz).color(rr, gg, bb, aa);
+        buf.vertex(m, cx - ax + bx, cy - ay + by, cz - az + bz).color(rr, gg, bb, aa);
     }
 
     private static void sparkle(VertexConsumer buf, Matrix4f m, Vector3f d, float r, float size, int c) {
