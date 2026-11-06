@@ -87,7 +87,7 @@ public class ClickGuiScreen extends dev.stella.client.gui.StellaScreen {
     }
 
     public ClickGuiScreen() {
-        super(Text.literal("Stella ClickGUI"));
+        super(Text.literal(dev.stella.client.Brand.NAME + " ClickGUI"));
         search.onChange(q -> panels.forEach(p -> p.filter(q)));
     }
 

@@ -9,8 +9,8 @@ public final class ChatUtil {
     private ChatUtil() {}
 
     public static MutableText prefix() {
-        return Text.literal("✦ ").formatted(Formatting.LIGHT_PURPLE)
-                .append(Text.literal("Stella").formatted(Formatting.DARK_PURPLE, Formatting.BOLD))
+        return Text.literal(dev.stella.client.Brand.ISRAELI ? "✡ " : "✦ ").formatted(dev.stella.client.Brand.ISRAELI ? Formatting.BLUE : Formatting.LIGHT_PURPLE)
+                .append(Text.literal(dev.stella.client.Brand.NAME).formatted(dev.stella.client.Brand.ISRAELI ? Formatting.AQUA : Formatting.DARK_PURPLE, Formatting.BOLD))
                 .append(Text.literal(" » ").formatted(Formatting.DARK_GRAY));
     }
 

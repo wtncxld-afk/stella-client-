@@ -44,7 +44,7 @@ public class StellaMainMenu extends dev.stella.client.gui.StellaScreen {
     private final long openedAt = System.currentTimeMillis();
     private final Animation fade = new Animation(0, 5).target(1);
 
-    public StellaMainMenu() { super(Text.literal("Stella Client")); }
+    public StellaMainMenu() { super(Text.literal(dev.stella.client.Brand.FULL)); }
 
     /** Content is laid out on a virtual canvas and scaled down when the window is too small. */
     private float ui = 1f;
@@ -74,7 +74,7 @@ public class StellaMainMenu extends dev.stella.client.gui.StellaScreen {
         }
         buttons.add(new MenuButton("▶", "SINGLEPLAYER", () -> client.setScreen(new SelectWorldScreen(this)), false, false));
         buttons.add(new MenuButton("◉", "MULTIPLAYER", () -> client.setScreen(new MultiplayerScreen(this)), false, false));
-        buttons.add(new MenuButton("✦", "STELLA CLICKGUI", () -> client.setScreen(new ClickGuiScreen()), false, false));
+        buttons.add(new MenuButton("✦", dev.stella.client.Brand.UPPER + " CLICKGUI", () -> client.setScreen(new ClickGuiScreen()), false, false));
         buttons.add(new MenuButton("⚙", "OPTIONS", () -> client.setScreen(new OptionsScreen(this, client.options)), false, false));
         buttons.add(new MenuButton("✕", "QUIT GAME", () -> client.scheduleStop(), false, true));
         computeScale();
@@ -86,6 +86,76 @@ public class StellaMainMenu extends dev.stella.client.gui.StellaScreen {
             y += b.h + 4;
         }
         logoTop = top;
+        if (dev.stella.client.Brand.ISRAELI) { // flag layout: button column on the left, between the stripes
+            int bx = 18, bw2 = 150, by = (int) (vh * 40f / 160f) + 8;
+            for (MenuButton b : buttons) { b.x = bx; b.y = by; b.w = bw2; by += b.h + 4; }
+        }
+    }
+
+    /**
+     * Israeli Client main menu: the waving flag of Israel fills the screen, the white title sits on the top
+     * blue stripe next to a Star of David, and white buttons with blue text run down the left so the flag's
+     * star stays visible in the middle.
+     */
+    private void renderIsraeli(DrawContext ctx, int rawX, int rawY, float delta) {
+        double a = fade.get();
+        IsraelFlag.render(ctx, width, height, 1);
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().scale(ui, ui);
+        int mx = (int) (rawX / ui), my = (int) (rawY / ui);
+        int width = vw, height = vh;
+        long age = System.currentTimeMillis() - openedAt;
+        double t = age / 1000.0;
+        float sTop = height * 15f / 160f, sH = height * 25f / 160f;
+        float logoCx = 18 + sH * 0.38f, logoCy = sTop + sH / 2f;
+        fx.focus(logoCx, logoCy, sH * 0.6f).render(ctx, width, height, a);
+        // logo pops in with a ring
+        double pop = dev.stella.client.util.Animation.easeOutBack(Math.min(1, age / 650.0));
+        if (!introBurst && age > 380) { introBurst = true; fx.burst(logoCx, logoCy, 30, 0xFFFFFFFF); }
+        if (age < 1200) {
+            double k = Math.min(1, age / 1200.0);
+            float rr = (float) (6 + k * 70);
+            int segs = 48;
+            for (int i = 0; i < segs; i++) {
+                double a1 = i * Math.PI * 2 / segs, a2 = (i + 1) * Math.PI * 2 / segs;
+                dev.stella.client.render.Render2D.line(ctx, logoCx + Math.cos(a1) * rr, logoCy + Math.sin(a1) * rr,
+                        logoCx + Math.cos(a2) * rr, logoCy + Math.sin(a2) * rr, (float) (2 * (1 - k)) + 0.3f,
+                        ColorUtil.withAlpha(0xFFFFFFFF, (int) (200 * (1 - k))));
+            }
+        }
+        IsraelFlag.logo(ctx, logoCx, logoCy, (float) (sH * 0.36f * pop), 0xFFFFFFFF, 0x70A8DAFF, a);
+        // title: white letters dropping in one by one, a light-blue shimmer running across
+        String title = dev.stella.client.Brand.UPPER;
+        float sc = Math.max(1.2f, Math.min(2.6f, sH * 0.6f / 9f));
+        float tx = logoCx + sH * 0.5f + 4, ty = sTop + (sH - 9 * sc) / 2f + 1;
+        float cx = tx;
+        for (int i = 0; i < title.length(); i++) {
+            String ch = String.valueOf(title.charAt(i));
+            double le = Math.max(0, Math.min(1, (age - 250 - i * 60) / 360.0));
+            float drop = (float) ((1 - dev.stella.client.util.Animation.easeOutBack(le)) * -6);
+            double p = i / (double) Math.max(1, title.length() - 1);
+            double sh = Math.max(0, 1 - Math.abs(p - ((age % 2600) / 2600.0 * 1.6 - 0.3)) * 4);
+            dev.stella.client.render.Render2D.textScaled(ctx, ch, cx, ty + drop, sc, ColorUtil.mulAlpha(ColorUtil.lerp(0xFFFFFFFF, 0xFFA8DAFF, sh), a * le), true);
+            cx += StellaFont.width(ch) * sc + sc;
+        }
+        double subIn = Math.max(0, Math.min(1, (age - 700) / 400.0));
+        dev.stella.client.render.Render2D.textScaled(ctx, "C L I E N T", cx + 6, ty + 9 * sc - 9 * 1.1f, 1.1f, ColorUtil.mulAlpha(0xFFD6E8FF, a * subIn), true);
+        // buttons (staggered entrance)
+        for (int i = 0; i < buttons.size(); i++) {
+            double e = Math.max(0, Math.min(1, (age - 250 - i * 70) / 350.0));
+            buttons.get(i).render(ctx, mx, my, a, dev.stella.client.util.Animation.easeOutCubic(e));
+        }
+        // footer in flag blue (the bottom edge of the flag is white)
+        int blue = IsraelFlag.BLUE;
+        StellaFont.draw(ctx, "Logged in as " + client.getSession().getUsername(), 6, height - 12, ColorUtil.mulAlpha(blue, a), false);
+        String ver = dev.stella.client.Brand.FULL + " " + StellaClient.VERSION + "  ·  Minecraft 1.21.11  ·  Fabric";
+        StellaFont.draw(ctx, ver, width - 6 - StellaFont.width(ver), height - 12, ColorUtil.mulAlpha(blue, a), false);
+        String vanilla = "Vanilla menu";
+        int vx = width - 6 - StellaFont.width(vanilla);
+        boolean vHover = mx >= vx && my >= height - 24 && my < height - 14;
+        StellaFont.draw(ctx, vanilla, vx, height - 24, ColorUtil.mulAlpha(vHover ? 0xFF3D8BFF : 0xFF5A6E9A, a), false);
+        ctx.getMatrices().popMatrix();
+        super.render(ctx, rawX, rawY, delta);
     }
 
     @Override
@@ -93,6 +163,7 @@ public class StellaMainMenu extends dev.stella.client.gui.StellaScreen {
 
     @Override
     public void render(DrawContext ctx, int rawX, int rawY, float delta) {
+        if (dev.stella.client.Brand.ISRAELI) { renderIsraeli(ctx, rawX, rawY, delta); return; }
         double a = fade.get();
         MenusModule cfg = ModuleManager.get(MenusModule.class);
         float pxm = 0, pym = 0;
@@ -195,7 +266,7 @@ public class StellaMainMenu extends dev.stella.client.gui.StellaScreen {
         // ---- footer
         String user = "Logged in as " + client.getSession().getUsername();
         StellaFont.draw(ctx, user, 6, height - 12, ColorUtil.mulAlpha(theme.textDim(), a), false);
-        String ver = "Stella " + StellaClient.VERSION + "  ·  Minecraft 1.21.11  ·  Fabric";
+        String ver = dev.stella.client.Brand.NAME + " " + StellaClient.VERSION + "  ·  Minecraft 1.21.11  ·  Fabric";
         String upd = dev.stella.client.update.AutoUpdater.statusLine();
         if (upd != null) StellaFont.draw(ctx, upd, 6, height - 24, ColorUtil.mulAlpha(theme.accent(), a), false);
         StellaFont.draw(ctx, ver, width - 6 - StellaFont.width(ver), height - 12, ColorUtil.mulAlpha(theme.textDim(), a), false);

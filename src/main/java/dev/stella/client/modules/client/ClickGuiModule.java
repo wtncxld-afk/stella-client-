@@ -13,7 +13,7 @@ import org.lwjgl.glfw.GLFW;
 
 /** Owns the GUI open key (Right Shift by default), the theme and UI sounds. */
 public class ClickGuiModule extends Module {
-    public final ModeSetting theme = add(new ModeSetting("Theme", "Colour theme", "Stella", Theme.names())).onChange(this::applyTheme);
+    public final ModeSetting theme = add(new ModeSetting("Theme", "Colour theme", dev.stella.client.Brand.defaultTheme(), Theme.names())).onChange(this::applyTheme);
     public final ColorSetting customAccent = add(new ColorSetting("Custom Accent", "Accent used by the Custom theme", 0xFFA855F7))
             .visibleWhen(() -> this.theme.is(Theme.CUSTOM)).onChange(this::applyTheme);
     public final dev.stella.client.setting.NumberSetting guiSize = add(new dev.stella.client.setting.NumberSetting("GUI Size",

@@ -21,17 +21,18 @@ public record Theme(String name,
     public static final String GALAXY = "Galaxy";
     public static final String AURORA = "Aurora";
     public static final String GLASS = "Liquid Glass";
+    public static final String ISRAEL = "Israel";
 
     public static final String[] NAMES = {"Stella", "Pink", "Purple", "Blue", "Red", "Emerald",
             "Midnight", "Ocean", "Aqua", "Frost", "Sakura", "Lavender", "Sunset", "Amber", "Gold", "Crimson",
-            "Toxic", "Mint", "Mono", GALAXY, AURORA, GLASS, RAINBOW, CUSTOM};
+            "Toxic", "Mint", "Mono", GALAXY, AURORA, GLASS, ISRAEL, RAINBOW, CUSTOM};
     public static final int[] ACCENTS = {0xFFA855F7, 0xFFF472B6, 0xFF8B5CF6, 0xFF60A5FA, 0xFFF87171, 0xFF34D399,
             0xFF6366F1, 0xFF0EA5E9, 0xFF2DD4BF, 0xFF93C5FD, 0xFFFDA4AF, 0xFFC4B5FD, 0xFFFB923C, 0xFFF59E0B, 0xFFFACC15, 0xFFDC2626,
-            0xFFA3E635, 0xFF6EE7B7, 0xFFE5E7EB, 0xFFC084FC, 0xFF5EEAD4, 0xFF9AD8FF, 0xFFFF6AD5, 0xFFA855F7};
+            0xFFA3E635, 0xFF6EE7B7, 0xFFE5E7EB, 0xFFC084FC, 0xFF5EEAD4, 0xFF9AD8FF, 0xFFA8DAFF, 0xFFFF6AD5, 0xFFA855F7};
     /** Background tint per theme (0 = Stella's neutral charcoal). */
     public static final int[] TINTS = {0, 0, 0, 0, 0, 0,
             0xFF1E1B4B, 0xFF082F49, 0xFF042F2E, 0xFF1E293B, 0xFF4C0519, 0xFF2E1065, 0xFF431407, 0xFF451A03, 0xFF422006, 0xFF450A0A,
-            0xFF1A2E05, 0xFF022C22, 0, 0xFF2E1065, 0xFF042F2E, 0, 0, 0};
+            0xFF1A2E05, 0xFF022C22, 0, 0xFF2E1065, 0xFF042F2E, 0, 0, 0, 0};
 
     /** Animated themes: hue range they drift through. */
     public static float[] animatedHues(String name) {
@@ -54,6 +55,11 @@ public record Theme(String name,
             // frosted glass: translucent cool panels, white text, icy accent
             return new Theme(name, 0x58222C3E, 0x30FFFFFF, 0x0CFFFFFF, 0x26FFFFFF, accent,
                     ColorUtil.lerp(accent, 0xFFFFFFFF, 0.6), 0xFFFFFFFF, 0xFFCFD8E6, 0x70FFFFFF);
+        }
+        if (ISRAEL.equalsIgnoreCase(name)) {
+            // light blue and white: blue panels, light-blue accents, white text and highlights
+            return new Theme(name, 0xEC2563C4, 0xF41C51A8, 0xFF2D6FCF, 0xFF3D80DD, accent,
+                    0xFFFFFFFF, 0xFFFFFFFF, 0xFFD6E8FF, 0x90FFFFFF);
         }
         if (tint != 0) {
             int bg = ColorUtil.lerp(0xFF111015, tint, 0.45);

@@ -4,9 +4,9 @@ import dev.stella.client.util.ColorUtil;
 
 /** Current theme. "Rainbow" cycles hue over time; "Custom" uses a user-picked accent. */
 public final class ThemeManager {
-    private static String name = "Stella";
+    private static String name = dev.stella.client.Brand.defaultTheme();
     private static int customAccent = 0xFFA855F7;
-    private static Theme cached = Theme.STELLA;
+    private static Theme cached = Theme.fromAccent(name, Theme.accentOf(name));
     private static long cachedAt;
 
     private ThemeManager() {}

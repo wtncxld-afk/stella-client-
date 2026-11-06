@@ -30,6 +30,9 @@ public class BrandingHud extends HudElement {
         int a = (int) (255 * opacity.get());
         int c1 = themeColors.isOn() ? ThemeManager.accentAt(0) : color1.argb();
         int c2 = themeColors.isOn() ? ColorUtil.lerp(ThemeManager.accentAt(0.2), 0xFFFFFFFF, 0.6) : color2.argb();
+        if (dev.stella.client.Brand.ISRAELI) {
+            dev.stella.client.gui.menu.IsraelFlag.logo(ctx, 8, 8, 7.5f, c2 | 0xFF000000, glow.isOn() ? ColorUtil.withAlpha(c1, 0x70) : 0, a / 255.0);
+        } else {
         if (glow.isOn()) {
             double pulse = animated.isOn() ? 0.65 + 0.35 * Math.sin(time * Math.PI * 2) : 0.8;
             int ga = (int) (a * pulse);
@@ -37,7 +40,8 @@ public class BrandingHud extends HudElement {
             ctx.drawTexture(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, GLOW, -6, -6, 0f, 0f, 28, 28, 28, 28, (ga << 24) | tint);
         }
         ctx.drawTexture(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, LOGO, 0, 0, 0f, 0f, 16, 16, 16, 16, (a << 24) | 0xFFFFFF);
-        String text = "STELLA";
+        }
+        String text = dev.stella.client.Brand.UPPER;
         int x = 20;
         for (int i = 0; i < text.length(); i++) {
             double p = (i / (double) (text.length() - 1) + time) % 1.0;

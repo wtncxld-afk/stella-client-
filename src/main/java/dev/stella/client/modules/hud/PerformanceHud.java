@@ -97,7 +97,7 @@ public class PerformanceHud extends HudElement {
             gy += 12;
         }
         if (topModules.isOn()) {
-            String hdr = String.format(java.util.Locale.ROOT, "STELLA CPU %.2f ms", dev.stella.client.util.Profiler.totalMs());
+            String hdr = String.format(java.util.Locale.ROOT, dev.stella.client.Brand.UPPER + " CPU %.2f ms", dev.stella.client.util.Profiler.totalMs());
             Render2D.textScaled(ctx, hdr, x, gy, 0.65f, col(0xFFE9D5FF), true);
             gy += 9;
             for (var e : top) {

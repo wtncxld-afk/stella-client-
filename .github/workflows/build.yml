@@ -283,6 +283,73 @@ jobs:
           base64 -w 4000 "$J" | sed 's/^/JAR /'
           echo "JAR_END"
 
+  israeli-client:
+    # Second build of the same code with -Pflavor=israeli ("Israeli Client": light blue and white theme, Israeli
+    # flag main menu, own config folder, no auto-update). Builds it, runs the short in-game test, prints the
+    # screenshots, then runs the same malware audit as the Stella jar and prints the jar for delivery.
+    # It is never published as a release (Stella's auto-updater reads the releases).
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build Israeli Client
+        run: |
+          chmod +x gradlew
+          ./gradlew build --no-daemon -Pflavor=israeli -Pmod_version=1.0.${{ github.run_number }}
+          ls -la build/libs
+      - name: Install virtual display
+        timeout-minutes: 8
+        run: sudo apt-get update && sudo apt-get install -y xvfb libgl1-mesa-dri mesa-utils
+      - name: Short in-game test
+        run: |
+          export LIBGL_ALWAYS_SOFTWARE=1
+          Xvfb :99 -screen 0 1280x720x24 &
+          export DISPLAY=:99
+          timeout 1200 ./gradlew runSmokeShort --no-daemon -Pflavor=israeli 2>&1 | tee short.log || true
+          grep -q "STELLA_SMOKE_OK" short.log
+      - name: Print screenshots
+        if: always()
+        run: |
+          pip install --quiet pillow
+          python3 - <<'PY'
+          import base64, io, os
+          from PIL import Image
+          d = 'run-smoke/screenshots'
+          for f in sorted(os.listdir(d)) if os.path.isdir(d) else []:
+              if not f.endswith('.png'): continue
+              im = Image.open(os.path.join(d, f)).convert('RGB')
+              buf = io.BytesIO(); im.save(buf, 'JPEG', quality=82)
+              b = base64.b64encode(buf.getvalue()).decode()
+              print(f'SHOT_BEGIN {f}')
+              for i in range(0, len(b), 4000): print('SHOT ' + b[i:i+4000])
+              print(f'SHOT_END {f}')
+          PY
+      - name: Audit and export the Israeli Client jar
+        run: |
+          J=$(ls build/libs/israeli-client-*.jar | grep -v sources)
+          sha256sum "$J"; unzip -l "$J"
+          mkdir xi && (cd xi && unzip -q "../$J")
+          echo "== classes referencing network / process / classloading / reflection APIs"
+          for c in $(cd xi && find . -name '*.class'); do
+            hits=$(javap -c -p "xi/$c" 2>/dev/null | grep -oE 'java/net/[A-Za-z/]+|java/lang/ProcessBuilder|java/lang/Runtime\.exec|java/lang/ClassLoader|java/net/URLClassLoader|defineClass|java/lang/reflect/[A-Za-z]+|sun/misc/Unsafe|java/util/Base64|javax/script' | sort -u | tr '\n' ' ')
+            [ -n "$hits" ] && echo "$c: $hits"
+          done
+          echo "== end of bytecode scan"
+          sudo apt-get install -y -qq clamav > /dev/null
+          sudo systemctl stop clamav-freshclam || true
+          sudo freshclam --quiet || sudo freshclam
+          clamscan --scan-archive=yes "$J" | tee clamscan.txt
+          grep -q "Infected files: 0" clamscan.txt
+          echo "IJAR_NAME $(basename $J)"
+          echo "IJAR_SHA256 $(sha256sum $J | cut -d' ' -f1)"
+          base64 -w 4000 "$J" | sed 's/^/IJAR /'
+          echo "IJAR_END"
+
   release:
     # Publishes the audited jar as a GitHub Release (tag v1.0.<run number>) with
     # its SHA-256. The in-game Auto Updater reads releases/latest, downloads the

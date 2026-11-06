@@ -28,6 +28,8 @@ public final class StellaSmokeTest {
     private static int tick;
     private static int menuShownAt = -1;
     private static int stage;
+    /** Short run: menus, ClickGUI, loading and one in-world scene only (used for the Israeli Client build). */
+    private static final boolean SHORT = Boolean.getBoolean("stella.smokeShort");
     private static int stageStart;
 
     private StellaSmokeTest() {}
@@ -416,6 +418,24 @@ public final class StellaSmokeTest {
                     }
                 }
                 case 5 -> {
+                    if (SHORT) { // short run (Israeli Client build): pause menu, in-game HUD, sky, then done
+                        int T = inStage();
+                        if (T == 5) { mc.player.setYaw(-90f); mc.player.setPitch(-12f); }
+                        if (T == 30 && holdForTerrain(mc, 900)) return;
+                        if (T == 32) shot(mc, "short-hud");
+                        if (T == 36) mc.setScreen(new net.minecraft.client.gui.screen.GameMenuScreen(true));
+                        if (T == 56) shot(mc, "short-pause-menu");
+                        if (T == 58) mc.setScreen(new ClickGuiScreen());
+                        if (T == 80) shot(mc, "short-clickgui-world");
+                        if (T == 82) mc.setScreen(null);
+                        if (T == 90) {
+                            int errors = StellaClient.errorCount();
+                            if (errors > 0) fail(errors + " runtime errors: " + StellaClient.errorSummary());
+                            else { StellaClient.LOGGER.info("STELLA_SMOKE_OK"); System.out.println("STELLA_SMOKE_OK"); mc.scheduleStop(); }
+                            next();
+                        }
+                        return;
+                    }
                     if (inStage() == 5) { mc.player.setYaw(-90f); mc.player.setPitch(18f); }
                     // A real, naturally generated trial chamber: must NOT be flagged
                     if (inStage() == 40) mc.player.networkHandler.sendChatCommand("place structure minecraft:trial_chambers " + (ox + 40) + " -30 " + (oz + 78));

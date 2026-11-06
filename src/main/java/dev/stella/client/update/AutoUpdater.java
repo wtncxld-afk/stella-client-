@@ -78,6 +78,11 @@ public final class AutoUpdater {
     /** Starts a background check (and download when {@code autoDownload}). Safe to call repeatedly. */
     public static synchronized void checkAsync(String source, boolean autoDownload, boolean notifyUpToDate) {
         if (state == State.CHECKING || state == State.DOWNLOADING || state == State.READY) return;
+        if (dev.stella.client.Brand.ISRAELI) {
+            // this repository's releases are Stella builds: never "update" Israeli Client into Stella
+            message = "Auto-update is off in Israeli Client - new versions come as new jars";
+            return;
+        }
         if (!source.matches("[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")) {
             fail("Invalid update source '" + source + "' (expected owner/repo)");
             return;

@@ -30,7 +30,7 @@ public class NotificationsHud extends HudElement {
     public void render(DrawContext ctx, float tickDelta, boolean editor) {
         List<Notification> list = NotificationManager.active();
         if (editor && list.isEmpty()) {
-            list = List.of(new Notification("Stella", "Notifications appear here", Notification.Type.INFO, System.currentTimeMillis(), 100000));
+            list = List.of(new Notification(dev.stella.client.Brand.NAME, "Notifications appear here", Notification.Type.INFO, System.currentTimeMillis(), 100000));
         }
         int w = cardWidth.getInt(), h = 28, y = 0;
         long now = System.currentTimeMillis();

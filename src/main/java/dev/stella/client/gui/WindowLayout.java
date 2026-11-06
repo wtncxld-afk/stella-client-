@@ -83,7 +83,7 @@ final class WindowLayout {
         Render2D.rect(ctx, sx + SIDEBAR - 1, sy + 8, 1, wh - 16, ColorUtil.mulAlpha(t.outline(), a * 0.6));
         // brand
         GuiDraw.text(ctx, "✦", sx + 10, sy + 10, ColorUtil.mulAlpha(t.accent(), a));
-        GuiDraw.small(ctx, "STELLA", sx + 22, sy + 10.5f, 1.0f, ColorUtil.mulAlpha(t.text(), a));
+        GuiDraw.small(ctx, dev.stella.client.Brand.UPPER, sx + 22, sy + 10.5f, 1.0f, ColorUtil.mulAlpha(t.text(), a));
         GuiDraw.small(ctx, "v" + dev.stella.client.StellaClient.VERSION, sx + 22, sy + 20, 0.6f, ColorUtil.mulAlpha(t.textDim(), a));
         int iy = sy + 36;
         boolean searching = !query.isBlank();

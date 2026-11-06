@@ -6,8 +6,12 @@ plugins {
 version = project.mod_version
 group = project.maven_group
 
+// Build flavour: "stella" (default) or "israeli" (./gradlew build -Pflavor=israeli) -> "Israeli Client" jar
+def flavor = (project.findProperty('flavor') ?: 'stella').toString().toLowerCase()
+def israeli = flavor == 'israeli'
+
 base {
-    archivesName = project.archives_base_name
+    archivesName = israeli ? 'israeli-client' : project.archives_base_name
 }
 
 repositories {
@@ -22,6 +26,15 @@ loom {
             client()
             name = 'Smoke Test Client'
             vmArg '-Dstella.smokeTest=true'
+            programArgs '--width', '1280', '--height', '720'
+            runDir 'run-smoke'
+        }
+        // Short smoke test (menus, ClickGUI, loading, pause menu, HUD) used for the Israeli Client build
+        smokeShort {
+            client()
+            name = 'Short Smoke Test Client'
+            vmArg '-Dstella.smokeTest=true'
+            vmArg '-Dstella.smokeShort=true'
             programArgs '--width', '1280', '--height', '720'
             runDir 'run-smoke'
         }
@@ -67,12 +80,20 @@ processResources {
     inputs.property 'version', project.version
     inputs.property 'minecraft_version', project.minecraft_version
     inputs.property 'loader_min', project.loader_min
+    inputs.property 'flavor', flavor
     filteringCharset 'UTF-8'
 
     filesMatching('fabric.mod.json') {
         expand 'version': project.version,
                'minecraft_version': project.minecraft_version,
-               'loader_version': project.loader_min
+               'loader_version': project.loader_min,
+               'mod_name': israeli ? 'Israeli Client' : 'Stella Client',
+               'mod_description': israeli
+                       ? 'Israeli Client: a light blue and white, DonutSMP-focused Fabric client (built from Stella Client).'
+                       : 'A purple-themed, DonutSMP-focused Fabric client: multi-panel ClickGUI, independent movable HUD, ESP, base-finding scanners, custom skies and visuals.'
+    }
+    filesMatching('assets/stella/flavor.txt') {
+        expand 'flavor': flavor
     }
 }
 

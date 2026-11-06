@@ -42,7 +42,7 @@ public final class ConfigManager {
     private ConfigManager() {}
 
     public static Path root() {
-        Path p = FabricLoader.getInstance().getConfigDir().resolve("stella");
+        Path p = FabricLoader.getInstance().getConfigDir().resolve(dev.stella.client.Brand.ISRAELI ? "israeli-client" : "stella"); // separate settings per build
         try { Files.createDirectories(p); } catch (IOException ignored) { }
         return p;
     }

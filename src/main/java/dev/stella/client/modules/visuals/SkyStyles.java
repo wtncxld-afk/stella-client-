@@ -23,7 +23,7 @@ final class SkyStyles {
 
     static final String[] PRESETS = {"Match GUI Theme", "Cosmic Stella", "Sakura Dawn", "Lavender Sunset", "Starlight",
             "Blood Moon", "Emerald Aurora", "Midnight", "Deep Ocean", "Arctic Aurora", "Golden Hour", "Toxic Nebula",
-            "Monochrome", "Spiral Galaxy", "Prism Glass", "Rainbow Drift", "Custom"};
+            "Monochrome", "Spiral Galaxy", "Prism Glass", "Rainbow Drift", "Blue & White", "Custom"};
 
     static Style preset(String name) {
         return switch (name) {
@@ -66,6 +66,9 @@ final class SkyStyles {
             case "Prism Glass" -> new Style(0xFF1B2A4A, 0xFFB8D8FF, 0xFF2A3654, 0.65,
                     300, 0xFFFFFFFF, 0x409AD8FF, 0x40F0ABFC, 0,
                     SUN, 0xFFFFFFFF, 0.06f, 0.5f, 2.2f, false, 0, 0, P_SPARKLES, 0xFFE0F2FF, true, true);
+            case "Blue & White" -> new Style(0xFF0B2A5C, 0xFF7FC3FF, 0xFF0A1F44, 0.5,
+                    1300, 0xFFFFFFFF, 0x5060A5FA, 0x40FFFFFF, 0,
+                    MOON, 0xFFFFFFFF, 0.055f, 0.55f, 2.4f, true, 0xFFD6ECFF, 0, P_SPARKLES, 0xFFFFFFFF, false, false);
             case "Rainbow Drift" -> {
                 float h = (System.currentTimeMillis() % 30000L) / 30000f;
                 int a = ColorUtil.fromHsb(h, 0.7f, 0.45f, 255), b = ColorUtil.fromHsb((h + 0.33f) % 1f, 0.6f, 0.95f, 255);
@@ -97,6 +100,7 @@ final class SkyStyles {
             case "Galaxy" -> "Spiral Galaxy";
             case "Liquid Glass" -> "Prism Glass";
             case "Rainbow" -> "Rainbow Drift";
+            case "Israel" -> "Blue & White";
             case "Custom" -> "Accent";
             default -> "Cosmic Stella";
         };

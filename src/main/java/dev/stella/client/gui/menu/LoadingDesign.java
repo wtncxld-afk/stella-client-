@@ -243,6 +243,11 @@ public final class LoadingDesign {
             Render2D.line(ctx, cx, cy, cx + Math.cos(a) * len, cy + Math.sin(a) * len, r * 0.08f,
                     ColorUtil.mulAlpha(ColorUtil.withAlpha(ColorUtil.lerp(accent, 0xFFFFFFFF, 0.2), 0x18), alpha));
         }
+        if (dev.stella.client.Brand.ISRAELI) { // Star of David: light-blue outline under a white one
+            IsraelFlag.star(ctx, cx, cy, r * 1.08f * (float) pulse, Math.max(1.6f, r * 0.24f), ColorUtil.mulAlpha(ColorUtil.withAlpha(accent, 0xC0), alpha));
+            IsraelFlag.star(ctx, cx, cy, r * (float) pulse, Math.max(1.2f, r * 0.15f), ColorUtil.mulAlpha(0xFFFFFFFF, alpha));
+            return;
+        }
         // filled star: nested outlines from the edge inward, theme colour -> white
         int edge = ColorUtil.lerp(accent, 0xFFFFFFFF, 0.25);
         int layers = Math.max(5, Math.min(10, (int) (r / 3)));

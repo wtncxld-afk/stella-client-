@@ -18,7 +18,9 @@ import java.util.Random;
  * load before textures and fonts exist. One instance per screen; call {@link #render} every frame.
  */
 public final class MenuFx {
-    private static final int[] PETAL_COLORS = {0xFFFFB7D5, 0xFFF9A8D4, 0xFFFBCFE8, 0xFFFFC4DD, 0xFFF472B6};
+    private static final int[] PETAL_COLORS = dev.stella.client.Brand.ISRAELI
+            ? new int[]{0xFFFFFFFF, 0xFFD6ECFF, 0xFFA8DAFF, 0xFF6FB6FF, 0xFF3D8BFF}   // blue and white
+            : new int[]{0xFFFFB7D5, 0xFFF9A8D4, 0xFFFBCFE8, 0xFFFFC4DD, 0xFFF472B6};
 
     private final Random rnd = new Random();
     private final List<Petal> petals = new ArrayList<>();

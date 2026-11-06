@@ -45,7 +45,7 @@ public class StellaPauseScreen extends dev.stella.client.gui.StellaScreen {
         buttons.add(new MenuButton("★", "ADVANCEMENTS", () -> client.setScreen(new AdvancementsScreen(client.player.networkHandler.getAdvancementHandler(), this)), false, false));
         buttons.add(new MenuButton("≡", "STATISTICS", () -> client.setScreen(new StatsScreen(this, client.player.getStatHandler())), false, false));
         buttons.add(new MenuButton("⚙", "OPTIONS", () -> client.setScreen(new OptionsScreen(this, client.options)), false, false));
-        buttons.add(new MenuButton("✦", "STELLA CLICKGUI", () -> client.setScreen(new ClickGuiScreen()), false, false));
+        buttons.add(new MenuButton("✦", dev.stella.client.Brand.UPPER + " CLICKGUI", () -> client.setScreen(new ClickGuiScreen()), false, false));
         buttons.add(new MenuButton("▣", "HUD EDITOR", () -> client.setScreen(new HudEditorScreen(this)), false, false));
         buttons.add(new MenuButton("⏻", client.isInSingleplayer() ? "SAVE & QUIT" : "DISCONNECT", this::disconnect, false, true));
         int bw = 160, x = width / 2 - bw / 2, y = height / 2 - (buttons.size() * 24) / 2 + 14;

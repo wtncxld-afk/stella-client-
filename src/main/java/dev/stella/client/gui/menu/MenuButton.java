@@ -29,6 +29,7 @@ public class MenuButton {
 
     /** @param enter 0..1 entrance progress (slides in from the left) */
     public void render(DrawContext ctx, int mx, int my, double alpha, double enter) {
+        if (dev.stella.client.Brand.ISRAELI) { renderWhite(ctx, mx, my, alpha, enter); return; }
         Theme t = ThemeManager.get();
         double hv = hover.target(over(mx, my) ? 1 : 0).get();
         float ox = (float) ((1 - enter) * -30);
@@ -64,6 +65,28 @@ public class MenuButton {
             textX += 14;
         }
         StellaFont.draw(ctx, label, textX, y + 6, ColorUtil.mulAlpha(tc, a), true);
+        if (hv > 0.05) StellaFont.draw(ctx, "›", (int) (bx + w - 12 + hv * 2), y + 6, ColorUtil.mulAlpha(0xFFFFFFFF, a * hv), false);
+    }
+
+    /** Israeli Client style: white card, blue text; hover fills it with flag blue and turns the text white. */
+    private void renderWhite(DrawContext ctx, int mx, int my, double alpha, double enter) {
+        double hv = hover.target(over(mx, my) ? 1 : 0).get();
+        float ox = (float) ((1 - enter) * -30);
+        double a = alpha * enter;
+        int blue = IsraelFlag.BLUE, fill = danger ? 0xFFE5484D : blue;
+        float bx = x + ox;
+        Render2D.shadow(ctx, bx, y, w, h, 6, 4, ColorUtil.mulAlpha(0x40001A4D, a * (0.6 + 0.4 * hv)));
+        Render2D.roundRect(ctx, bx, y, w, h, 6, ColorUtil.mulAlpha(primary ? 0xFFE6F3FF : 0xF8FFFFFF, a));
+        Render2D.roundRect(ctx, bx, y + h - 1.5f, w, 1.5f, 0.75f, ColorUtil.mulAlpha(ColorUtil.withAlpha(fill, primary ? 0xC0 : 0x50), a));
+        float fw = (float) (w * hv);
+        if (fw > 1) Render2D.roundRect(ctx, bx, y, fw, h, 6, ColorUtil.mulAlpha(ColorUtil.withAlpha(fill, 0xF0), a));
+        int tc = ColorUtil.lerp(danger ? 0xFFC0262D : blue, 0xFFFFFFFF, hv);
+        int textX = (int) (bx + 10 + hv * 3);
+        if (!icon.isEmpty()) {
+            StellaFont.draw(ctx, icon, textX, y + 6, ColorUtil.mulAlpha(tc, a), false);
+            textX += 14;
+        }
+        StellaFont.draw(ctx, label, textX, y + 6, ColorUtil.mulAlpha(tc, a), false);
         if (hv > 0.05) StellaFont.draw(ctx, "›", (int) (bx + w - 12 + hv * 2), y + 6, ColorUtil.mulAlpha(0xFFFFFFFF, a * hv), false);
     }
 }

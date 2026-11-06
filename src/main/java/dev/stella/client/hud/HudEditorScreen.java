@@ -26,7 +26,7 @@ public class HudEditorScreen extends dev.stella.client.gui.StellaScreen {
     private boolean snap = cfg == null || cfg.snap.isOn();
 
     public HudEditorScreen(Screen parent) {
-        super(Text.literal("Stella HUD Editor"));
+        super(Text.literal(dev.stella.client.Brand.NAME + " HUD Editor"));
         this.parent = parent;
     }
 
