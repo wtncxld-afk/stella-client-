@@ -290,6 +290,8 @@ jobs:
     # It is never published as a release (Stella's auto-updater reads the releases).
     runs-on: ubuntu-24.04
     timeout-minutes: 40
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -349,6 +351,21 @@ jobs:
           echo "IJAR_SHA256 $(sha256sum $J | cut -d' ' -f1)"
           base64 -w 4000 "$J" | sed 's/^/IJAR /'
           echo "IJAR_END"
+      - name: Publish as the "israeli-latest" pre-release
+        # A pre-release never shows up as "latest", so Stella's auto-updater (releases/latest) can't pick it up.
+        # Only after the in-game test and the malware audit above have passed.
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/stella-client-fabric-mod-1i9iw2')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          J=$(ls build/libs/israeli-client-*.jar | grep -v sources)
+          N=$(basename "$J")
+          (cd build/libs && sha256sum "$N" > "$N.sha256")
+          V=${N#israeli-client-}; V=${V%.jar}
+          gh release delete israeli-latest --yes --cleanup-tag -R "${{ github.repository }}" || true
+          gh release create israeli-latest "$J" "$J.sha256" -R "${{ github.repository }}" --prerelease --target "${{ github.sha }}" \
+            --title "Israeli Client $V" \
+            --notes "Israeli Client $V - light blue and white build of Stella Client with an Israeli-flag main menu. Passed the in-game test and the malware audit (ClamAV + bytecode scan). SHA-256: $(cut -d' ' -f1 < "$J.sha256"). Put it in .minecraft/mods instead of Stella (not both)."
 
   release:
     # Publishes the audited jar as a GitHub Release (tag v1.0.<run number>) with
