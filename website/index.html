@@ -14,25 +14,32 @@
 <link rel="stylesheet" href="assets/site.css">
 <script src="assets/modules.js" defer></script>
 <script src="assets/site.js" defer></script>
+<script src="assets/dashboard.js" defer></script>
+<script src="assets/demos.js" defer></script>
 </head>
 <body>
 
 <nav class="nav" id="top" aria-label="Main">
   <div class="wrap">
     <a class="brand" href="#home" aria-label="Stella Client home">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#d8b4fe" d="M12 1.8l2.9 6.6 7.2.7-5.4 4.8 1.6 7.1L12 17.3 5.7 21l1.6-7.1L1.9 9.1l7.2-.7z"/></svg>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.8l2.9 6.6 7.2.7-5.4 4.8 1.6 7.1L12 17.3 5.7 21l1.6-7.1L1.9 9.1l7.2-.7z"/></svg>
       STELLA
     </a>
     <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
     <div class="nav-links" id="nav-links">
       <a href="#clickgui">ClickGUI</a>
       <a href="#features">Features</a>
+      <a href="#install">Install</a>
       <a href="#gallery">Gallery</a>
       <a href="#pricing">Pricing</a>
       <a href="#updates" data-view-link="updates">Update log</a>
+      <a href="#dashboard">Dashboard</a>
+      <button class="theme-dot" type="button" id="theme-cycle" aria-label="Change theme (Stella)" title="Theme: Stella"></button>
+      <button class="kbd kbd-btn" type="button" id="open-gui" title="Open the ClickGUI (Right Shift)">Right Shift</button>
       <a class="btn small" href="#pricing">Get Stella</a>
     </div>
   </div>
+  <div class="progress" id="progress" aria-hidden="true"></div>
 </nav>
 
 <!-- =========================================================== HOME VIEW -->
@@ -59,10 +66,28 @@
         <div class="screen-inner" id="screen-inner">
           <img src="assets/shots/main-menu.jpg" width="1280" height="720" alt="Stella main menu: animated night sky, glowing star logo and the Play DonutSMP button">
         </div>
+        <div class="float-card fc-spawners" aria-hidden="true">
+          <p class="fc-title"><span class="fc-dot"></span>Spawners <b class="tab">13</b></p>
+          <p class="fc-row"><span>Cave Spider</span><b class="tab">15m</b></p>
+          <p class="fc-row"><span>Skeleton</span><b class="tab">144m</b></p>
+          <p class="fc-row"><span>Zombie</span><b class="tab">146m</b></p>
+        </div>
+        <div class="float-card fc-hud" aria-hidden="true">
+          <p class="fc-stat">FPS <b class="tab" id="fc-fps">240</b></p>
+          <p class="fc-stat">XYZ <b class="tab">-35 -29 28</b></p>
+        </div>
+        <div class="float-card fc-list" aria-hidden="true">
+          <p>Spawner Finder</p><p>Storage ESP</p><p>Sus Chunk Finder</p><p>Radar HUD</p>
+        </div>
         <p class="screen-caption">The Stella main menu, captured in-game</p>
       </div>
     </div>
   </header>
+
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-track" id="marquee-a"></div>
+    <div class="marquee-track rev" id="marquee-b"></div>
+  </div>
 
   <!-- live ClickGUI -->
   <section class="section" id="clickgui" aria-labelledby="clickgui-title">
@@ -88,49 +113,90 @@
     </div>
   </section>
 
-  <!-- features -->
+  <!-- features: live mini demos -->
   <section class="section" id="features" aria-labelledby="features-title">
     <div class="wrap">
       <div class="section-head">
         <p class="eyebrow">What's inside</p>
         <h2 id="features-title">Built around how DonutSMP is played</h2>
-        <p>Base hunting, spawner farming and the auction house each get their own tools. Everything else makes the game nicer to look at.</p>
+        <p>Base hunting, spawner farming and the auction house each get their own tools. Try a few of them right here.</p>
       </div>
-      <div class="features">
-        <article class="feature wide tilt">
-          <p class="k">DonutSMP tools</p>
-          <h3>Find what's hidden</h3>
-          <p>Spawner Finder puts a beam over every spawner with its mob type and distance. Sus Chunk Finder flags chunks with player-made redstone, grown amethyst or rotated deepslate, and ignores trial chambers and other natural structures.</p>
-          <ul><li>Spawner Finder</li><li>Sus Chunk Finder</li><li>Region Map</li><li>Player Detector</li><li>Storage ESP</li><li>Block Entity Debug</li></ul>
+      <div class="bento">
+
+        <article class="tile tile-region tilt" aria-labelledby="region-title">
+          <div class="tile-text">
+            <p class="k">DonutSMP · Region Map</p>
+            <h3 id="region-title">Know which region you're in</h3>
+            <p>The Region Map HUD shows DonutSMP's 9 × 9 grid of 50,000-block regions with their real IDs and which ones are good for media and baltop bases. Type your coordinates to look one up.</p>
+            <form class="coord-form" id="coord-form" autocomplete="off">
+              <label for="coord-x">X</label><input id="coord-x" inputmode="numeric" maxlength="8" placeholder="-35000" value="-35000">
+              <label for="coord-z">Z</label><input id="coord-z" inputmode="numeric" maxlength="8" placeholder="28000" value="28000">
+              <button class="btn small" type="submit">Find region</button>
+            </form>
+            <p class="region-out" id="region-out" role="status"></p>
+            <ul class="legend">
+              <li><span class="sw sw-0"></span>Glitched (no RTP spots)</li>
+              <li><span class="sw sw-1"></span>Good for media / baltop</li>
+              <li><span class="sw sw-2"></span>Good for media / other bases</li>
+            </ul>
+          </div>
+          <div class="region-grid" id="region-grid" role="grid" aria-label="DonutSMP region map"></div>
+        </article>
+
+        <article class="tile tile-radar tilt" aria-labelledby="radar-title">
+          <p class="k">DonutSMP · Spawner Finder</p>
+          <h3 id="radar-title">Every spawner, sorted by distance</h3>
+          <div class="radar-wrap"><canvas id="radar" width="260" height="260" aria-label="Animated spawner radar"></canvas></div>
+          <ul class="radar-list" id="radar-list"></ul>
+        </article>
+
+        <article class="tile tile-sky" aria-labelledby="sky-title">
+          <div class="sky-view"><img id="sky-img" src="assets/shots/sky-stella.jpg" width="960" height="540" alt="Cosmic Stella sky design in game"></div>
+          <div class="tile-text">
+            <p class="k">Visuals · Custom Sky</p>
+            <h3 id="sky-title">A sky for every theme</h3>
+            <p>16 animated designs with moons, suns, aurora, a spiral galaxy and drifting particles. Pick a theme: this whole page follows it, like the client does.</p>
+            <div class="theme-chips" id="theme-chips" role="group" aria-label="Theme"></div>
+          </div>
+        </article>
+
+        <article class="tile tile-hud" aria-labelledby="hud-title">
+          <div class="tile-text">
+            <p class="k">HUD · HUD Editor</p>
+            <h3 id="hud-title">Put your HUD anywhere</h3>
+            <p>22 HUD elements, each dragged into place in the HUD editor. Try it: drag these around.</p>
+            <button class="btn small ghost" type="button" id="hud-reset">Reset layout</button>
+          </div>
+          <div class="hud-stage" id="hud-stage">
+            <div class="hud-el" data-hud="fps" tabindex="0"><span class="bar"></span>FPS <b class="tab" id="hud-fps">240</b></div>
+            <div class="hud-el" data-hud="ping" tabindex="0"><span class="bar"></span>PING <b class="tab">23 ms</b></div>
+            <div class="hud-el" data-hud="xyz" tabindex="0"><span class="bar"></span>XYZ <b class="tab">-35 104 28</b></div>
+            <div class="hud-el hud-radar" data-hud="radar" tabindex="0"><canvas id="hud-radar" width="96" height="96" aria-label="Radar HUD"></canvas></div>
+            <div class="hud-el hud-list" data-hud="list" tabindex="0"><p>SPAWNER FINDER</p><p>STORAGE ESP</p><p>FULLBRIGHT</p><p>RADAR HUD</p></div>
+            <div class="hud-el hud-brand" data-hud="brand" tabindex="0"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.8l2.9 6.6 7.2.7-5.4 4.8 1.6 7.1L12 17.3 5.7 21l1.6-7.1L1.9 9.1l7.2-.7z"/></svg>STELLA</div>
+          </div>
+        </article>
+
+        <article class="tile tile-knife" aria-labelledby="knife-title">
+          <div class="tile-text">
+            <p class="k">Cosmetics · Knife Skins</p>
+            <h3 id="knife-title">Six knives, thirteen finishes</h3>
+            <p>Draw, inspect and trick animations replace your sword. Only you see them.</p>
+          </div>
+          <div class="knife-view"><img id="knife-img" src="assets/shots/knife-karambit.jpg" width="720" height="272" alt="Karambit knife skin, Nebula finish, during the inspect animation"></div>
+          <div class="knife-tabs" id="knife-tabs" role="tablist" aria-label="Knife"></div>
+        </article>
+
+        <article class="tile tile-perf tilt" aria-labelledby="perf-title">
+          <p class="k">Performance</p>
+          <h3 id="perf-title">Light on your FPS</h3>
+          <p>A built-in profiler shows what each module costs per frame. Every build is tested in-game, on its own and alongside popular performance mods.</p>
           <div class="stat-row">
             <div class="stat"><b class="tab" data-count="95">95</b><span>modules</span></div>
             <div class="stat"><b class="tab" data-count="427">427</b><span>settings</span></div>
-            <div class="stat"><b class="tab" data-count="25">25</b><span>GUI themes</span></div>
+            <div class="stat"><b class="tab" data-count="101">101</b><span>in-game screenshots checked per build</span></div>
           </div>
-        </article>
-        <article class="feature tilt">
-          <p class="k">HUD</p>
-          <h3>Drag everything</h3>
-          <p>Radar with player heads, Region Map, module list, Spotify card, armour, potions, CPS graph and a Performance HUD that shows which module costs the most.</p>
-          <ul><li>22 HUD elements</li><li>HUD editor</li></ul>
-        </article>
-        <article class="feature tilt">
-          <p class="k">Visuals</p>
-          <h3>16 animated skies</h3>
-          <p>Moons with craters, suns with god rays, aurora curtains, a spiral galaxy and drifting petals. Each GUI theme picks its own sky.</p>
-          <ul><li>Custom Sky</li><li>Liquid Glass</li><li>Motion Blur</li></ul>
-        </article>
-        <article class="feature tilt">
-          <p class="k">Cosmetics</p>
-          <h3>Knives with inspect</h3>
-          <p>Six knives and thirteen finishes replace your sword, with draw, inspect and trick animations. Plus wings, capes, trails and jump circles. Only you see them.</p>
-          <ul><li>Karambit</li><li>Butterfly</li><li>Bayonet</li></ul>
-        </article>
-        <article class="feature tilt">
-          <p class="k">Performance</p>
-          <h3>Light on your FPS</h3>
-          <p>Built-in profiler, background FPS limit and scanner budget. Tested every build alongside Sodium, Lithium, FerriteCore, ImmediatelyFast and Entity Culling.</p>
-          <ul><li>Performance HUD</li><li>FPS Boost</li></ul>
+          <ul class="chips"><li>Sodium</li><li>Lithium</li><li>FerriteCore</li><li>ImmediatelyFast</li><li>Entity Culling</li><li>Mod Menu</li></ul>
         </article>
       </div>
     </div>
@@ -155,6 +221,33 @@
         <button class="shot" type="button" data-src="assets/shots/sky-galaxy.jpg"><img src="assets/shots/sky-galaxy.jpg" loading="lazy" width="1280" height="720" alt="Spiral Galaxy sky design"><span>Spiral Galaxy sky</span></button>
         <button class="shot" type="button" data-src="assets/shots/liquid-glass.jpg"><img src="assets/shots/liquid-glass.jpg" loading="lazy" width="1280" height="720" alt="ClickGUI in the Liquid Glass theme"><span>Liquid Glass theme</span></button>
       </div>
+    </div>
+  </section>
+
+  <!-- reviews from verified buyers: stays hidden until there are approved reviews -->
+  <section class="section" id="reviews" aria-labelledby="reviews-title" hidden>
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Reviews</p>
+        <h2 id="reviews-title">From verified buyers</h2>
+        <p id="reviews-summary"></p>
+      </div>
+      <div class="review-grid" id="review-grid"></div>
+    </div>
+  </section>
+
+  <!-- install -->
+  <section class="section" id="install" aria-labelledby="install-title">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Install</p>
+        <h2 id="install-title">Playing in three steps</h2>
+      </div>
+      <ol class="steps">
+        <li class="step"><span class="num">1</span><h3>Install Fabric</h3><p>Install Fabric Loader for Minecraft <b>1.21.11</b> and put <b>Fabric API</b> in your mods folder.</p></li>
+        <li class="step"><span class="num">2</span><h3>Add Stella</h3><p>Download your Stella jar after checkout and drop it into <code>.minecraft/mods</code>. Every release has a SHA-256 hash you can check.</p></li>
+        <li class="step"><span class="num">3</span><h3>Press Right Shift</h3><p>Launch the Fabric profile and press <span class="kbd">Right Shift</span> to open the ClickGUI. Drag the HUD from the HUD editor.</p></li>
+      </ol>
     </div>
   </section>
 
@@ -194,6 +287,11 @@
         </article>
       </div>
       <div class="notice" id="checkout-notice" role="status" hidden></div>
+      <figure class="cost">
+        <figcaption><b>What you pay over a year</b><span>Lifetime is cheaper from month two.</span></figcaption>
+        <div class="cost-chart" id="cost-chart"></div>
+        <div class="cost-legend"><span class="lg-m">Monthly, total paid</span><span class="lg-l">Lifetime, €15 once</span></div>
+      </figure>
       <p class="price-note">Prices in euro, including VAT where it applies. Payment is handled by our payment provider on its own secure page; Stella never sees your card details. See the <a href="#terms">Terms</a> for subscriptions, refunds and the right of withdrawal.</p>
 
       <div class="faq">
@@ -264,6 +362,47 @@
   </div>
 </section>
 
+<!-- =========================================================== DASHBOARD VIEW -->
+<section class="doc dash" id="dashboard" data-view="dashboard" hidden aria-labelledby="dash-title">
+  <div class="wrap">
+    <p class="eyebrow">Dashboard</p>
+    <h1 id="dash-title">Your Stella</h1>
+    <div id="dash-root" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- =========================================================== PRIVACY VIEW -->
+<section class="doc" id="privacy" data-view="privacy" hidden aria-labelledby="privacy-title">
+  <div class="wrap">
+    <p class="eyebrow">Legal</p>
+    <h1 id="privacy-title">Privacy Policy</h1>
+    <p class="stamp">Last updated: <span data-fill="updated"></span></p>
+
+    <h2>Who is responsible</h2>
+    <p><span class="fill" data-fill="owner"></span>, <span class="fill" data-fill="country"></span>, is responsible for the personal data described here. Contact: <span class="fill" data-fill="email"></span>.</p>
+
+    <h2>What we process and why</h2>
+    <ul>
+      <li><b>Purchases.</b> Our payment provider (Lemon Squeezy) processes your payment, billing details and email address as merchant of record, under its own privacy policy. We receive your order, licence status and email address from it to give you access.</li>
+      <li><b>Dashboard sign-in.</b> When you sign in with your licence key we check it with the payment provider, then store an encrypted copy of the key, your plan and a shortened form of your email address (for example j***@example.com) for up to 7 days, to keep you signed in and to re-check the licence. Legal basis: performance of our contract with you.</li>
+      <li><b>Suggestions and reviews.</b> What you write, your rating, the display name you choose and the time you posted. Approved reviews are public on this website. Legal basis: our contract with you and, for publishing reviews, your choice to post one.</li>
+      <li><b>Security.</b> Your IP address is turned into a one-way hash to limit repeated sign-in attempts and spam; the counters are kept for at most one day. Legal basis: our legitimate interest in keeping accounts safe.</li>
+    </ul>
+
+    <h2>What we don't do</h2>
+    <p>No analytics, advertising or tracking, and we never sell or share your data for marketing. We never see your card details.</p>
+
+    <h2>Where it's stored</h2>
+    <p>The website and dashboard run on Cloudflare, which processes data on our behalf under a data processing agreement and may process it outside the EU under the EU Standard Contractual Clauses.</p>
+
+    <h2>How long we keep it</h2>
+    <p>Sessions: up to 7 days. Suggestions and reviews: until you ask us to delete them or we remove them. Purchase records: as long as the law requires (usually several years for tax).</p>
+
+    <h2>Your rights</h2>
+    <p>You can ask for a copy of your data, or to correct, delete, restrict or move it, and you can object to processing based on legitimate interest. Write to <span class="fill" data-fill="email"></span>. You can also complain to your local data protection authority.</p>
+  </div>
+</section>
+
 <!-- =========================================================== TERMS VIEW -->
 <section class="doc" id="terms" data-view="terms" hidden aria-labelledby="terms-title">
   <div class="wrap">
@@ -321,10 +460,13 @@
     <p class="stamp">Last updated: <span data-fill="updated"></span></p>
 
     <h2>The short version</h2>
-    <p>This website sets no cookies. It has no analytics, no advertising, no tracking pixels and no third-party scripts, so there's nothing to accept or decline.</p>
+    <p>This website has no analytics, no advertising, no tracking pixels and no third-party scripts. The only cookie is the one that keeps you signed in to your dashboard, and it's only set if you sign in.</p>
 
-    <h2>What this website stores</h2>
-    <p>Nothing. The website doesn't use cookies, local storage or similar technologies on your device. The fonts, images and scripts all come from this website itself.</p>
+    <h2>The sign-in cookie</h2>
+    <p>When you sign in to the dashboard with your licence key we set one cookie, <code>__Host-stella_session</code>. It holds a random sign-in token, lasts up to 7 days (or until you sign out), can't be read by scripts and is only sent to this website. It's strictly necessary for the dashboard you asked to use, so it doesn't need consent.</p>
+
+    <h2>Nothing else on your device</h2>
+    <p>The website doesn't use other cookies, local storage or similar technologies. The fonts, images and scripts all come from this website itself.</p>
 
     <h2>Checkout</h2>
     <p>When you choose a plan you're taken to our payment provider's checkout page. That page is run by the provider, on its own website, and it may use cookies that are strictly necessary for secure payment and fraud prevention. Those cookies are covered by the provider's own cookie policy, which you can read on its checkout page.</p>
@@ -340,7 +482,7 @@
 <footer>
   <div class="wrap">
     <div>
-      <a class="brand" href="#home"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#d8b4fe" d="M12 1.8l2.9 6.6 7.2.7-5.4 4.8 1.6 7.1L12 17.3 5.7 21l1.6-7.1L1.9 9.1l7.2-.7z"/></svg>STELLA</a>
+      <a class="brand" href="#home"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.8l2.9 6.6 7.2.7-5.4 4.8 1.6 7.1L12 17.3 5.7 21l1.6-7.1L1.9 9.1l7.2-.7z"/></svg>STELLA</a>
       <p class="muted">A Fabric client for Minecraft 1.21.11, made for DonutSMP.</p>
     </div>
     <div>
@@ -349,7 +491,7 @@
     </div>
     <div>
       <h4>Legal</h4>
-      <ul><li><a href="#terms">Terms and Conditions</a></li><li><a href="#cookies">Cookie Policy</a></li><li><span data-fill="email" class="fill"></span></li></ul>
+      <ul><li><a href="#terms">Terms and Conditions</a></li><li><a href="#privacy">Privacy Policy</a></li><li><a href="#cookies">Cookie Policy</a></li><li><span data-fill="email" class="fill"></span></li></ul>
     </div>
     <div class="legal">
       <span>© <span id="year">2026</span> Stella Client</span>
@@ -358,8 +500,19 @@
   </div>
 </footer>
 
+<div class="gui-overlay" id="gui-overlay" hidden role="dialog" aria-modal="true" aria-label="Stella ClickGUI">
+  <div class="gui-overlay-top">
+    <label class="search" for="overlay-search"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><input id="overlay-search" type="search" placeholder="Search modules..." autocomplete="off" spellcheck="false"></label>
+    <button class="x" type="button" id="gui-overlay-close" aria-label="Close the ClickGUI">✕</button>
+  </div>
+  <div class="demo-stage gui" id="gui-overlay-stage"></div>
+  <p class="gui-overlay-hint">Press <span class="kbd">Right Shift</span> or <span class="kbd">Esc</span> to close</p>
+</div>
+
 <div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Screenshot">
   <button class="x" type="button" id="lightbox-close" aria-label="Close">✕</button>
+  <button class="lb-nav lb-prev" type="button" id="lightbox-prev" aria-label="Previous screenshot">‹</button>
+  <button class="lb-nav lb-next" type="button" id="lightbox-next" aria-label="Next screenshot">›</button>
   <figure><img id="lightbox-img" src="assets/shots/main-menu.jpg" alt=""><figcaption id="lightbox-cap"></figcaption></figure>
 </div>
 </body>

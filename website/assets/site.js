@@ -63,7 +63,7 @@ function svgIcon(kind) {
 }
 
 /* ------------------------------------------------------------------ views (home / updates / terms / cookies) */
-const VIEWS = ["updates", "terms", "cookies"];
+const VIEWS = ["updates", "dashboard", "privacy", "terms", "cookies"];
 
 function route() {
   const hash = decodeURIComponent(location.hash.replace(/^#/, "")).slice(0, 40);
@@ -182,10 +182,11 @@ function sky() {
     ctx.clearRect(0, 0, w, h);
     // nebula
     const g1 = ctx.createRadialGradient(w * 0.78 - px * 10, h * 0.3 - py * 6, 0, w * 0.78 - px * 10, h * 0.3 - py * 6, Math.max(w, h) * 0.55);
-    g1.addColorStop(0, "rgba(168,85,247,0.28)"); g1.addColorStop(1, "rgba(168,85,247,0)");
+    const th = THEMES[themeIndex];
+    g1.addColorStop(0, hexA(th.c, 0.28)); g1.addColorStop(1, hexA(th.c, 0));
     ctx.fillStyle = g1; ctx.fillRect(0, 0, w, h);
     const g2 = ctx.createRadialGradient(w * 0.15 - px * 6, h * 0.85, 0, w * 0.15, h * 0.85, Math.max(w, h) * 0.45);
-    g2.addColorStop(0, "rgba(236,72,153,0.16)"); g2.addColorStop(1, "rgba(236,72,153,0)");
+    g2.addColorStop(0, hexA(th.c2, 0.16)); g2.addColorStop(1, hexA(th.c2, 0));
     ctx.fillStyle = g2; ctx.fillRect(0, 0, w, h);
     // stars
     for (const s of stars) {
@@ -235,7 +236,8 @@ function sky() {
       const b = bolts[i]; b.age += dt;
       if (b.age > b.life) { bolts.splice(i, 1); continue; }
       const k = b.age / b.life, f = k < 0.15 ? 1 : k < 0.3 ? 0.35 : k < 0.45 ? 0.9 : (1 - k) / 0.55;
-      for (const [lw, col] of [[5, `rgba(168,85,247,${0.25 * f})`], [2, `rgba(216,180,254,${0.8 * f})`], [0.8, `rgba(255,255,255,${f})`]]) {
+      const bc = THEMES[themeIndex].c;
+      for (const [lw, col] of [[5, hexA(bc, 0.25 * f)], [2, hexA(mix(bc, "#ffffff", 0.55), 0.8 * f)], [0.8, `rgba(255,255,255,${f})`]]) {
         ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.lineJoin = "round"; ctx.beginPath();
         b.pts.forEach(([x, y], j) => (j ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke();
       }
@@ -336,10 +338,47 @@ function gallery() {
 }
 
 /* ------------------------------------------------------------------ the ClickGUI demo */
+/** GUI themes from the client, each with its in-game sky (the whole site follows the chosen theme). */
 const THEMES = [
-  { n: "Stella", c: "#a855f7" }, { n: "Pink", c: "#f472b6" }, { n: "Ocean", c: "#0ea5e9" }, { n: "Emerald", c: "#34d399" },
-  { n: "Sunset", c: "#fb923c" }, { n: "Crimson", c: "#dc2626" }, { n: "Frost", c: "#93c5fd" }, { n: "Liquid Glass", c: "#9ad8ff", glass: true },
+  { n: "Stella", c: "#a855f7", c2: "#f472b6", sky: "stella", skyName: "Cosmic Stella" },
+  { n: "Pink", c: "#f472b6", c2: "#fda4af", sky: "pink", skyName: "Sakura Dawn" },
+  { n: "Ocean", c: "#0ea5e9", c2: "#2dd4bf", sky: "ocean", skyName: "Deep Ocean" },
+  { n: "Emerald", c: "#34d399", c2: "#a3e635", sky: "emerald", skyName: "Emerald Aurora" },
+  { n: "Sunset", c: "#fb923c", c2: "#facc15", sky: "sunset", skyName: "Golden Hour" },
+  { n: "Crimson", c: "#ef4444", c2: "#fb7185", sky: "red", skyName: "Blood Moon" },
+  { n: "Frost", c: "#93c5fd", c2: "#22d3ee", sky: "frost", skyName: "Arctic Aurora" },
+  { n: "Galaxy", c: "#c084fc", c2: "#f472b6", sky: "galaxy", skyName: "Spiral Galaxy" },
+  { n: "Liquid Glass", c: "#9ad8ff", c2: "#f0abfc", sky: "liquid-glass", skyName: "Prism Glass", glass: true },
 ];
+let themeIndex = 0;
+const themeListeners = [];
+
+/** Recolours the whole site (and every ClickGUI) with a theme; colours fade across thanks to @property. */
+function setTheme(i) {
+  themeIndex = ((i % THEMES.length) + THEMES.length) % THEMES.length;
+  const t = THEMES[themeIndex];
+  const html = document.documentElement;
+  html.style.setProperty("--accent", t.c);
+  html.style.setProperty("--accent-soft", mix(t.c, "#ffffff", 0.55));
+  html.style.setProperty("--pink", t.c2);
+  html.style.setProperty("--on-accent", luminance(t.c) > 0.55 ? "#0b0a10" : "#ffffff");
+  for (const g of $$(".gui")) {
+    g.style.setProperty("--g-accent", t.c);
+    g.style.setProperty("--g-soft", mix(t.c, "#ffffff", 0.55));
+    g.classList.toggle("glass", !!t.glass);
+  }
+  $$(".pill").forEach(p => p.style.setProperty("--g-accent", t.c));
+  const dot = $("#theme-cycle");
+  if (dot) { dot.title = "Theme: " + t.n; dot.setAttribute("aria-label", "Change theme (" + t.n + ")"); }
+  themeListeners.forEach(fn => fn(t));
+  GUI_INSTANCES.forEach(g => g.render());
+}
+
+function luminance(hex) {
+  const v = parseInt(hex.slice(1), 16);
+  const ch = x => { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); };
+  return 0.2126 * ch((v >> 16) & 255) + 0.7152 * ch((v >> 8) & 255) + 0.0722 * ch(v & 255);
+}
 const CATEGORY_ORDER = ["DonutSMP", "Combat", "Visuals", "HUD", "World", "Misc", "Cosmetics", "Client", "Settings"];
 const CATEGORY_INFO = {
   DonutSMP: "Base hunting, spawners, ESP and server tools",
@@ -353,22 +392,33 @@ const CATEGORY_INFO = {
   Settings: "Client settings",
 };
 
-function clickGui() {
-  const root = $("#gui");
+/** Module state shared by every ClickGUI on the page (the demo and the Right Shift overlay). */
+let MODS = null;
+const GUI_INSTANCES = [];
+function sharedMods() {
+  if (MODS) return MODS;
   const data = Array.isArray(window.STELLA_MODULES) ? window.STELLA_MODULES : [];
-  const mods = data.map(m => ({ ...m, on: !!m.on, s: (m.s || []).map(s => ({ ...s, cur: s.v })) }));
+  MODS = data.map(m => ({ ...m, on: !!m.on, s: (m.s || []).map(s => ({ ...s, cur: s.v })) }));
+  // a few modules start switched on, like a fresh install plus the ones people turn on first
+  for (const n of ["Spawner Finder", "Storage ESP", "Radar HUD", "Region Map HUD", "Module List HUD", "Fullbright", "Custom Sky"]) {
+    const m = MODS.find(x => x.n === n);
+    if (m) m.on = true;
+  }
+  return MODS;
+}
+
+/**
+ * One ClickGUI rendered into root. opts: search input and the window / dropdown view buttons.
+ * Every instance shares the module state, so a switch flipped in one shows in the others.
+ */
+function clickGui(root, opts) {
+  const mods = sharedMods();
   const cats = CATEGORY_ORDER.filter(c => mods.some(m => m.c === c));
-  const state = { view: "window", cat: cats[0], query: "", open: null, theme: 0, expanded: new Set(), panelPos: {} };
+  const state = { view: "window", cat: cats[0], query: "", open: null, expanded: new Set(), panelPos: {} };
+  const searchEl = opts.search;
+  const renderAll = () => GUI_INSTANCES.forEach(g => g.render());
 
   const matches = m => !state.query || m.n.toLowerCase().includes(state.query) || m.d.toLowerCase().includes(state.query);
-
-  function applyTheme() {
-    const t = THEMES[state.theme];
-    root.style.setProperty("--g-accent", t.c);
-    root.style.setProperty("--g-soft", mix(t.c, "#ffffff", 0.55));
-    root.classList.toggle("glass", !!t.glass);
-    $$(".pill").forEach(p => p.style.setProperty("--g-accent", t.c));
-  }
 
   function settingRow(mod, s, rerender) {
     if (s.t === "bool") {
@@ -424,13 +474,13 @@ function clickGui() {
       cats.map(c => {
         const inCat = mods.filter(m => m.c === c);
         return el("button", { class: "cat" + (c === state.cat && !state.query ? " on" : ""), type: "button", "aria-pressed": String(c === state.cat),
-          onclick: () => { state.cat = c; state.query = ""; $("#gui-search").value = ""; state.open = null; render(); } },
+          onclick: () => { state.cat = c; state.query = ""; searchEl.value = ""; state.open = null; render(); } },
           c, el("small", { class: "tab" }, inCat.filter(m => m.on).length + "/" + inCat.length));
       }),
       el("div", { class: "spacer" }),
       el("div", { class: "themes", role: "group", "aria-label": "Theme" }, THEMES.map((t, i) => {
-        const b = el("button", { class: "swatch" + (i === state.theme ? " on" : ""), type: "button", title: t.n, "aria-label": "Theme: " + t.n, "aria-pressed": String(i === state.theme),
-          onclick: () => { state.theme = i; applyTheme(); render(); } });
+        const b = el("button", { class: "swatch" + (i === themeIndex ? " on" : ""), type: "button", title: t.n, "aria-label": "Theme: " + t.n, "aria-pressed": String(i === themeIndex),
+          onclick: () => setTheme(i) });
         b.style.setProperty("--c", t.c);
         return b;
       })));
@@ -439,7 +489,7 @@ function clickGui() {
       const gear = el("button", { class: "gear", type: "button", "aria-label": m.n + " settings", "aria-expanded": String(state.open === m.n),
         onclick: e => { e.stopPropagation(); state.open = state.open === m.n ? null : m.n; render(); } }, svgIcon("gear"));
       const card = el("div", { class: "card" + (m.on ? " on" : ""), title: m.d },
-        el("div", { class: "t" }, el("b", null, m.n), el("span", null, m.d)), gear, moduleSwitch(m, render));
+        el("div", { class: "t" }, el("b", null, m.n), el("span", null, m.d)), gear, moduleSwitch(m, renderAll));
       card.style.setProperty("animation-delay", Math.min(i, 14) * 0.025 + "s");
       if (state.open === m.n) anchor = card;
       return card;
@@ -463,7 +513,7 @@ function clickGui() {
       const pos = state.panelPos[c] || { x: (i % perRow) * 202, y: Math.floor(i / perRow) * 250 + (i % 2) * 14 };
       const rows = list.map(m => {
         const row = el("button", { class: "prow" + (m.on ? " on" : ""), type: "button", "aria-pressed": String(m.on), title: m.d + " (right-click for settings)",
-          onclick: () => { m.on = !m.on; render(); },
+          onclick: () => { m.on = !m.on; renderAll(); },
           oncontextmenu: e => { e.preventDefault(); toggleExpand(m); } },
           el("span", null, m.n),
           el("span", { class: "more", role: "button", tabindex: "0", "aria-label": m.n + " settings",
@@ -514,26 +564,21 @@ function clickGui() {
     if (state.view === "window") renderWindow(); else renderDropdown();
   }
 
-  // a few modules start switched on, like a fresh install plus the ones people turn on first
-  for (const n of ["Spawner Finder", "Storage ESP", "Radar HUD", "Region Map HUD", "Module List HUD", "Fullbright", "Custom Sky"]) {
-    const m = mods.find(x => x.n === n);
-    if (m) m.on = true;
-  }
-
-  $("#gui-search").addEventListener("input", e => { state.query = e.target.value.trim().toLowerCase().slice(0, 40); state.open = null; render(); });
+  searchEl.addEventListener("input", e => { state.query = e.target.value.trim().toLowerCase().slice(0, 40); state.open = null; render(); });
   const setView = v => {
     state.view = v; state.open = null;
-    $("#view-window").classList.toggle("on", v === "window"); $("#view-window").setAttribute("aria-pressed", String(v === "window"));
-    $("#view-dropdown").classList.toggle("on", v === "dropdown"); $("#view-dropdown").setAttribute("aria-pressed", String(v === "dropdown"));
+    if (opts.windowBtn) { opts.windowBtn.classList.toggle("on", v === "window"); opts.windowBtn.setAttribute("aria-pressed", String(v === "window")); }
+    if (opts.dropdownBtn) { opts.dropdownBtn.classList.toggle("on", v === "dropdown"); opts.dropdownBtn.setAttribute("aria-pressed", String(v === "dropdown")); }
     render();
   };
-  $("#view-window").addEventListener("click", () => setView("window"));
-  $("#view-dropdown").addEventListener("click", () => setView("dropdown"));
-  document.addEventListener("keydown", e => { if (e.key === "Escape" && state.open) { state.open = null; render(); } });
+  if (opts.windowBtn) opts.windowBtn.addEventListener("click", () => setView("window"));
+  if (opts.dropdownBtn) opts.dropdownBtn.addEventListener("click", () => setView("dropdown"));
   let rw = root.clientWidth;
   new ResizeObserver(() => { if (Math.abs(root.clientWidth - rw) > 40) { rw = root.clientWidth; if (state.view === "dropdown") { state.panelPos = {}; render(); } } }).observe(root);
-  applyTheme();
+  const api = { render, closeSettings: () => { if (!state.open) return false; state.open = null; render(); return true; } };
+  GUI_INSTANCES.push(api);
   render();
+  return api;
 }
 
 function fmt(v, step) { return step >= 1 ? String(Math.round(v)) : Number(v).toFixed(step >= 0.1 ? 1 : 2); }
@@ -552,7 +597,12 @@ function start() {
   setupCheckout();
   heroTitle();
   sky();
-  clickGui();
+  clickGui($("#gui"), { search: $("#gui-search"), windowBtn: $("#view-window"), dropdownBtn: $("#view-dropdown") });
+  setupOverlay();
+  setTheme(0);
+  const cycle = $("#theme-cycle");
+  if (cycle) cycle.addEventListener("click", () => setTheme(themeIndex + 1));
+  if (typeof setupDemos === "function") setupDemos();
   tilt();
   gallery();
   route();
@@ -560,4 +610,4 @@ function start() {
   counters();
   window.addEventListener("hashchange", route);
 }
-if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
+// start() runs from the end of demos.js, the last script, so every function is defined first
