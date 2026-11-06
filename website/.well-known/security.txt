@@ -1,0 +1,4 @@
+# Report security problems with the Stella Client website or client here.
+Contact: mailto:[your support email]
+Expires: 2027-11-06T00:00:00.000Z
+Preferred-Languages: en

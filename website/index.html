@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stella Client</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Stella Client: a Fabric client for Minecraft 1.21.11 built for DonutSMP. Spawner Finder, Sus Chunk Finder, Region Map, ESP, a movable HUD, 16 animated skies and knife skins.">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0b0a10">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/modules.js" defer></script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+
+<nav class="nav" id="top" aria-label="Main">
+  <div class="wrap">
+    <a class="brand" href="#home" aria-label="Stella Client home">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#d8b4fe" d="M12 1.8l2.9 6.6 7.2.7-5.4 4.8 1.6 7.1L12 17.3 5.7 21l1.6-7.1L1.9 9.1l7.2-.7z"/></svg>
+      STELLA
+    </a>
+    <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
+    <div class="nav-links" id="nav-links">
+      <a href="#clickgui">ClickGUI</a>
+      <a href="#features">Features</a>
+      <a href="#gallery">Gallery</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#updates" data-view-link="updates">Update log</a>
+      <a class="btn small" href="#pricing">Get Stella</a>
+    </div>
+  </div>
+</nav>
+
+<!-- =========================================================== HOME VIEW -->
+<main id="home" data-view="home">
+
+  <header class="hero">
+    <canvas class="sky" id="sky" aria-hidden="true"></canvas>
+    <div class="wrap">
+      <div>
+        <p class="eyebrow">Fabric client · Minecraft 1.21.11 · built for DonutSMP</p>
+        <h1 class="display" aria-label="Stella Client"><span class="shine" id="hero-title">STELLA</span><br><span class="muted">CLIENT</span></h1>
+        <p class="lede">Find spawners, stashes and bases faster, with <strong>95 modules</strong>, a HUD you can drag anywhere, and a ClickGUI you'll actually enjoy opening. Press <span class="kbd">Right Shift</span> and try it below.</p>
+        <div class="hero-cta">
+          <a class="btn" href="#pricing">Get Stella · from €8</a>
+          <a class="btn ghost" href="#clickgui">Try the ClickGUI</a>
+        </div>
+        <div class="hero-meta">
+          <span>Tested in-game on every build</span>
+          <span>Works with Sodium, Lithium &amp; co.</span>
+          <span>Malware-scanned releases</span>
+        </div>
+      </div>
+      <div class="screen" id="screen">
+        <div class="screen-inner" id="screen-inner">
+          <img src="assets/shots/main-menu.jpg" width="1280" height="720" alt="Stella main menu: animated night sky, glowing star logo and the Play DonutSMP button">
+        </div>
+        <p class="screen-caption">The Stella main menu, captured in-game</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- live ClickGUI -->
+  <section class="section" id="clickgui" aria-labelledby="clickgui-title">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Live demo</p>
+        <h2 id="clickgui-title">The real ClickGUI, in your browser</h2>
+        <p>Every module and setting below is taken from Stella's code. Flip switches, open the gear for settings, change themes, or switch to the dropdown view and drag the panels around.</p>
+      </div>
+      <div class="demo-frame">
+        <div class="demo-top">
+          <label class="search" for="gui-search">
+            <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+            <input id="gui-search" type="search" placeholder="Search modules..." autocomplete="off" spellcheck="false">
+          </label>
+        </div>
+        <div class="demo-stage gui" id="gui" aria-live="polite"></div>
+        <div class="demo-bottom" role="group" aria-label="ClickGUI layout">
+          <button class="pill on" type="button" id="view-window" aria-pressed="true">▣ Window view</button>
+          <button class="pill" type="button" id="view-dropdown" aria-pressed="false">☰ Dropdown view</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- features -->
+  <section class="section" id="features" aria-labelledby="features-title">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">What's inside</p>
+        <h2 id="features-title">Built around how DonutSMP is played</h2>
+        <p>Base hunting, spawner farming and the auction house each get their own tools. Everything else makes the game nicer to look at.</p>
+      </div>
+      <div class="features">
+        <article class="feature wide tilt">
+          <p class="k">DonutSMP tools</p>
+          <h3>Find what's hidden</h3>
+          <p>Spawner Finder puts a beam over every spawner with its mob type and distance. Sus Chunk Finder flags chunks with player-made redstone, grown amethyst or rotated deepslate, and ignores trial chambers and other natural structures.</p>
+          <ul><li>Spawner Finder</li><li>Sus Chunk Finder</li><li>Region Map</li><li>Player Detector</li><li>Storage ESP</li><li>Block Entity Debug</li></ul>
+          <div class="stat-row">
+            <div class="stat"><b class="tab" data-count="95">95</b><span>modules</span></div>
+            <div class="stat"><b class="tab" data-count="427">427</b><span>settings</span></div>
+            <div class="stat"><b class="tab" data-count="25">25</b><span>GUI themes</span></div>
+          </div>
+        </article>
+        <article class="feature tilt">
+          <p class="k">HUD</p>
+          <h3>Drag everything</h3>
+          <p>Radar with player heads, Region Map, module list, Spotify card, armour, potions, CPS graph and a Performance HUD that shows which module costs the most.</p>
+          <ul><li>22 HUD elements</li><li>HUD editor</li></ul>
+        </article>
+        <article class="feature tilt">
+          <p class="k">Visuals</p>
+          <h3>16 animated skies</h3>
+          <p>Moons with craters, suns with god rays, aurora curtains, a spiral galaxy and drifting petals. Each GUI theme picks its own sky.</p>
+          <ul><li>Custom Sky</li><li>Liquid Glass</li><li>Motion Blur</li></ul>
+        </article>
+        <article class="feature tilt">
+          <p class="k">Cosmetics</p>
+          <h3>Knives with inspect</h3>
+          <p>Six knives and thirteen finishes replace your sword, with draw, inspect and trick animations. Plus wings, capes, trails and jump circles. Only you see them.</p>
+          <ul><li>Karambit</li><li>Butterfly</li><li>Bayonet</li></ul>
+        </article>
+        <article class="feature tilt">
+          <p class="k">Performance</p>
+          <h3>Light on your FPS</h3>
+          <p>Built-in profiler, background FPS limit and scanner budget. Tested every build alongside Sodium, Lithium, FerriteCore, ImmediatelyFast and Entity Culling.</p>
+          <ul><li>Performance HUD</li><li>FPS Boost</li></ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- gallery -->
+  <section class="section" id="gallery" aria-labelledby="gallery-title">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Screenshots</p>
+        <h2 id="gallery-title">Straight from the game</h2>
+        <p>No mock-ups. Every image was captured by Stella's automated in-game test.</p>
+      </div>
+      <div class="gallery" id="gallery-grid">
+        <button class="shot big" type="button" data-src="assets/shots/hud-layout.jpg"><img src="assets/shots/hud-layout.jpg" loading="lazy" width="1280" height="720" alt="Default HUD: radar and region map top-left, module list and Spotify card top-right, Spawner Finder panel"><span>Default HUD layout</span></button>
+        <button class="shot" type="button" data-src="assets/shots/storage-esp.jpg"><img src="assets/shots/storage-esp.jpg" loading="lazy" width="1280" height="720" alt="Storage ESP and Block ESP highlighting a hidden stash with tracers"><span>Storage ESP + tracers</span></button>
+        <button class="shot" type="button" data-src="assets/shots/spawner-finder.jpg"><img src="assets/shots/spawner-finder.jpg" loading="lazy" width="1280" height="720" alt="Spawner Finder beams over spawners with the dropdown list"><span>Spawner Finder</span></button>
+        <button class="shot" type="button" data-src="assets/shots/block-entity-debug.jpg"><img src="assets/shots/block-entity-debug.jpg" loading="lazy" width="1280" height="720" alt="Block Entity Debug labelling pistons, observers and repeaters with their state"><span>Block Entity Debug</span></button>
+        <button class="shot" type="button" data-src="assets/shots/freecam.jpg"><img src="assets/shots/freecam.jpg" loading="lazy" width="1280" height="720" alt="Freecam inside solid rock showing an underground base"><span>Freecam underground</span></button>
+        <button class="shot" type="button" data-src="assets/shots/region-map.jpg"><img src="assets/shots/region-map.jpg" loading="lazy" width="1280" height="720" alt="DonutSMP Region Map HUD with numbered regions"><span>Region Map</span></button>
+        <button class="shot" type="button" data-src="assets/shots/knife-inspect.jpg"><img src="assets/shots/knife-inspect.jpg" loading="lazy" width="1280" height="720" alt="Karambit knife skin during the inspect animation"><span>Knife inspect</span></button>
+        <button class="shot" type="button" data-src="assets/shots/sky-galaxy.jpg"><img src="assets/shots/sky-galaxy.jpg" loading="lazy" width="1280" height="720" alt="Spiral Galaxy sky design"><span>Spiral Galaxy sky</span></button>
+        <button class="shot" type="button" data-src="assets/shots/liquid-glass.jpg"><img src="assets/shots/liquid-glass.jpg" loading="lazy" width="1280" height="720" alt="ClickGUI in the Liquid Glass theme"><span>Liquid Glass theme</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- pricing -->
+  <section class="section" id="pricing" aria-labelledby="pricing-title">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Pricing</p>
+        <h2 id="pricing-title">One client, two ways to pay</h2>
+        <p>Both plans get every module, every theme and the same tested builds. Lifetime costs less than two months of Monthly.</p>
+      </div>
+      <div class="plans">
+        <article class="plan">
+          <h3>Monthly</h3>
+          <div class="price"><b class="tab">€8</b><span>/ month</span></div>
+          <p class="sub">Renews every month. Cancel any time.</p>
+          <ul>
+            <li>All 95 modules and 427 settings</li>
+            <li>Updates while you're subscribed</li>
+            <li>25 themes and 16 animated skies</li>
+            <li>Knife skins, wings, capes and trails</li>
+          </ul>
+          <button class="btn ghost" type="button" data-plan="monthly">Subscribe for €8 / month</button>
+        </article>
+        <article class="plan best">
+          <span class="tag">Best value</span>
+          <h3>Lifetime</h3>
+          <div class="price"><b class="tab">€15</b><span>once</span></div>
+          <p class="sub">Pay once. Keep Stella and every update.</p>
+          <ul>
+            <li>All 95 modules and 427 settings</li>
+            <li>Every future update, no renewals</li>
+            <li>25 themes and 16 animated skies</li>
+            <li>Knife skins, wings, capes and trails</li>
+          </ul>
+          <button class="btn" type="button" data-plan="lifetime">Buy Lifetime for €15</button>
+        </article>
+      </div>
+      <div class="notice" id="checkout-notice" role="status" hidden></div>
+      <p class="price-note">Prices in euro, including VAT where it applies. Payment is handled by our payment provider on its own secure page; Stella never sees your card details. See the <a href="#terms">Terms</a> for subscriptions, refunds and the right of withdrawal.</p>
+
+      <div class="faq">
+        <details><summary>Which Minecraft version does Stella support?</summary><p>Minecraft Java 1.21.11 with Fabric Loader 0.17.3 or newer and Fabric API. Put the Stella jar in your mods folder; don't combine it with another build of Stella.</p></details>
+        <details><summary>Can I use Stella on any server?</summary><p>Check each server's rules first. Some servers don't allow ESP, freecam or base-finding tools, and breaking a server's rules can get you banned there. You're responsible for how you use Stella.</p></details>
+        <details><summary>How do I open the ClickGUI?</summary><p>Press Right Shift in game. You can change the key in the ClickGUI module, switch between the window and dropdown views with the button at the bottom, and drag the HUD anywhere from the HUD editor.</p></details>
+        <details><summary>Is it safe to install?</summary><p>Every release passes an automated in-game test and a malware audit (ClamAV plus a scan of the compiled code for network and process calls) before it's published, and comes with a SHA-256 hash you can check.</p></details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- =========================================================== UPDATE LOG VIEW -->
+<section class="doc" id="updates" data-view="updates" hidden aria-labelledby="updates-title">
+  <div class="wrap">
+    <p class="eyebrow">Update log</p>
+    <h1 id="updates-title">What's new in Stella</h1>
+    <p class="muted">Every version below was built, tested in-game and malware-scanned before release.</p>
+    <div class="timeline">
+      <article class="release latest">
+        <header><h2>1.0.143</h2><time datetime="2026-11-05">5 Nov 2026</time><span class="badge">Latest</span></header>
+        <ul>
+          <li><b>Knives</b> are held like a sword: the whole knife is on screen with the grip in your hand. The arm is now an option.</li>
+          <li><b>Performance:</b> Sus Chunk Finder no longer freezes the game every two seconds (36 ms to 0.4 ms), Custom Glint no longer spikes on theme changes, lighter spawner beams, skies and rounded panels.</li>
+          <li><b>Performance HUD</b> shows the modules using the most CPU time each frame.</li>
+        </ul>
+      </article>
+      <article class="release">
+        <header><h2>1.0.138</h2><time datetime="2026-11-05">5 Nov 2026</time></header>
+        <ul>
+          <li><b>Block Entity Debug:</b> highlights pistons, observers, repeaters, comparators, target blocks, dispensers and hoppers with live state labels and facing arrows.</li>
+          <li><b>Freecam</b> now shows caves, tunnels and bases around the camera when it's inside blocks.</li>
+        </ul>
+      </article>
+      <article class="release">
+        <header><h2>1.0.137</h2><time datetime="2026-11-05">5 Nov 2026</time></header>
+        <ul>
+          <li>New <b>loading screens</b> with a progress ring, orbiting moons and a finish burst.</li>
+          <li><b>Main menu</b> intro, mouse parallax, petals, small lightning bolts and sparkles.</li>
+          <li>Fixed lag on the main menu and loading screens.</li>
+        </ul>
+      </article>
+      <article class="release">
+        <header><h2>1.0.134</h2><time datetime="2026-11-04">4 Nov 2026</time></header>
+        <ul>
+          <li>Cleaner <b>window-style ClickGUI</b>, with a button to switch to the dropdown view.</li>
+          <li><b>Custom Sky:</b> animated designs for every theme (moons, suns, aurora, galaxy, particles).</li>
+          <li>New default HUD layout and the <b>Module List HUD</b>.</li>
+        </ul>
+      </article>
+      <article class="release">
+        <header><h2>1.0.125</h2><time datetime="2026-11-04">4 Nov 2026</time></header>
+        <ul>
+          <li><b>Performance</b> module (background FPS limit, FPS boost, scanner budget) and the Performance HUD.</li>
+          <li>Tested alongside Sodium, Lithium, FerriteCore, ImmediatelyFast, Entity Culling and Mod Menu.</li>
+          <li>Code review fixes across the client.</li>
+        </ul>
+      </article>
+      <article class="release">
+        <header><h2>1.0.123</h2><time datetime="2026-11-04">4 Nov 2026</time></header>
+        <ul>
+          <li><b>Liquid Glass</b> theme for the GUI and HUD.</li>
+          <li>Auction Helper, Money Tracker, Region Alerts, Base Saver, Target HUD, Combat Timer and Friends.</li>
+          <li>Knife skins with inspect, wings, capes, accessories, trails and kill effects.</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================== TERMS VIEW -->
+<section class="doc" id="terms" data-view="terms" hidden aria-labelledby="terms-title">
+  <div class="wrap">
+    <p class="eyebrow">Legal</p>
+    <h1 id="terms-title">Terms and Conditions</h1>
+    <p class="stamp">Last updated: <span data-fill="updated"></span></p>
+    <nav class="toc" aria-label="Sections"><a href="#t-1">Who we are</a><a href="#t-2">Licence</a><a href="#t-3">Plans and payment</a><a href="#t-4">Withdrawal and refunds</a><a href="#t-5">Acceptable use</a><a href="#t-6">Liability</a><a href="#t-7">Changes</a><a href="#t-8">Law and contact</a></nav>
+
+    <h2 id="t-1">1. Who we are</h2>
+    <p>Stella Client ("Stella", "we") is provided by <span class="fill" data-fill="owner"></span>, <span class="fill" data-fill="country"></span>. You can contact us at <span class="fill" data-fill="email"></span>. By buying or using Stella you agree to these terms.</p>
+    <p>Stella is an independent project. It is not affiliated with, endorsed by or connected to Mojang Studios, Microsoft or DonutSMP. Minecraft is a trademark of Mojang Synergies AB.</p>
+
+    <h2 id="t-2">2. Your licence</h2>
+    <ul>
+      <li>When you buy a plan you get a personal, non-exclusive, non-transferable licence to download and use Stella for your own Minecraft account.</li>
+      <li>You may not resell, share, redistribute, rent or publish Stella or your access to it, or remove or bypass any licence checks.</li>
+      <li>Stella's code, artwork and name remain ours. Third-party parts (such as the Xuong font, under the SIL Open Font License) keep their own licences.</li>
+    </ul>
+
+    <h2 id="t-3">3. Plans and payment</h2>
+    <ul>
+      <li><b>Monthly (€8 per month):</b> renews automatically every month until you cancel. You can cancel at any time; you keep access until the end of the month you've paid for.</li>
+      <li><b>Lifetime (€15 once):</b> a single payment for access to Stella and its updates for as long as we offer Stella.</li>
+      <li>Prices are in euro and include VAT where it applies. Payments are processed by our payment provider, whose own terms and privacy policy apply to the payment. We never receive your full card details.</li>
+      <li>We may change prices for new purchases. If the Monthly price changes we'll tell you before your next renewal, and you can cancel before it applies.</li>
+    </ul>
+
+    <h2 id="t-4">4. Right of withdrawal and refunds</h2>
+    <p>If you are a consumer in the EU or UK, you normally have 14 days to withdraw from an online purchase. For digital content, that right ends once the download or access starts, provided you asked for it to start straight away and confirmed that you lose the right of withdrawal by doing so. Our checkout asks for that confirmation.</p>
+    <p>If Stella doesn't work as described and we can't fix it within a reasonable time, contact us and we'll refund you. Your statutory rights are not affected by these terms.</p>
+
+    <h2 id="t-5">5. Acceptable use</h2>
+    <ul>
+      <li>Follow the Minecraft End User Licence Agreement and the rules of every server you play on. Some servers don't allow modules such as ESP, freecam or base finders; using them there can get you banned, and that's your responsibility.</li>
+      <li>Don't use Stella to harass other players, to break the law, or to attack, overload or exploit servers.</li>
+      <li>We may suspend or end your access if you break these terms, for example by sharing or reselling your access. Where the law requires it, we'll refund any unused part of a Monthly plan.</li>
+    </ul>
+
+    <h2 id="t-6">6. Warranty and liability</h2>
+    <p>We test every release, but Stella is provided as it is, and we can't promise it will work with every server, every other mod or every future Minecraft update. To the extent the law allows, we aren't liable for indirect losses, lost game progress or bans by third-party servers, and our total liability is limited to the amount you paid us in the 12 months before the claim. Nothing in these terms limits liability that can't be limited by law, such as for intent or gross negligence.</p>
+
+    <h2 id="t-7">7. Changes to Stella and these terms</h2>
+    <p>We may update, add or remove features. We may change these terms; the date at the top shows the latest version. If a change affects an active Monthly plan, we'll tell you before it applies.</p>
+
+    <h2 id="t-8">8. Governing law and contact</h2>
+    <p>These terms are governed by the laws of <span class="fill" data-fill="country"></span>. If you're a consumer, you keep the protection of the mandatory laws of the country where you live, and you can also bring a claim there. Questions or complaints: <span class="fill" data-fill="email"></span>.</p>
+  </div>
+</section>
+
+<!-- =========================================================== COOKIES VIEW -->
+<section class="doc" id="cookies" data-view="cookies" hidden aria-labelledby="cookies-title">
+  <div class="wrap">
+    <p class="eyebrow">Legal</p>
+    <h1 id="cookies-title">Cookie Policy</h1>
+    <p class="stamp">Last updated: <span data-fill="updated"></span></p>
+
+    <h2>The short version</h2>
+    <p>This website sets no cookies. It has no analytics, no advertising, no tracking pixels and no third-party scripts, so there's nothing to accept or decline.</p>
+
+    <h2>What this website stores</h2>
+    <p>Nothing. The website doesn't use cookies, local storage or similar technologies on your device. The fonts, images and scripts all come from this website itself.</p>
+
+    <h2>Checkout</h2>
+    <p>When you choose a plan you're taken to our payment provider's checkout page. That page is run by the provider, on its own website, and it may use cookies that are strictly necessary for secure payment and fraud prevention. Those cookies are covered by the provider's own cookie policy, which you can read on its checkout page.</p>
+
+    <h2>Server logs</h2>
+    <p>Like any website, our hosting provider processes basic technical data (such as your IP address and browser type) when you load a page, to deliver it and to protect against attacks. This isn't stored on your device and isn't used to track you.</p>
+
+    <h2>Changes and contact</h2>
+    <p>If we ever add cookies that aren't strictly necessary, we'll update this policy and ask for your consent first. Questions: <span class="fill" data-fill="email"></span>.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <a class="brand" href="#home"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#d8b4fe" d="M12 1.8l2.9 6.6 7.2.7-5.4 4.8 1.6 7.1L12 17.3 5.7 21l1.6-7.1L1.9 9.1l7.2-.7z"/></svg>STELLA</a>
+      <p class="muted">A Fabric client for Minecraft 1.21.11, made for DonutSMP.</p>
+    </div>
+    <div>
+      <h4>Client</h4>
+      <ul><li><a href="#clickgui">ClickGUI demo</a></li><li><a href="#features">Features</a></li><li><a href="#pricing">Pricing</a></li><li><a href="#updates">Update log</a></li></ul>
+    </div>
+    <div>
+      <h4>Legal</h4>
+      <ul><li><a href="#terms">Terms and Conditions</a></li><li><a href="#cookies">Cookie Policy</a></li><li><span data-fill="email" class="fill"></span></li></ul>
+    </div>
+    <div class="legal">
+      <span>© <span id="year">2026</span> Stella Client</span>
+      <span>Not affiliated with Mojang Studios, Microsoft or DonutSMP. Minecraft is a trademark of Mojang Synergies AB.</span>
+    </div>
+  </div>
+</footer>
+
+<div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Screenshot">
+  <button class="x" type="button" id="lightbox-close" aria-label="Close">✕</button>
+  <figure><img id="lightbox-img" src="assets/shots/main-menu.jpg" alt=""><figcaption id="lightbox-cap"></figcaption></figure>
+</div>
+</body>
+</html>
