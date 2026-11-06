@@ -98,9 +98,13 @@ public class StellaPauseScreen extends dev.stella.client.gui.StellaScreen {
         int top = buttons.isEmpty() ? height / 2 : buttons.get(0).y - 42;
         double tsec = age / 1000.0;
         int glowA = (int) (120 + 70 * Math.sin(tsec * 2.2));
-        ctx.drawTexture(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, BrandingHud.GLOW, width / 2 - 18, top - 9, 0f, 0f, 36, 36, 36, 36,
-                ColorUtil.mulAlpha((glowA << 24) | (theme.accent() & 0xFFFFFF), a));
-        ctx.drawTexture(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, BrandingHud.LOGO, width / 2 - 9, top, 0f, 0f, 18, 18, 18, 18, ColorUtil.mulAlpha(0xFFFFFFFF, a));
+        if (dev.stella.client.Brand.ISRAELI) {
+            IsraelFlag.logo(ctx, width / 2f, top + 9, 9, 0xFFFFFFFF, ColorUtil.withAlpha(theme.accent(), glowA / 2), a);
+        } else {
+            ctx.drawTexture(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, BrandingHud.GLOW, width / 2 - 18, top - 9, 0f, 0f, 36, 36, 36, 36,
+                    ColorUtil.mulAlpha((glowA << 24) | (theme.accent() & 0xFFFFFF), a));
+            ctx.drawTexture(net.minecraft.client.gl.RenderPipelines.GUI_TEXTURED, BrandingHud.LOGO, width / 2 - 9, top, 0f, 0f, 18, 18, 18, 18, ColorUtil.mulAlpha(0xFFFFFFFF, a));
+        }
         String title = "PAUSED";
         float ts = 1.6f;
         float tx = width / 2f - StellaFont.width(title) * ts / 2f;
